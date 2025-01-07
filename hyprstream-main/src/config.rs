@@ -185,18 +185,6 @@ impl Default for CacheConfig {
     }
 }
 
-fn default_cache_engine() -> String {
-    "duckdb".to_string()
-}
-
-fn default_cache_connection() -> String {
-    ":memory:".to_string()
-}
-
-fn default_cache_duration() -> u64 {
-    3600
-}
-
 impl Settings {
     /// Loads configuration from all available sources.
     pub fn new(cli: CliArgs) -> Result<Self, ConfigError> {

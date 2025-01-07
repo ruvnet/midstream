@@ -281,7 +281,7 @@ impl AdbcBackend {
     }
 
     /// Inserts a batch of metrics with optimized aggregation updates.
-    async fn insert_batch_optimized(&self, metrics: &[MetricRecord], window: TimeWindow) -> Result<(), Status> {
+    async fn insert_batch_optimized(&self, metrics: &[MetricRecord], _window: TimeWindow) -> Result<(), Status> {
         // Begin transaction
         self.begin_transaction().await?;
         let mut conn = self.conn.lock().await;
@@ -455,7 +455,7 @@ impl AdbcBackend {
         sql.push_str(") VALUES (");
         first = true;
 
-        for i in 0..batch.num_columns() {
+        for _i in 0..batch.num_columns() {
             if !first {
                 sql.push_str(", ");
             }
@@ -868,21 +868,3 @@ impl StorageBackend for AdbcBackend {
     }
 }
 
-fn format_value(array: &dyn Array, index: usize) -> String {
-    match array.data_type() {
-        DataType::Int8 => format!("{}", array.as_any().downcast_ref::<Int8Array>().unwrap().value(index)),
-        DataType::Int16 => format!("{}", array.as_any().downcast_ref::<Int16Array>().unwrap().value(index)),
-        DataType::Int32 => format!("{}", array.as_any().downcast_ref::<Int32Array>().unwrap().value(index)),
-        DataType::Int64 => format!("{}", array.as_any().downcast_ref::<Int64Array>().unwrap().value(index)),
-        DataType::Float32 => format!("{}", array.as_any().downcast_ref::<Float32Array>().unwrap().value(index)),
-        DataType::Float64 => format!("{}", array.as_any().downcast_ref::<Float64Array>().unwrap().value(index)),
-        DataType::Boolean => format!("{}", array.as_any().downcast_ref::<BooleanArray>().unwrap().value(index)),
-        DataType::Utf8 => format!("'{}'", array.as_any().downcast_ref::<StringArray>().unwrap().value(index)),
-        DataType::Binary => format!("X'{}'", hex::encode(array.as_any().downcast_ref::<BinaryArray>().unwrap().value(index))),
-        DataType::Timestamp(_, _) => {
-            let ts = array.as_any().downcast_ref::<TimestampNanosecondArray>().unwrap().value(index);
-            format!("'{}'", chrono::NaiveDateTime::from_timestamp(ts / 1_000_000_000, (ts % 1_000_000_000) as u32))
-        },
-        _ => "NULL".to_string(),
-    }
-}

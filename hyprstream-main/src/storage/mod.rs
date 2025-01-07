@@ -22,7 +22,6 @@ use std::collections::HashMap;
 use tonic::Status;
 use arrow_schema::Schema;
 use arrow_array::RecordBatch;
-use std::sync::Arc;
 
 /// Batch-level aggregation state for efficient updates
 #[derive(Debug, Clone)]

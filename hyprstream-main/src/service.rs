@@ -9,28 +9,22 @@
 //! The service implementation is designed to work with multiple storage backends
 //! while maintaining consistent query semantics and high performance.
 
-use crate::metrics::{create_record_batch, encode_record_batch, get_metrics_schema};
 use crate::storage::StorageBackend;
 use arrow_flight::{
     flight_service_server::FlightService,
     Action, ActionType, Criteria, FlightData, FlightDescriptor, FlightInfo,
     HandshakeRequest, HandshakeResponse, PutResult, SchemaResult, Ticket,
-    Location, FlightEndpoint, Empty, Result as FlightResult,
-    IpcMessage,
-    PollInfo,
+    Empty, PollInfo,
 };
-use arrow_array::RecordBatch;
 use arrow_schema::Schema;
-use arrow_ipc::{writer, reader};
 use bytes::Bytes;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use std::pin::Pin;
 use std::sync::Arc;
 use tonic::{Request, Response, Status, Streaming};
 use crate::storage::table_manager::AggregationView;
 use serde::Deserialize;
 use serde_json;
-use arrow_ipc::{convert::fb_to_schema, root_as_message};
 
 /// Command types for table and view operations
 #[derive(Debug)]
@@ -114,7 +108,7 @@ impl FlightService for FlightSqlService {
 
     async fn get_schema(
         &self,
-        request: Request<FlightDescriptor>,
+        _request: Request<FlightDescriptor>,
     ) -> Result<Response<SchemaResult>, Status> {
         // Implementation here
         todo!()
@@ -122,7 +116,7 @@ impl FlightService for FlightSqlService {
 
     async fn do_get(
         &self,
-        request: Request<Ticket>,
+        _request: Request<Ticket>,
     ) -> Result<Response<Self::DoGetStream>, Status> {
         // Implementation here
         todo!()
@@ -130,7 +124,7 @@ impl FlightService for FlightSqlService {
 
     async fn handshake(
         &self,
-        request: Request<Streaming<HandshakeRequest>>,
+        _request: Request<Streaming<HandshakeRequest>>,
     ) -> Result<Response<Self::HandshakeStream>, Status> {
         // Implementation here
         todo!()
@@ -138,7 +132,7 @@ impl FlightService for FlightSqlService {
 
     async fn list_flights(
         &self,
-        request: Request<Criteria>,
+        _request: Request<Criteria>,
     ) -> Result<Response<Self::ListFlightsStream>, Status> {
         // Implementation here
         todo!()
@@ -146,7 +140,7 @@ impl FlightService for FlightSqlService {
 
     async fn get_flight_info(
         &self,
-        request: Request<FlightDescriptor>,
+        _request: Request<FlightDescriptor>,
     ) -> Result<Response<FlightInfo>, Status> {
         Ok(Response::new(FlightInfo {
             schema: Bytes::new(),
@@ -161,14 +155,14 @@ impl FlightService for FlightSqlService {
 
     async fn poll_flight_info(
         &self,
-        request: Request<FlightDescriptor>,
+        _request: Request<FlightDescriptor>,
     ) -> Result<Response<PollInfo>, Status> {
         Err(Status::unimplemented("poll_flight_info not implemented"))
     }
 
     async fn do_put(
         &self,
-        request: Request<Streaming<FlightData>>,
+        _request: Request<Streaming<FlightData>>,
     ) -> Result<Response<Self::DoPutStream>, Status> {
         // Implementation here
         todo!()
@@ -176,7 +170,7 @@ impl FlightService for FlightSqlService {
 
     async fn do_action(
         &self,
-        request: Request<Action>,
+        _request: Request<Action>,
     ) -> Result<Response<Self::DoActionStream>, Status> {
         // Implementation here
         todo!()
@@ -184,7 +178,7 @@ impl FlightService for FlightSqlService {
 
     async fn list_actions(
         &self,
-        request: Request<Empty>,
+        _request: Request<Empty>,
     ) -> Result<Response<Self::ListActionsStream>, Status> {
         // Implementation here
         todo!()
@@ -192,7 +186,7 @@ impl FlightService for FlightSqlService {
 
     async fn do_exchange(
         &self,
-        request: Request<Streaming<FlightData>>,
+        _request: Request<Streaming<FlightData>>,
     ) -> Result<Response<Self::DoExchangeStream>, Status> {
         // Implementation here
         todo!()

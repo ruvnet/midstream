@@ -12,7 +12,7 @@
 //! logic and optimizations.
 
 use crate::metrics::MetricRecord;
-use crate::aggregation::{TimeWindow, AggregateFunction, GroupBy, AggregateResult, build_aggregate_query};
+use crate::aggregation::{AggregateFunction, GroupBy, build_aggregate_query};
 use tonic::Status;
 
 /// The standard metric value columns used in aggregation queries

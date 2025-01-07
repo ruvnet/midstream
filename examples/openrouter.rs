@@ -1,9 +1,8 @@
 use midstream::{Midstream, HyprSettings, HyprServiceImpl, StreamProcessor, LLMClient};
-use futures::stream::{BoxStream, Stream, StreamExt};
+use futures::stream::{BoxStream, StreamExt};
 use reqwest::Client;
 use serde_json::{json, Value};
 use std::time::Duration;
-use std::pin::Pin;
 use eventsource_stream::Eventsource;
 use dotenv::dotenv;
 
@@ -19,69 +18,83 @@ impl OpenRouterClient {
             api_key,
         }
     }
-
-    async fn stream_completion(&self, prompt: &str) -> BoxStream<'static, String> {
-        let url = "https://openrouter.ai/api/v1/chat/completions";
-        
-        let payload = json!({
-            "model": "anthropic/claude-2",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "stream": true
-        });
-
-        let response = self.client
-            .post(url)
-            .header("Authorization", format!("Bearer {}", self.api_key))
-            .header("HTTP-Referer", "http://localhost:3000")
-            .json(&payload)
-            .send()
-            .await
-            .expect("Failed to send request");
-
-        let stream = response
-            .bytes_stream()
-            .eventsource()
-            .map(|event| {
-                event.map_or_else(
-                    |e| format!("Error: {}", e),
-                    |event| {
-                        if event.data == "[DONE]" {
-                            String::new()
-                        } else {
-                            // Parse the SSE data as JSON
-                            if let Ok(value) = serde_json::from_str::<Value>(&event.data) {
-                                // Extract the content from the completion
-                                value["choices"][0]["delta"]["content"]
-                                    .as_str()
-                                    .unwrap_or("")
-                                    .to_string()
-                            } else {
-                                String::new()
-                            }
-                        }
-                    }
-                )
-            })
-            .filter(|s| !s.is_empty());
-
-        Box::pin(stream)
-    }
 }
 
 impl LLMClient for OpenRouterClient {
     fn stream(&self) -> BoxStream<'static, String> {
-        let prompt = "Tell me a short story about a robot learning to paint. Make it emotional and stream it word by word.";
+        let prompt = "Tell me a short story about a robot learning to paint. Make it emotional and stream it word by word.".to_string();
+        let client = self.client.clone();
+        let api_key = self.api_key.clone();
         
-        let future = self.stream_completion(prompt);
-        Box::pin(async move {
-            future.await
-                .filter(|s| !s.is_empty())
-                .map(|s| s.trim().to_string())
+        Box::pin(async_stream::stream! {
+            let url = "https://openrouter.ai/api/v1/chat/completions";
+            let referer = std::env::var("OPENROUTER_REFERER").unwrap_or_else(|_| "http://localhost:3000".to_string());
+            let model = std::env::var("OPENROUTER_MODEL").unwrap_or_else(|_| "anthropic/claude-2".to_string());
+            
+            println!("Sending request to OpenRouter API...");
+            println!("Model: {}", model);
+            
+            let payload = json!({
+                "model": model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "stream": true
+            });
+
+            let response = client
+                .post(url)
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("HTTP-Referer", referer)
+                .json(&payload)
+                .send()
+                .await
+                .expect("Failed to send request");
+
+            println!("Response status: {}", response.status());
+            
+            let mut stream = response
+                .bytes_stream()
+                .eventsource()
+                .map(|event| {
+                    match event {
+                        Ok(event) => {
+                            println!("Received event: {}", event.data);
+                            if event.data == "[DONE]" {
+                                String::new()
+                            } else {
+                                match serde_json::from_str::<Value>(&event.data) {
+                                    Ok(value) => {
+                                        let content = value["choices"][0]["delta"]["content"]
+                                            .as_str()
+                                            .unwrap_or("");
+                                        if !content.is_empty() {
+                                            println!("Content: {}", content);
+                                        }
+                                        content.to_string()
+                                    }
+                                    Err(e) => {
+                                        println!("Failed to parse JSON: {}", e);
+                                        String::new()
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            println!("Stream error: {}", e);
+                            format!("Error: {}", e)
+                        }
+                    }
+                });
+
+            while let Some(s) = stream.next().await {
+                if !s.is_empty() {
+                    yield s.trim().to_string();
+                }
+            }
         })
     }
 }

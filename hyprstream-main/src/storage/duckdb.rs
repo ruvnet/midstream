@@ -59,23 +59,19 @@ use std::time::Duration;
 #[derive(Clone)]
 pub struct DuckDbBackend {
     conn: Arc<Mutex<Connection>>,
-    connection_string: String,
-    options: HashMap<String, String>,
     cache_manager: CacheManager,
     table_manager: TableManager,
 }
 
 impl DuckDbBackend {
     /// Creates a new DuckDB backend instance.
-    pub fn new(connection_string: String, options: HashMap<String, String>, ttl: Option<u64>) -> Result<Self, Status> {
+    pub fn new(connection_string: String, _options: HashMap<String, String>, ttl: Option<u64>) -> Result<Self, Status> {
         let config = Config::default();
         let conn = Connection::open_with_flags(&connection_string, config)
             .map_err(|e| Status::internal(e.to_string()))?;
 
         let backend = Self {
             conn: Arc::new(Mutex::new(conn)),
-            connection_string,
-            options,
             cache_manager: CacheManager::new(ttl),
             table_manager: TableManager::new(),
         };
@@ -232,50 +228,6 @@ impl DuckDbBackend {
             .map_err(|e| Status::internal(format!("Failed to create parameter batch: {}", e)))
     }
 
-    /// Creates the necessary tables for metric storage and aggregation.
-    async fn create_tables(&self) -> Result<(), Status> {
-        let conn = self.conn.lock().await;
-
-        // Create metrics table
-        conn.execute(r#"
-            CREATE TABLE IF NOT EXISTS metrics (
-                metric_id VARCHAR NOT NULL,
-                timestamp BIGINT NOT NULL,
-                value_running_window_sum DOUBLE NOT NULL,
-                value_running_window_avg DOUBLE NOT NULL,
-                value_running_window_count BIGINT NOT NULL,
-                PRIMARY KEY (metric_id, timestamp)
-            )
-        "#, params![]).map_err(|e| Status::internal(e.to_string()))?;
-
-        // Create index for time-based queries
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON metrics(timestamp)",
-            params![]
-        ).map_err(|e| Status::internal(e.to_string()))?;
-
-        // Create table for batch-level aggregations
-        conn.execute(r#"
-            CREATE TABLE IF NOT EXISTS metric_aggregations (
-                metric_id VARCHAR NOT NULL,
-                window_start BIGINT NOT NULL,
-                window_end BIGINT NOT NULL,
-                running_sum DOUBLE NOT NULL,
-                running_count BIGINT NOT NULL,
-                min_value DOUBLE NOT NULL,
-                max_value DOUBLE NOT NULL,
-                PRIMARY KEY (metric_id, window_start, window_end)
-            )
-        "#, params![]).map_err(|e| Status::internal(e.to_string()))?;
-
-        // Create index for window-based queries
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_aggregations_window ON metric_aggregations(window_start, window_end)",
-            params![]
-        ).map_err(|e| Status::internal(e.to_string()))?;
-
-        Ok(())
-    }
 }
 
 #[async_trait]
