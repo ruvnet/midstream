@@ -23,6 +23,12 @@ dotenv = "0.15"
 async-stream = "0.3"
 # Lean Agentic dependencies
 thiserror = "2.0"
+dashmap = "6.1"
+lru = "0.12"
+
+# Phase 1: Temporal and Scheduling integrations
+temporal-compare = "0.1"
+nanosecond-scheduler = "0.1"
 
 [dev-dependencies]
 mockall = "0.11"

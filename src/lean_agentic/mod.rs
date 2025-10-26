@@ -37,6 +37,8 @@ pub mod knowledge;
 pub mod learning;
 pub mod types;
 pub mod optimized;
+pub mod temporal;
+pub mod scheduler;
 
 pub use reasoning::{FormalReasoner, Theorem, Proof, ProofStep};
 pub use agent::{AgenticLoop, Action, Observation, Plan, LearningSignal};
@@ -46,6 +48,13 @@ pub use types::{AgentState, Context, Reward};
 pub use optimized::{
     FeatureCache, BufferPool, PredictionCache, BatchProcessor,
     FastEntityExtractor, fast_hash, simd,
+};
+pub use temporal::{
+    TemporalComparator, Sequence, ComparisonAlgorithm, CacheStats,
+};
+pub use scheduler::{
+    RealtimeScheduler, ScheduledTask, SchedulingPolicy, Priority,
+    SchedulableAction, SchedulerStats,
 };
 
 use async_trait::async_trait;
