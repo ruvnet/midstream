@@ -36,12 +36,17 @@ pub mod agent;
 pub mod knowledge;
 pub mod learning;
 pub mod types;
+pub mod optimized;
 
 pub use reasoning::{FormalReasoner, Theorem, Proof, ProofStep};
 pub use agent::{AgenticLoop, Action, Observation, Plan, LearningSignal};
 pub use knowledge::{KnowledgeGraph, TheoremStore, Entity, Relation};
 pub use learning::{StreamLearner, OnlineModel, AdaptationStrategy};
 pub use types::{AgentState, Context, Reward};
+pub use optimized::{
+    FeatureCache, BufferPool, PredictionCache, BatchProcessor,
+    FastEntityExtractor, fast_hash, simd,
+};
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
