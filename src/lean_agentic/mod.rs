@@ -39,6 +39,9 @@ pub mod types;
 pub mod optimized;
 pub mod temporal;
 pub mod scheduler;
+pub mod attractor;
+pub mod temporal_neural;
+pub mod strange_loop;
 
 pub use reasoning::{FormalReasoner, Theorem, Proof, ProofStep};
 pub use agent::{AgenticLoop, Action, Observation, Plan, LearningSignal};
@@ -55,6 +58,18 @@ pub use temporal::{
 pub use scheduler::{
     RealtimeScheduler, ScheduledTask, SchedulingPolicy, Priority,
     SchedulableAction, SchedulerStats,
+};
+pub use attractor::{
+    AttractorAnalyzer, BehaviorAttractorAnalyzer, AttractorType,
+    AttractorInfo, Trajectory, PhasePoint, BehaviorSummary,
+};
+pub use temporal_neural::{
+    TemporalNeuralSolver, TemporalFormula, TemporalOperator,
+    TemporalTrace, TemporalState, VerificationResult,
+};
+pub use strange_loop::{
+    MetaLearner, MetaLevel, MetaKnowledge, StrangeLoop,
+    ModificationRule, SafetyConstraint, MetaLearningSummary,
 };
 
 use async_trait::async_trait;

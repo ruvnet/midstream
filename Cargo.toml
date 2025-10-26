@@ -30,6 +30,17 @@ lru = "0.12"
 temporal-compare = "0.1"
 nanosecond-scheduler = "0.1"
 
+# Phase 2: Dynamical systems and temporal logic
+temporal-attractor-studio = "0.1"
+temporal-neural-solver = "0.1"
+
+# Phase 3: Meta-learning and self-reference
+strange-loop = "0.1"
+
+# Additional dependencies for advanced integrations
+nalgebra = "0.33" # For linear algebra in attractor analysis
+ndarray = "0.16" # For multi-dimensional arrays
+
 [dev-dependencies]
 mockall = "0.11"
 tokio = "1.42.0"

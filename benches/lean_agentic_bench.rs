@@ -9,6 +9,9 @@ use midstream::{
     Action, Entity, EntityType,
     TemporalComparator, Sequence, ComparisonAlgorithm,
     RealtimeScheduler, SchedulingPolicy, Priority,
+    AttractorAnalyzer, BehaviorAttractorAnalyzer, Trajectory,
+    TemporalNeuralSolver, TemporalFormula, TemporalTrace, TemporalState,
+    MetaLearner, MetaLevel,
 };
 use std::collections::HashMap;
 use tokio::runtime::Runtime;
@@ -516,6 +519,260 @@ fn benchmark_scheduler(c: &mut Criterion) {
     group.finish();
 }
 
+fn benchmark_attractor_analysis(c: &mut Criterion) {
+    let mut group = c.benchmark_group("attractor_analysis");
+
+    // Benchmark attractor detection with different data sizes
+    for size in [100, 500, 1000].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("analyze", size),
+            size,
+            |b, &size| {
+                let analyzer = AttractorAnalyzer::new(3, 1);
+
+                // Generate test data (logistic map)
+                let mut data = Vec::with_capacity(size);
+                let mut x = 0.1;
+                for _ in 0..size {
+                    x = 3.7 * x * (1.0 - x);
+                    data.push(x);
+                }
+
+                b.iter(|| {
+                    black_box(analyzer.analyze(&data).unwrap())
+                });
+            },
+        );
+    }
+
+    // Benchmark behavior analysis
+    group.bench_function("behavior_analysis", |b| {
+        let mut analyzer = BehaviorAttractorAnalyzer::new(2, 200);
+
+        // Populate with history
+        for i in 0..200 {
+            analyzer.observe(
+                0.5 + 0.3 * (i as f64 / 50.0).sin(),
+                0.7 + 0.2 * (i as f64 / 30.0).cos(),
+            );
+        }
+
+        b.iter(|| {
+            black_box(analyzer.get_behavior_summary())
+        });
+    });
+
+    // Benchmark trajectory prediction
+    group.bench_function("predict_next", |b| {
+        let analyzer = AttractorAnalyzer::new(3, 1);
+        let data: Vec<f64> = (0..100).map(|i| (i as f64 * 0.1).sin()).collect();
+        let trajectory = Trajectory::from_timeseries(&data, 3, 1);
+
+        b.iter(|| {
+            black_box(analyzer.predict_next(&trajectory))
+        });
+    });
+
+    group.finish();
+}
+
+fn benchmark_temporal_neural(c: &mut Criterion) {
+    let mut group = c.benchmark_group("temporal_neural");
+
+    // Benchmark basic LTL verification
+    group.bench_function("verify_atom", |b| {
+        let mut solver = TemporalNeuralSolver::new();
+        let mut trace = TemporalTrace::new();
+
+        for i in 0..50 {
+            let mut state = TemporalState::new(std::time::Duration::from_secs(i));
+            state.set("safe".to_string(), true);
+            trace.add_state(state);
+        }
+
+        let formula = TemporalFormula::atom("safe");
+
+        b.iter(|| {
+            black_box(solver.verify(&formula, &trace))
+        });
+    });
+
+    // Benchmark eventually operator
+    group.bench_function("verify_eventually", |b| {
+        let mut solver = TemporalNeuralSolver::new();
+        let mut trace = TemporalTrace::new();
+
+        for i in 0..100 {
+            let mut state = TemporalState::new(std::time::Duration::from_secs(i));
+            state.set("goal".to_string(), i == 75);
+            trace.add_state(state);
+        }
+
+        let formula = TemporalFormula::eventually(TemporalFormula::atom("goal"));
+
+        b.iter(|| {
+            black_box(solver.verify(&formula, &trace))
+        });
+    });
+
+    // Benchmark globally operator
+    group.bench_function("verify_globally", |b| {
+        let mut solver = TemporalNeuralSolver::new();
+        let mut trace = TemporalTrace::new();
+
+        for i in 0..100 {
+            let mut state = TemporalState::new(std::time::Duration::from_secs(i));
+            state.set("invariant".to_string(), true);
+            trace.add_state(state);
+        }
+
+        let formula = TemporalFormula::globally(TemporalFormula::atom("invariant"));
+
+        b.iter(|| {
+            black_box(solver.verify(&formula, &trace))
+        });
+    });
+
+    // Benchmark complex formulas
+    group.bench_function("verify_complex", |b| {
+        let mut solver = TemporalNeuralSolver::new();
+        let mut trace = TemporalTrace::new();
+
+        for i in 0..50 {
+            let mut state = TemporalState::new(std::time::Duration::from_secs(i));
+            state.set("request".to_string(), i % 10 == 0);
+            state.set("response".to_string(), i % 10 == 5);
+            trace.add_state(state);
+        }
+
+        // G(request -> F response)
+        let formula = TemporalFormula::globally(
+            TemporalFormula::implies(
+                TemporalFormula::atom("request"),
+                TemporalFormula::eventually(TemporalFormula::atom("response"))
+            )
+        );
+
+        b.iter(|| {
+            black_box(solver.verify(&formula, &trace))
+        });
+    });
+
+    // Benchmark MTL (bounded temporal)
+    group.bench_function("verify_bounded", |b| {
+        let mut solver = TemporalNeuralSolver::new();
+        let mut trace = TemporalTrace::new();
+
+        for i in 0..100 {
+            let mut state = TemporalState::new(std::time::Duration::from_millis(i * 10));
+            state.set("event".to_string(), i == 50);
+            trace.add_state(state);
+        }
+
+        let formula = TemporalFormula::eventually_bounded(
+            TemporalFormula::atom("event"),
+            std::time::Duration::from_millis(400),
+            std::time::Duration::from_millis(600),
+        );
+
+        b.iter(|| {
+            black_box(solver.verify(&formula, &trace))
+        });
+    });
+
+    group.finish();
+}
+
+fn benchmark_meta_learning(c: &mut Criterion) {
+    let mut group = c.benchmark_group("meta_learning");
+
+    // Benchmark learning at different meta levels
+    for level in [MetaLevel::Object, MetaLevel::Meta1, MetaLevel::Meta2].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("learn", format!("{:?}", level)),
+            level,
+            |b, &level| {
+                let mut learner = MetaLearner::new(100);
+
+                // Ascend to the target level
+                while learner.current_level() != level {
+                    let _ = learner.ascend();
+                }
+
+                b.iter(|| {
+                    learner.learn("Test learning content".to_string(), 0.8);
+                });
+            },
+        );
+    }
+
+    // Benchmark pattern detection
+    group.bench_function("detect_patterns", |b| {
+        b.iter(|| {
+            let mut learner = MetaLearner::new(100);
+
+            // Learn many things to trigger pattern detection
+            for i in 0..20 {
+                learner.learn(format!("Learning {}", i), 0.7 + (i % 3) as f64 * 0.1);
+                if i % 3 == 0 {
+                    let _ = learner.ascend();
+                } else if i % 3 == 2 {
+                    let _ = learner.descend();
+                }
+            }
+
+            black_box(learner.get_summary())
+        });
+    });
+
+    // Benchmark strange loop detection
+    group.bench_function("detect_loops", |b| {
+        b.iter(|| {
+            let mut learner = MetaLearner::new(100);
+
+            // Create oscillating pattern
+            for i in 0..10 {
+                learner.learn(format!("Item {}", i), 0.75);
+                if i % 2 == 0 {
+                    let _ = learner.ascend();
+                } else {
+                    let _ = learner.descend();
+                }
+            }
+
+            black_box(learner.get_strange_loops())
+        });
+    });
+
+    // Benchmark safety checks
+    group.bench_function("safety_check", |b| {
+        let learner = MetaLearner::new(100);
+
+        b.iter(|| {
+            black_box(learner.safety_check())
+        });
+    });
+
+    // Benchmark meta-level transitions
+    group.bench_function("level_transitions", |b| {
+        b.iter(|| {
+            let mut learner = MetaLearner::new(100);
+
+            // Go up and down the hierarchy
+            for _ in 0..5 {
+                let _ = learner.ascend();
+            }
+            for _ in 0..5 {
+                let _ = learner.descend();
+            }
+
+            black_box(learner.current_level())
+        });
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     benchmark_formal_reasoning,
@@ -526,6 +783,9 @@ criterion_group!(
     benchmark_concurrent_sessions,
     benchmark_temporal_comparison,
     benchmark_scheduler,
+    benchmark_attractor_analysis,
+    benchmark_temporal_neural,
+    benchmark_meta_learning,
 );
 
 criterion_main!(benches);
