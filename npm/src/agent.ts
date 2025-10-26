@@ -2,20 +2,20 @@
  * MidStream Agent - High-level wrapper for Lean Agentic Learning System
  */
 
-interface AgentConfig {
+export interface AgentConfig {
   maxHistory?: number;
   embeddingDim?: number;
   schedulingPolicy?: string;
 }
 
-interface AnalysisResult {
+export interface AnalysisResult {
   messageCount: number;
   patterns: any[];
   metaLearning: any;
   temporalAnalysis?: any;
 }
 
-interface BehaviorAnalysis {
+export interface BehaviorAnalysis {
   attractorType?: string;
   lyapunovExponent?: number;
   isStable?: boolean;
