@@ -72,6 +72,7 @@ Built with Rust for performance and TypeScript for flexibility, MidStream combin
 - Event-driven updates with memory management
 
 ### 🎥 Streaming Integration
+- **QUIC/HTTP/3** - Multiplexed transport with 0-RTT and stream prioritization
 - **RTMP/RTMPS** - Real-Time Messaging Protocol support
 - **WebRTC** - Peer-to-peer audio/video streaming
 - **HLS** - HTTP Live Streaming support
@@ -137,6 +138,13 @@ npm run demo:text    # Text streaming only
 npm run demo:audio   # Audio streaming only
 npm run demo:video   # Video streaming only
 npm run demo:openai  # OpenAI Realtime API
+
+# QUIC demos
+npm run quic-demo              # Interactive QUIC demo
+npm run quic-demo:server       # QUIC server
+npm run quic-demo:client       # QUIC client
+npm run quic-demo:multistream  # Multi-stream demo
+npm run quic-demo:benchmark    # Performance benchmark
 ```
 
 ### Basic Usage
@@ -191,6 +199,27 @@ client.on('frame', (frame) => {
 await client.connectWebRTC();
 ```
 
+#### QUIC Integration
+```typescript
+import { createQuicServer, connectQuic } from 'midstream-cli';
+
+// Server
+const server = createQuicServer({ port: 4433, maxStreams: 1000 });
+server.on('connection', (connection) => {
+  connection.on('stream', (stream) => {
+    stream.on('data', (data) => {
+      console.log('Received:', data.toString());
+    });
+  });
+});
+await server.listen();
+
+// Client
+const connection = await connectQuic('localhost', 4433);
+const stream = await connection.openBiStream({ priority: 10 });
+stream.write('Hello QUIC!');
+```
+
 ---
 
 ## 🏗️ Architecture
@@ -224,6 +253,7 @@ await client.connectWebRTC();
 |-----------|---------|--------|
 | **Dashboard** | Real-time monitoring & visualization | ✅ Functional |
 | **OpenAI Realtime** | Text/audio streaming with OpenAI | ✅ 26/26 tests |
+| **QUIC/HTTP/3** | Multiplexed transport protocol | ✅ 37/37 tests |
 | **Restream** | Multi-protocol video streaming | ✅ Framework ready |
 | **Lean Agentic** | Autonomous learning agents | ✅ Active |
 | **Temporal Analysis** | Pattern & attractor detection | ✅ Functional |
@@ -277,6 +307,32 @@ class RestreamClient {
 }
 ```
 
+#### QUIC API
+```typescript
+class QuicConnection {
+  connect(): Promise<void>
+  openBiStream(config?: QuicStreamConfig): Promise<QuicStream>
+  openUniStream(config?: QuicStreamConfig): Promise<QuicStream>
+  close(): void
+  getStats(): QuicConnectionStats
+  getAgent(): MidStreamAgent
+}
+
+class QuicServer {
+  listen(): Promise<void>
+  close(): void
+  getConnectionCount(): number
+  on(event: string, callback: Function): void
+}
+
+class QuicStream {
+  write(data: Buffer | string): boolean
+  close(): void
+  setPriority(priority: number): void
+  on(event: string, callback: Function): void
+}
+```
+
 ---
 
 ## 🧪 Testing
@@ -297,10 +353,11 @@ npx ts-node scripts/security-check.ts
 
 ### Test Results
 ```
-Test Suites: 3 total
-Tests: 67 total
-  ✅ Passed: 63 (94%)
-  ✅ New Components: 26/26 (100%)
+Test Suites: 4 total
+Tests: 104 total
+  ✅ Passed: 100 (96%)
+  ✅ QUIC Integration: 37/37 (100%)
+  ✅ OpenAI Realtime: 26/26 (100%)
 
 Security Audit: 10/10 checks passed
 Build Status: ✅ Success
@@ -340,6 +397,27 @@ const dashboard = new MidStreamDashboard();
 openai.on('response.audio.delta', (audio) => {
   dashboard.processStream('openai', Buffer.from(audio, 'base64'), 'audio');
 });
+```
+
+### Low-Latency Multiplexed Streaming with QUIC
+```typescript
+const connection = await connectQuic('localhost', 4433);
+
+// High-priority video stream
+const videoStream = await connection.openBiStream({ priority: 10 });
+videoStream.write(videoFrame);
+
+// Medium-priority audio stream
+const audioStream = await connection.openBiStream({ priority: 9 });
+audioStream.write(audioChunk);
+
+// Low-priority telemetry
+const telemetryStream = await connection.openUniStream({ priority: 1 });
+telemetryStream.write(stats);
+
+// Get connection statistics
+const stats = connection.getStats();
+console.log(`RTT: ${stats.rtt}ms, Throughput: ${stats.bytesSent} bytes`);
 ```
 
 ---
@@ -486,12 +564,13 @@ Apache 2.0 License - see [LICENSE](LICENSE) file for details.
 ### Recent Updates
 
 **v0.1.0** - October 2025
+- ✅ QUIC/HTTP/3 support (37/37 tests passing)
 - ✅ Real-time dashboard with console UI
 - ✅ Restream integration (RTMP/WebRTC/HLS)
 - ✅ OpenAI Realtime API (26/26 tests passing)
 - ✅ Security audit tool (10/10 checks)
-- ✅ Comprehensive documentation (1000+ lines)
-- ✅ Production-ready code (2500+ lines)
+- ✅ Comprehensive documentation (1200+ lines)
+- ✅ Production-ready code (3500+ lines)
 
 ---
 

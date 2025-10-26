@@ -20,6 +20,15 @@ export {
   WebRTCSignalingServer,
   StreamSimulator
 } from './restream-integration.js';
+export {
+  QuicConnection,
+  QuicServer,
+  QuicClient,
+  QuicStream,
+  createQuicServer,
+  connectQuic,
+  isQuicSupported
+} from './quic-integration.js';
 
 // Re-export types
 export type {
@@ -47,3 +56,9 @@ export type {
   StreamAnalysis,
   DetectedObject
 } from './restream-integration.js';
+
+export type {
+  QuicConfig,
+  QuicStreamConfig,
+  QuicConnectionStats
+} from './quic-integration.js';

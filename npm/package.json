@@ -22,7 +22,12 @@
     "demo:text": "ts-node examples/dashboard-demo.ts --mode text",
     "demo:audio": "ts-node examples/dashboard-demo.ts --mode audio",
     "demo:video": "ts-node examples/dashboard-demo.ts --mode video",
-    "demo:openai": "ts-node examples/dashboard-demo.ts --mode all --openai"
+    "demo:openai": "ts-node examples/dashboard-demo.ts --mode all --openai",
+    "quic-demo": "ts-node examples/quic-demo.ts",
+    "quic-demo:server": "ts-node examples/quic-demo.ts server",
+    "quic-demo:client": "ts-node examples/quic-demo.ts client",
+    "quic-demo:multistream": "ts-node examples/quic-demo.ts multistream",
+    "quic-demo:benchmark": "ts-node examples/quic-demo.ts benchmark"
   },
   "keywords": [
     "llm",
