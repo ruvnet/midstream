@@ -14,6 +14,12 @@ export {
   audioToBase64,
   base64ToAudio
 } from './openai-realtime.js';
+export { MidStreamDashboard, InteractiveDashboard } from './dashboard.js';
+export {
+  RestreamClient,
+  WebRTCSignalingServer,
+  StreamSimulator
+} from './restream-integration.js';
 
 // Re-export types
 export type {
@@ -28,3 +34,16 @@ export type {
   ConversationItem,
   RealtimeMessage,
 } from './openai-realtime.js';
+
+export type {
+  DashboardState,
+  StreamMetrics
+} from './dashboard.js';
+
+export type {
+  RestreamConfig,
+  StreamFrame,
+  AudioChunk,
+  StreamAnalysis,
+  DetectedObject
+} from './restream-integration.js';

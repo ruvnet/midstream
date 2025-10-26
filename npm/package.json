@@ -17,7 +17,12 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write 'src/**/*.ts'",
     "prepublishOnly": "npm run build && npm test",
-    "mcp": "node dist/mcp-server.js"
+    "mcp": "node dist/mcp-server.js",
+    "demo": "ts-node examples/dashboard-demo.ts",
+    "demo:text": "ts-node examples/dashboard-demo.ts --mode text",
+    "demo:audio": "ts-node examples/dashboard-demo.ts --mode audio",
+    "demo:video": "ts-node examples/dashboard-demo.ts --mode video",
+    "demo:openai": "ts-node examples/dashboard-demo.ts --mode all --openai"
   },
   "keywords": [
     "llm",
