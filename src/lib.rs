@@ -61,12 +61,13 @@ pub mod config;
 pub mod midstream;
 pub mod hypr_service;
 pub mod tests;
+pub mod lean_agentic;
 
 pub use config::HyprSettings;
 pub use midstream::{
-    Midstream, 
-    StreamProcessor, 
-    LLMMessage, 
+    Midstream,
+    StreamProcessor,
+    LLMMessage,
     LLMClient,
     HyprService,
     ToolIntegration,
@@ -76,3 +77,27 @@ pub use midstream::{
     AggregateFunction,
 };
 pub use hypr_service::HyprServiceImpl;
+
+// Lean Agentic Learning System exports
+pub use lean_agentic::{
+    LeanAgenticSystem,
+    LeanAgenticConfig,
+    FormalReasoner,
+    Theorem,
+    Proof,
+    ProofStep,
+    AgenticLoop,
+    Action,
+    Observation,
+    Plan,
+    LearningSignal,
+    KnowledgeGraph,
+    Entity,
+    Relation,
+    StreamLearner,
+    OnlineModel,
+    AdaptationStrategy,
+    AgentState,
+    Context as AgentContext,
+    Reward,
+};

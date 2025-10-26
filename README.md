@@ -1,5 +1,33 @@
 # MidStream: Real-Time Large Language Model Streaming Platform
-This project demonstrates a **minimal** Rust-based implementation of a **Real-Time Conversational AI Assistant** with **Dynamic Tool Integration** using **MidStream**. It showcases how to stream LLM responses in real time, perform inflight data analysis, and integrate with external tools like calendars and weather services. The project leverages **Routerify**, an open-source routing library in Rust, to handle HTTP requests and manage streaming data efficiently.
+
+**Now featuring the revolutionary Lean Agentic Learning System!**
+
+This project demonstrates a **state-of-the-art** Rust-based implementation of a **Real-Time Conversational AI Assistant** with **Lean Agentic Learning**, **Dynamic Tool Integration**, and **Formal Verification**. It showcases how to stream LLM responses in real time, perform inflight data analysis with autonomous agents, and integrate with external tools—all while maintaining mathematical rigor through formal reasoning.
+
+## 🎯 New: Lean Agentic Learning System
+
+MidStream now includes a groundbreaking **Lean Agentic Learning System** that combines:
+
+- **🔬 Formal Reasoning** - Lean-style theorem proving for verified knowledge
+- **🤖 Autonomous Agents** - Self-directed decision-making with Plan-Act-Observe-Learn loops
+- **📊 Stream Learning** - Real-time online adaptation from continuous data
+- **🧠 Knowledge Graphs** - Dynamic knowledge that evolves with experience
+
+👉 **[Complete Guide: Lean Agentic Learning System](./LEAN_AGENTIC_GUIDE.md)**
+
+### Quick Start with Lean Agentic
+
+```bash
+# Run the lean agentic streaming example
+cargo run --example lean_agentic_streaming
+
+# Or use the TypeScript client
+cd lean-agentic-js
+npm install
+npm run build
+```
+
+See the [Lean Agentic Guide](./LEAN_AGENTIC_GUIDE.md) for comprehensive documentation.
 
 ## Acknowledgement
 
