@@ -28,6 +28,11 @@ thiserror = "2.0"
 mockall = "0.11"
 tokio = "1.42.0"
 tokio-test = "0.4"
+criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
+
+[[bench]]
+name = "lean_agentic_bench"
+harness = false
 
 [[example]]
 name = "openrouter"
