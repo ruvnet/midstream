@@ -22,7 +22,7 @@ impl QuicConnection {
     /// # Examples
     /// ```no_run
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// use quic_multistream::QuicConnection;
+    /// use midstreamer_quic::QuicConnection;
     ///
     /// let connection = QuicConnection::connect("localhost:4433").await?;
     /// # Ok(())

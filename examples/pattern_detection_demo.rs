@@ -5,7 +5,7 @@
 /// 2. detect_pattern() - Detect if a pattern exists
 /// 3. Advanced APIs for recurring and fuzzy pattern detection
 
-use temporal_compare::{TemporalComparator, Pattern};
+use midstreamer_temporal_compare::{TemporalComparator, Pattern};
 
 fn main() {
     println!("=== Temporal-Compare Pattern Detection Demo ===\n");

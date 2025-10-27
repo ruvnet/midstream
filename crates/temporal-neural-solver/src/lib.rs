@@ -12,7 +12,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use thiserror::Error;
-use nanosecond_scheduler::Priority;
 
 /// Temporal logic errors
 #[derive(Debug, Error)]
@@ -212,6 +211,7 @@ pub struct VerificationResult {
 /// Temporal neural solver
 pub struct TemporalNeuralSolver {
     trace: TemporalTrace,
+    #[allow(dead_code)]
     max_solving_time_ms: u64,
     verification_strictness: VerificationStrictness,
 }

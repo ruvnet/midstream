@@ -17,7 +17,7 @@
 //! - Priority handling: <1ms overhead
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use quic_multistream::{QuicConnection, StreamPriority};
+use midstreamer_quic::{QuicConnection, StreamPriority};
 use quinn::{Endpoint, ServerConfig};
 use std::net::SocketAddr;
 use std::sync::Arc;

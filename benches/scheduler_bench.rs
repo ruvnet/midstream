@@ -14,7 +14,7 @@
 //! - Stats calculation: <10μs
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use nanosecond_scheduler::{
+use midstreamer_scheduler::{
     NanoScheduler, Task, TaskPriority, ScheduleResult,
     stats::SchedulerStats,
 };

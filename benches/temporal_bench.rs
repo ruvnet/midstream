@@ -13,7 +13,7 @@
 //! - Edit distance n=100: <3ms
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use temporal_compare::{
+use midstreamer_temporal_compare::{
     TemporalCompare, TemporalData, TemporalPattern, CachedCompare,
     dtw::dtw_distance,
     lcs::longest_common_subsequence,

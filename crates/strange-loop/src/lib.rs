@@ -14,9 +14,9 @@ use std::collections::HashMap;
 use thiserror::Error;
 use dashmap::DashMap;
 use std::sync::Arc;
-use temporal_compare::TemporalComparator;
-use temporal_attractor_studio::{AttractorAnalyzer, PhasePoint};
-use temporal_neural_solver::TemporalNeuralSolver;
+use midstreamer_temporal_compare::TemporalComparator;
+use midstreamer_attractor::{AttractorAnalyzer, PhasePoint};
+use midstreamer_neural_solver::TemporalNeuralSolver;
 
 /// Strange loop errors
 #[derive(Debug, Error)]

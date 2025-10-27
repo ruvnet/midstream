@@ -3,7 +3,7 @@
 /// This test suite verifies that the find_similar() and detect_pattern() APIs
 /// work correctly with the published crate.
 
-use temporal_compare::{TemporalComparator, Pattern, SimilarityMatch};
+use midstreamer_temporal_compare::{TemporalComparator, Pattern, SimilarityMatch};
 
 #[test]
 fn test_find_similar_with_f64() {

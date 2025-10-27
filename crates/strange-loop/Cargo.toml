@@ -1,15 +1,18 @@
 [package]
-name = "strange-loop"
+name = "midstreamer-strange-loop"
 version = "0.1.0"
 edition = "2021"
 description = "Self-referential systems and meta-learning"
 license = "MIT"
+repository = "https://github.com/ruvnet/midstream"
+keywords = ["meta-learning", "self-reference", "strange-loop", "cognition", "midstream"]
+categories = ["algorithms", "science"]
 
 [dependencies]
-temporal-compare = { path = "../temporal-compare" }
-temporal-attractor-studio = { path = "../temporal-attractor-studio" }
-temporal-neural-solver = { path = "../temporal-neural-solver" }
-nanosecond-scheduler = { path = "../nanosecond-scheduler" }
+midstreamer-temporal-compare = { path = "../temporal-compare" }
+midstreamer-attractor = { path = "../temporal-attractor-studio" }
+midstreamer-neural-solver = { path = "../temporal-neural-solver" }
+midstreamer-scheduler = { path = "../nanosecond-scheduler" }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
 dashmap = "6.1"

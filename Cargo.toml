@@ -38,18 +38,18 @@ dashmap = "6.1"
 lru = "0.12"
 
 # Phase 1: Temporal and Scheduling integrations (local workspace crates)
-temporal-compare = { path = "crates/temporal-compare" }
-nanosecond-scheduler = { path = "crates/nanosecond-scheduler" }
+midstreamer-temporal-compare = { path = "crates/temporal-compare" }
+midstreamer-scheduler = { path = "crates/nanosecond-scheduler" }
 
 # Phase 2: Dynamical systems and temporal logic (local workspace crates)
-temporal-attractor-studio = { path = "crates/temporal-attractor-studio" }
-temporal-neural-solver = { path = "crates/temporal-neural-solver" }
+midstreamer-attractor = { path = "crates/temporal-attractor-studio" }
+midstreamer-neural-solver = { path = "crates/temporal-neural-solver" }
 
 # Phase 3: Meta-learning and self-reference (local workspace crates)
-strange-loop = { path = "crates/strange-loop" }
+midstreamer-strange-loop = { path = "crates/strange-loop" }
 
 # QUIC multi-stream support (local workspace crate)
-quic-multistream = { path = "crates/quic-multistream" }
+midstreamer-quic = { path = "crates/quic-multistream" }
 
 # Additional dependencies for advanced integrations
 nalgebra = "0.33" # For linear algebra in attractor analysis

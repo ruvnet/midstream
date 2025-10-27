@@ -13,11 +13,11 @@ use wasm_bindgen_test::*;
 use std::collections::HashMap;
 
 // WASM-specific imports
-use temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
-use nanosecond_scheduler::{RealtimeScheduler, SchedulingPolicy, Priority};
-use temporal_attractor_studio::{AttractorAnalyzer, PhasePoint};
-use temporal_neural_solver::{TemporalNeuralSolver, TemporalFormula, TemporalState, VerificationStrictness};
-use strange_loop::{StrangeLoop, MetaLevel};
+use midstreamer_temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
+use midstreamer_scheduler::{RealtimeScheduler, SchedulingPolicy, Priority};
+use midstreamer_attractor::{AttractorAnalyzer, PhasePoint};
+use midstreamer_neural_solver::{TemporalNeuralSolver, TemporalFormula, TemporalState, VerificationStrictness};
+use midstreamer_strange_loop::{StrangeLoop, MetaLevel};
 
 wasm_bindgen_test_configure!(run_in_browser);
 

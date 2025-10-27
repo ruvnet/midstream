@@ -14,7 +14,7 @@
 //! - Parsing: <5ms
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use temporal_neural_solver::{
+use midstreamer_neural_solver::{
     TemporalSolver, LTLFormula, Formula, State, Trace,
     parser::parse_ltl,
     encoder::encode_formula,

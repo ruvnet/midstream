@@ -15,7 +15,7 @@
 //! ```no_run
 //! # #[cfg(not(target_arch = "wasm32"))]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use quic_multistream::{QuicConnection, StreamPriority};
+//! use midstreamer_quic::{QuicConnection, StreamPriority};
 //!
 //! // Connect to server
 //! let connection = QuicConnection::connect("localhost:4433").await?;
@@ -39,7 +39,7 @@
 //! ```no_run
 //! # #[cfg(target_arch = "wasm32")]
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! use quic_multistream::QuicConnection;
+//! use midstreamer_quic::QuicConnection;
 //!
 //! // Connect via WebTransport
 //! let connection = QuicConnection::connect("https://server.example.com").await?;

@@ -11,11 +11,11 @@
 use std::time::Duration;
 
 // Import from published crates
-use temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
-use nanosecond_scheduler::{RealtimeScheduler, SchedulerConfig, Priority, Deadline};
-use temporal_attractor_studio::{AttractorAnalyzer, PhasePoint, AttractorType};
-use temporal_neural_solver::{TemporalNeuralSolver, TemporalFormula, TemporalState, VerificationStrictness};
-use strange_loop::{StrangeLoop, MetaLevel, StrangeLoopConfig};
+use midstreamer_temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
+use midstreamer_scheduler::{RealtimeScheduler, SchedulerConfig, Priority, Deadline};
+use midstreamer_attractor::{AttractorAnalyzer, PhasePoint, AttractorType};
+use midstreamer_neural_solver::{TemporalNeuralSolver, TemporalFormula, TemporalState, VerificationStrictness};
+use midstreamer_strange_loop::{StrangeLoop, MetaLevel, StrangeLoopConfig};
 
 /// Test 1: Scheduler + Temporal Compare Integration
 ///

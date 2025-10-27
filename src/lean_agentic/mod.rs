@@ -67,7 +67,7 @@ pub use temporal_neural::{
     TemporalNeuralSolver, TemporalFormula, TemporalOperator,
     TemporalTrace, TemporalState, VerificationResult,
 };
-pub use strange_loop::{
+pub use midstreamer_strange_loop::{
     MetaLearner, MetaLevel, MetaKnowledge, StrangeLoop,
     ModificationRule, SafetyConstraint, MetaLearningSummary,
 };

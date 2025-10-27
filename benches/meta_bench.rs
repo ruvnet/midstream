@@ -15,7 +15,7 @@
 //! - Safety overhead: <5% performance impact
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use strange_loop::{
+use midstreamer_strange_loop::{
     StrangeLoop, StrangeLoopConfig, MetaLevel, MetaKnowledge,
     SafetyConstraint, ModificationRule,
 };

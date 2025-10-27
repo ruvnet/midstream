@@ -14,7 +14,7 @@
 //! - Detection: <100ms
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use temporal_attractor_studio::{
+use midstreamer_attractor::{
     AttractorStudio, PhaseSpace, Trajectory, AttractorType,
     lyapunov::calculate_lyapunov_exponent,
     embedding::reconstruct_phase_space,

@@ -28,7 +28,7 @@ impl QuicConnection {
     /// ```no_run
     /// # #[cfg(target_arch = "wasm32")]
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    /// use quic_multistream::QuicConnection;
+    /// use midstreamer_quic::QuicConnection;
     ///
     /// let connection = QuicConnection::connect("https://localhost:4433").await?;
     /// # Ok(())
