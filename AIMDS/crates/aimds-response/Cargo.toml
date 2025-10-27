@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 # Workspace dependencies
-strange-loop = { path = "../../../crates/strange-loop" }
+midstreamer-strange-loop = { path = "../../../crates/strange-loop" }
 aimds-core = { path = "../aimds-core" }
 aimds-detection = { path = "../aimds-detection" }
 aimds-analysis = { path = "../aimds-analysis" }

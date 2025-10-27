@@ -10,8 +10,8 @@ description = "Fast-path detection layer for AIMDS with pattern matching and ano
 [dependencies]
 # Workspace dependencies
 aimds-core.workspace = true
-temporal-compare.workspace = true
-nanosecond-scheduler.workspace = true
+midstreamer-temporal-compare.workspace = true
+midstreamer-scheduler.workspace = true
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true

@@ -5,7 +5,7 @@
 //!
 //! Performance target: <100ms p99 (87ms baseline + 13ms overhead)
 
-use temporal_attractor_studio::{AttractorAnalyzer, AttractorInfo};
+use midstreamer_attractor::{AttractorAnalyzer, AttractorInfo};
 use crate::errors::{AnalysisError, AnalysisResult};
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -123,7 +123,7 @@ impl BehavioralAnalyzer {
 
                 // Add all points from sequence
                 for (i, chunk) in seq.chunks(dimensions).enumerate() {
-                    let point = temporal_attractor_studio::PhasePoint::new(
+                    let point = midstreamer_attractor::PhasePoint::new(
                         chunk.to_vec(),
                         i as u64,
                     );
@@ -190,7 +190,7 @@ impl BehavioralAnalyzer {
 
                     // Add all points from sequence
                     for (i, chunk) in seq.chunks(dims).enumerate() {
-                        let point = temporal_attractor_studio::PhasePoint::new(
+                        let point = midstreamer_attractor::PhasePoint::new(
                             chunk.to_vec(),
                             i as u64,
                         );

@@ -16,11 +16,11 @@ repository = "https://github.com/your-org/aimds"
 
 [workspace.dependencies]
 # Midstream platform (validated benchmarks - production-ready)
-temporal-compare = { version = "0.1", path = "../crates/temporal-compare" }
-nanosecond-scheduler = { version = "0.1", path = "../crates/nanosecond-scheduler" }
-temporal-attractor-studio = { version = "0.1", path = "../crates/temporal-attractor-studio" }
-temporal-neural-solver = { version = "0.1", path = "../crates/temporal-neural-solver" }
-strange-loop = { version = "0.1", path = "../crates/strange-loop" }
+midstreamer-temporal-compare = { version = "0.1", path = "../crates/temporal-compare" }
+midstreamer-scheduler = { version = "0.1", path = "../crates/nanosecond-scheduler" }
+midstreamer-attractor = { version = "0.1", path = "../crates/temporal-attractor-studio" }
+midstreamer-neural-solver = { version = "0.1", path = "../crates/temporal-neural-solver" }
+midstreamer-strange-loop = { version = "0.1", path = "../crates/strange-loop" }
 
 # AIMDS internal crates
 aimds-core = { version = "0.1.0", path = "crates/aimds-core" }

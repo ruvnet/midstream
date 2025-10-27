@@ -9,9 +9,9 @@ description = "Deep behavioral analysis layer for AIMDS with temporal neural ver
 
 [dependencies]
 aimds-core.workspace = true
-temporal-attractor-studio.workspace = true
-temporal-neural-solver.workspace = true
-strange-loop.workspace = true
+midstreamer-attractor.workspace = true
+midstreamer-neural-solver.workspace = true
+midstreamer-strange-loop.workspace = true
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true

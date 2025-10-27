@@ -36,7 +36,7 @@ pub enum ResponseError {
     },
 
     #[error("Strange-loop error: {0}")]
-    StrangeLoopError(#[from] strange_loop::StrangeLoopError),
+    StrangeLoopError(#[from] midstreamer_strange_loop::StrangeLoopError),
 
     #[error("AIMDS core error: {0}")]
     CoreError(#[from] aimds_core::AimdsError),

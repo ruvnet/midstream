@@ -1,7 +1,7 @@
 //! Meta-learning engine using strange-loop for recursive self-improvement
 
 use std::collections::HashMap;
-use strange_loop::{StrangeLoop, StrangeLoopConfig, MetaLevel, MetaKnowledge};
+use midstreamer_strange_loop::{StrangeLoop, StrangeLoopConfig, MetaLevel, MetaKnowledge};
 use crate::{MitigationOutcome, FeedbackSignal};
 use serde::{Deserialize, Serialize};
 

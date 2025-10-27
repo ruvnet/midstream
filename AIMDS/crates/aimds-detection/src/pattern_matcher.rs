@@ -6,7 +6,7 @@ use chrono::Utc;
 use dashmap::DashMap;
 use regex::RegexSet;
 use std::sync::Arc;
-use temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
+use midstreamer_temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
 use uuid::Uuid;
 
 /// Pattern matcher using multiple detection strategies
