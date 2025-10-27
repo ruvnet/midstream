@@ -1,11 +1,13 @@
 [workspace]
 members = [
+    "crates/quic-multistream",
     "crates/temporal-compare",
     "crates/nanosecond-scheduler",
     "crates/temporal-attractor-studio",
     "crates/temporal-neural-solver",
     "crates/strange-loop",
 ]
+exclude = ["npm-wasm"]
 
 [package]
 name = "midstream"
@@ -35,16 +37,19 @@ thiserror = "2.0"
 dashmap = "6.1"
 lru = "0.12"
 
-# Phase 1: Temporal and Scheduling integrations (workspace crates)
+# Phase 1: Temporal and Scheduling integrations (local workspace crates)
 temporal-compare = { path = "crates/temporal-compare" }
 nanosecond-scheduler = { path = "crates/nanosecond-scheduler" }
 
-# Phase 2: Dynamical systems and temporal logic (workspace crates)
+# Phase 2: Dynamical systems and temporal logic (local workspace crates)
 temporal-attractor-studio = { path = "crates/temporal-attractor-studio" }
 temporal-neural-solver = { path = "crates/temporal-neural-solver" }
 
-# Phase 3: Meta-learning and self-reference (workspace crates)
+# Phase 3: Meta-learning and self-reference (local workspace crates)
 strange-loop = { path = "crates/strange-loop" }
+
+# QUIC multi-stream support (local workspace crate)
+quic-multistream = { path = "crates/quic-multistream" }
 
 # Additional dependencies for advanced integrations
 nalgebra = "0.33" # For linear algebra in attractor analysis
@@ -58,6 +63,30 @@ criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 
 [[bench]]
 name = "lean_agentic_bench"
+harness = false
+
+[[bench]]
+name = "temporal_bench"
+harness = false
+
+[[bench]]
+name = "scheduler_bench"
+harness = false
+
+[[bench]]
+name = "attractor_bench"
+harness = false
+
+[[bench]]
+name = "solver_bench"
+harness = false
+
+[[bench]]
+name = "meta_bench"
+harness = false
+
+[[bench]]
+name = "quic_bench"
 harness = false
 
 [[example]]

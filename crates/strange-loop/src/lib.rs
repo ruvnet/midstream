@@ -10,14 +10,13 @@
 //! - Meta-knowledge extraction
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use thiserror::Error;
 use dashmap::DashMap;
 use std::sync::Arc;
-use temporal_compare::{Sequence, TemporalElement, TemporalComparator, ComparisonAlgorithm};
+use temporal_compare::TemporalComparator;
 use temporal_attractor_studio::{AttractorAnalyzer, PhasePoint};
-use temporal_neural_solver::{TemporalNeuralSolver, TemporalFormula};
-use nanosecond_scheduler::{RealtimeScheduler, Priority, Deadline, SchedulerConfig};
+use temporal_neural_solver::TemporalNeuralSolver;
 
 /// Strange loop errors
 #[derive(Debug, Error)]
@@ -168,9 +167,11 @@ pub struct StrangeLoop {
     modification_count: usize,
     safety_violations: usize,
 
-    // Integrated components
+    // Integrated components (reserved for future use)
+    #[allow(dead_code)]
     temporal_comparator: TemporalComparator<String>,
     attractor_analyzer: AttractorAnalyzer,
+    #[allow(dead_code)]
     temporal_solver: TemporalNeuralSolver,
 }
 

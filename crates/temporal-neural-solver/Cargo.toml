@@ -6,7 +6,7 @@ description = "Temporal logic with neural reasoning"
 license = "MIT"
 
 [dependencies]
-nanosecond-scheduler = { path = "../nanosecond-scheduler" }
+nanosecond-scheduler = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
 ndarray = "0.16"

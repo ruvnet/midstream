@@ -5,6 +5,10 @@ edition = "2021"
 description = "Temporal sequence comparison and pattern matching"
 license = "MIT"
 
+[lib]
+name = "temporal_compare"
+path = "src/lib.rs"
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"

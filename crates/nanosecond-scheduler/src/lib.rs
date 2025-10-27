@@ -16,7 +16,6 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::RwLock;
 use thiserror::Error;
-use tokio::sync::mpsc;
 
 /// Scheduler errors
 #[derive(Debug, Error)]

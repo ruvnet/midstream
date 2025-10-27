@@ -12,9 +12,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use thiserror::Error;
-use nalgebra::{DMatrix, DVector};
-use ndarray::{Array1, Array2};
-use temporal_compare::{Sequence, TemporalElement};
 
 /// Attractor analysis errors
 #[derive(Debug, Error)]
@@ -110,7 +107,9 @@ impl AttractorInfo {
     }
 
     pub fn max_lyapunov_exponent(&self) -> Option<f64> {
-        self.lyapunov_exponents.iter().copied().max_by(|a, b| a.partial_cmp(b).unwrap())
+        self.lyapunov_exponents.iter().copied().max_by(|a, b| {
+            a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
+        })
     }
 }
 
@@ -214,7 +213,7 @@ impl AttractorAnalyzer {
     fn classify_attractor(&self, lyapunov_exponents: &[f64]) -> AttractorType {
         let max_exponent = lyapunov_exponents.iter()
             .copied()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
             .unwrap_or(0.0);
 
         if max_exponent > 0.1 {
@@ -416,5 +415,68 @@ mod tests {
         assert_eq!(summary.total_points, 50);
         assert_eq!(summary.dimension, 2);
         assert!(summary.trajectory_length > 0.0);
+    }
+
+    #[test]
+    fn test_nan_handling_in_lyapunov_exponents() {
+        // Test that NaN values don't cause panics in max_lyapunov_exponent
+        let info = AttractorInfo {
+            attractor_type: AttractorType::StrangeAttractor,
+            dimension: 3,
+            lyapunov_exponents: vec![1.0, f64::NAN, -0.5],
+            is_stable: false,
+            confidence: 0.95,
+        };
+
+        // Should not panic, should handle NaN gracefully
+        let max_exp = info.max_lyapunov_exponent();
+        assert!(max_exp.is_some());
+        // With NaN handling, should return one of the valid values
+        let val = max_exp.unwrap();
+        assert!(val.is_finite(), "Should not return NaN");
+    }
+
+    #[test]
+    fn test_nan_handling_in_trajectory() {
+        // Test that NaN values in trajectory don't cause panics during analysis
+        let mut analyzer = AttractorAnalyzer::new(2, 1000);
+
+        // Add points including some with NaN to trigger edge cases
+        for i in 0..150 {
+            let coords = if i == 50 {
+                // Insert a point that could lead to NaN in calculations
+                vec![f64::NAN, i as f64]
+            } else {
+                vec![i as f64, (i * 2) as f64]
+            };
+
+            let point = PhasePoint::new(coords, i as u64 * 1000);
+            // Should not panic when adding or analyzing
+            let _ = analyzer.add_point(point);
+        }
+
+        // Analysis should complete without panicking
+        let result = analyzer.analyze();
+        assert!(result.is_ok(), "Analysis should handle NaN gracefully");
+
+        let info = result.unwrap();
+        // Verify the result is usable
+        assert_eq!(info.dimension, 2);
+    }
+
+    #[test]
+    fn test_all_nan_lyapunov_exponents() {
+        // Edge case: all NaN values
+        let info = AttractorInfo {
+            attractor_type: AttractorType::Unknown,
+            dimension: 2,
+            lyapunov_exponents: vec![f64::NAN, f64::NAN],
+            is_stable: false,
+            confidence: 0.5,
+        };
+
+        // Should not panic even with all NaN
+        let max_exp = info.max_lyapunov_exponent();
+        assert!(max_exp.is_some());
     }
 }

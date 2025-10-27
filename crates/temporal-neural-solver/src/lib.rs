@@ -12,7 +12,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use thiserror::Error;
-use nanosecond_scheduler::{Priority, Deadline};
+use nanosecond_scheduler::Priority;
 
 /// Temporal logic errors
 #[derive(Debug, Error)]
