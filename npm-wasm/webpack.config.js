@@ -34,7 +34,12 @@ module.exports = (env, argv) => {
       new CopyWebpackPlugin({
         patterns: [
           {
-            from: 'pkg/*.wasm',
+            from: 'pkg-bundler/*.wasm',
+            to: '[name][ext]',
+            noErrorOnMissing: true
+          },
+          {
+            from: 'pkg-bundler/*.js',
             to: '[name][ext]',
             noErrorOnMissing: true
           }

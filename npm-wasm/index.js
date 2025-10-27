@@ -24,12 +24,12 @@ async function init(wasmPath) {
     const isBrowser = typeof window !== 'undefined';
 
     if (isBrowser) {
-      // Browser environment - use web target
-      const wasmModule = await import('./pkg/midstream_wasm.js');
+      // Browser environment - use bundler target (works in browsers)
+      const wasmModule = await import('./pkg-bundler/midstream_wasm.js');
       await wasmModule.default();
       wasm = wasmModule;
     } else if (isNode) {
-      // Node.js environment - use nodejs target
+      // Node.js environment - use nodejs target (package.json uses pkg-node)
       const wasmModule = await import('./pkg-node/midstream_wasm.js');
       wasm = wasmModule;
     } else {
