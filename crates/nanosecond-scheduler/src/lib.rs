@@ -65,7 +65,7 @@ pub enum SchedulingPolicy {
 /// A deadline for task execution
 #[derive(Debug, Clone, Copy)]
 pub struct Deadline {
-    absolute_time: Instant,
+    pub absolute_time: Instant,
 }
 
 impl Deadline {

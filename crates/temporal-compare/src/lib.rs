@@ -378,7 +378,7 @@ where
         }
 
         Ok(ComparisonResult {
-            distance: sum.sqrt(),
+            distance: sum.sqrt(), // f64 type is now explicit from declaration
             algorithm: ComparisonAlgorithm::Euclidean,
             alignment: None,
         })
