@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+description = "Core types and abstractions for AI Manipulation Defense System (AIMDS)"
 
 [dependencies]
 # Workspace dependencies

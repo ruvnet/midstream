@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+description = "Fast-path detection layer for AIMDS with pattern matching and anomaly detection"
 
 [dependencies]
 # Workspace dependencies

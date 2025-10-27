@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+description = "Deep behavioral analysis layer for AIMDS with temporal neural verification"
 
 [dependencies]
 aimds-core.workspace = true
