@@ -5,6 +5,7 @@ target/
 # Build output
 dist/
 *.js
+!scripts/build.js
 *.d.ts
 *.map
 
