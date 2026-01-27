@@ -29,12 +29,27 @@ pub struct DetectionResult {
 /// Types of threats that can be detected
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThreatType {
+    /// Direct prompt injection attempts
     PromptInjection,
+    /// Jailbreak attempts to bypass safety measures
     JailbreakAttempt,
+    /// Attempts to extract sensitive data
     DataExfiltration,
+    /// Attempts to manipulate model behavior
     ModelManipulation,
+    /// Violations of configured policies
     PolicyViolation,
+    /// Anomalous behavioral patterns
     BehavioralAnomaly,
+    /// Encoded or obfuscated attack patterns
+    ObfuscatedAttack,
+    /// Social engineering attempts
+    SocialEngineering,
+    /// Multi-turn context manipulation
+    ContextManipulation,
+    /// Token/delimiter smuggling attacks
+    TokenSmuggling,
+    /// Unknown threat type
     Unknown,
 }
 

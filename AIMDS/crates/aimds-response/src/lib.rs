@@ -43,7 +43,10 @@ use crate::meta_learning::ThreatIncident;
 
 pub use meta_learning::MetaLearningEngine;
 pub use adaptive::{AdaptiveMitigator, MitigationStrategy};
-pub use mitigations::{MitigationAction, MitigationOutcome, ThreatContext};
+pub use mitigations::{
+    EnforcementStats, EnforcementStatus, MitigationAction, MitigationEngine, MitigationOutcome,
+    ThreatContext,
+};
 pub use audit::AuditLogger;
 pub use rollback::RollbackManager;
 pub use error::{ResponseError, Result};

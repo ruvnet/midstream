@@ -23,7 +23,7 @@ import {
   AIMDSRequestSchema,
   ThreatIncident
 } from '../types';
-import { createHash } from 'crypto';
+import { EmbeddingService } from '../services/embedding';
 
 export class AIMDSGateway {
   private app: express.Application;
@@ -33,6 +33,7 @@ export class AIMDSGateway {
   private logger: Logger;
   private config: GatewayConfig;
   private defaultPolicy: SecurityPolicy;
+  private embeddingService: EmbeddingService;
   private server?: any;
 
   constructor(
@@ -45,6 +46,7 @@ export class AIMDSGateway {
     this.agentdb = new AgentDBClient(agentdbConfig, this.logger);
     this.verifier = new LeanAgenticVerifier(verifierConfig, this.logger);
     this.metrics = new MetricsCollector(this.logger);
+    this.embeddingService = new EmbeddingService(agentdbConfig.embeddingDim || 384);
     this.app = express();
     this.defaultPolicy = this.createDefaultPolicy();
   }
@@ -410,23 +412,34 @@ export class AIMDSGateway {
   // ============================================================================
 
   private async generateEmbedding(req: AIMDSRequest): Promise<number[]> {
-    // Simple embedding generation (use proper embedding model in production)
-    const text = JSON.stringify({
-      type: req.action.type,
-      resource: req.action.resource,
-      method: req.action.method,
-      ip: req.source.ip
-    });
+    // Build semantic text from request for embedding
+    // Include all relevant fields that might contain attack patterns
+    const textParts: string[] = [
+      req.action.type,
+      req.action.resource,
+      req.action.method
+    ];
 
-    // Hash-based embedding for demo (use BERT/etc in production)
-    const hash = createHash('sha256').update(text).digest();
-    const embedding = new Array(384);
-
-    for (let i = 0; i < 384; i++) {
-      embedding[i] = hash[i % hash.length] / 255;
+    // Include payload if present (may contain prompt injection)
+    if (req.action.payload) {
+      if (typeof req.action.payload === 'string') {
+        textParts.push(req.action.payload);
+      } else if (typeof req.action.payload === 'object') {
+        textParts.push(JSON.stringify(req.action.payload));
+      }
     }
 
-    return embedding;
+    // Include context if present
+    if (req.context) {
+      const contextValues = Object.values(req.context)
+        .filter((v): v is string => typeof v === 'string');
+      textParts.push(...contextValues);
+    }
+
+    const text = textParts.join(' ');
+
+    // Generate semantic embedding using TF-IDF with security term weighting
+    return this.embeddingService.generateEmbedding(text);
   }
 
   private calculateThreatLevel(matches: any[]): ThreatLevel {

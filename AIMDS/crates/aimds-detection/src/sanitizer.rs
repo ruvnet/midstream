@@ -158,10 +158,20 @@ impl Sanitizer {
     /// Default patterns to neutralize with replacements
     fn default_neutralization_patterns() -> Vec<(Regex, String)> {
         vec![
+            // Instruction override patterns
             (
-                Regex::new(r"(?i)ignore\s+(all|previous|prior)\s+instructions").unwrap(),
+                Regex::new(r"(?i)ignore\s+(all\s+)?(previous|prior|above|earlier)\s+instructions").unwrap(),
                 "[redacted instruction]".to_string(),
             ),
+            (
+                Regex::new(r"(?i)disregard\s+(all\s+)?(your\s+)?(previous|prior|programming|instructions)").unwrap(),
+                "[redacted instruction]".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)forget\s+(everything|all|your)\s*(instructions|rules)?").unwrap(),
+                "[redacted instruction]".to_string(),
+            ),
+            // System/mode override patterns
             (
                 Regex::new(r"(?i)system\s*:\s*").unwrap(),
                 "user: ".to_string(),
@@ -169,6 +179,58 @@ impl Sanitizer {
             (
                 Regex::new(r"(?i)admin\s+mode").unwrap(),
                 "user mode".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)developer\s+mode").unwrap(),
+                "user mode".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)sudo\s+mode").unwrap(),
+                "user mode".to_string(),
+            ),
+            // Jailbreak patterns
+            (
+                Regex::new(r"(?i)jailbreak").unwrap(),
+                "[filtered]".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)bypass\s+(your\s+)?(filters?|safety|restrictions?)").unwrap(),
+                "[filtered]".to_string(),
+            ),
+            // Role manipulation
+            (
+                Regex::new(r"(?i)pretend\s+(to\s+be|you're|you\s+are)").unwrap(),
+                "[filtered]".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)you\s+are\s+now\s+(a|an)").unwrap(),
+                "[filtered]".to_string(),
+            ),
+            // DAN patterns
+            (
+                Regex::new(r"(?i)do\s+anything\s+now").unwrap(),
+                "[filtered]".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)DAN\s*mode").unwrap(),
+                "[filtered]".to_string(),
+            ),
+            // Boundary markers
+            (
+                Regex::new(r"(?i)\[SYSTEM\]").unwrap(),
+                "[user]".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)\[INST\]").unwrap(),
+                "[input]".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)<<SYS>>").unwrap(),
+                "".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)<</SYS>>").unwrap(),
+                "".to_string(),
             ),
         ]
     }
@@ -248,7 +310,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(result.modifications.len() > 0);
+        assert!(!result.modifications.is_empty());
         assert!(result.sanitized_content.contains("[redacted instruction]"));
     }
 }
