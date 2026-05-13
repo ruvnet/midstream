@@ -123,31 +123,7 @@ proptest! {
         prop_assert!(s.next_task().is_none(), "empty queue must return None");
     }
 
-    /// Every scheduled task is popped exactly once, in some total
-    /// order, before the queue is empty.
-    ///
-    /// **This test deliberately does NOT assert the pop ordering by
-    /// priority or deadline.** The current `ScheduledTask::cmp` impl
-    /// in `lib.rs` has two bugs, both surfaced by initial drafts of
-    /// this property test:
-    ///
-    ///   1. Priority's derived `Ord` compares by discriminant value
-    ///      (Critical=100 > High=75 > ...), but the `cmp` impl does
-    ///      `other.priority.cmp(&self.priority)`, which inverts that
-    ///      and causes the BinaryHeap to pop LOWER-priority tasks
-    ///      first (opposite of the doc-comment claim).
-    ///   2. The within-priority deadline tie-break uses
-    ///      `self.deadline.cmp(&other.deadline)` without inversion,
-    ///      so in the max-heap LATER deadlines pop before EARLIER
-    ///      deadlines (opposite of the doc-comment claim).
-    ///
-    /// Both are filed as follow-up tickets; the fix involves swapping
-    /// the cmp pair so they match the documented semantics. Once
-    /// fixed, this test grows back its priority-desc + deadline-asc
-    /// assertions (preserved as an inline TODO).
-    ///
-    /// What this test *does* assert is the lock-step pop semantics:
-    /// every task scheduled is popped exactly once before the queue
+    /// Every scheduled task is popped exactly once before the queue
     /// becomes empty.
     #[test]
     fn next_task_pops_every_scheduled_exactly_once(specs in task_specs()) {
@@ -163,6 +139,42 @@ proptest! {
             prop_assert!(popped <= expected, "popped more tasks than scheduled");
         }
         prop_assert_eq!(popped, expected);
+    }
+
+    /// Pop sequence is sorted by (priority desc by `as_i32()`,
+    /// then deadline asc by `absolute_time`).
+    ///
+    /// Initial drafts of this test surfaced two bugs in
+    /// `ScheduledTask::cmp` (PR #59): the priority comparison was
+    /// inverted, and the within-priority deadline tie-break was
+    /// inverted. Both fixed in PR #60 (this commit pair); the
+    /// strict ordering check is now re-enabled to lock in the
+    /// documented "Higher priority first, earlier deadline first"
+    /// behaviour.
+    #[test]
+    fn next_task_emits_priority_desc_then_deadline_asc(specs in task_specs()) {
+        let s = fresh_scheduler(specs.len().max(1));
+        for (p, micros, payload) in &specs {
+            s.schedule(*payload, Deadline::from_micros(*micros), priority(*p)).unwrap();
+        }
+
+        let mut last: Option<(i32, std::time::Instant)> = None;
+        while let Some(task) = s.next_task() {
+            let curr = (task.priority.as_i32(), task.deadline.absolute_time);
+            if let Some(prev) = last {
+                prop_assert!(
+                    prev.0 >= curr.0,
+                    "priority order violated: prev={} curr={}", prev.0, curr.0
+                );
+                if prev.0 == curr.0 {
+                    prop_assert!(
+                        prev.1 <= curr.1,
+                        "deadline order violated within priority {}", curr.0
+                    );
+                }
+            }
+            last = Some(curr);
+        }
     }
 
     /// Empty queue returns None from next_task.
