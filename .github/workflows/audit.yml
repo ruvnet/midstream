@@ -48,14 +48,15 @@ jobs:
   cargo-deny:
     name: cargo deny (${{ matrix.check }})
     runs-on: ubuntu-latest
-    # Initial rollout: cargo-deny reports pre-existing supply-chain
-    # tangle (duplicate-version skew via hyprstream-main, unmaintained
-    # transitives via duckdb / tonic 0.12, etc.). Each is tracked by a
-    # follow-up ADR (0002 un-vendor hyprstream, 0019 replace `config`,
-    # 0024 semver path-versions). The job runs and surfaces findings
-    # for review but does not gate PRs yet; promote to a hard gate
-    # once those ADRs land. cargo-audit (above) remains a hard gate.
-    continue-on-error: true
+    # Hard gate (promoted 2026-05-13). After PRs #13 (un-vendor
+    # hyprstream), #52 (config -> figment), #54 (reqwest 0.11 -> 0.12),
+    # all four `cargo deny check` subcommands pass clean on `main`.
+    # If you're seeing a failure on this job, fix it — don't add
+    # `continue-on-error` back; either:
+    #   1. Bump the offending dep to a non-advisory version.
+    #   2. Add a documented `ignore` / `skip` entry in `deny.toml`
+    #      with a citing ADR + expiry date.
+    # See ADR-0014 for the policy.
     strategy:
       fail-fast: false
       matrix:
@@ -85,17 +86,19 @@ jobs:
     name: Audit gates passed
     needs: [cargo-audit, cargo-deny]
     runs-on: ubuntu-latest
-    # Don't gate on cargo-deny while its matrix is in continue-on-error
-    # mode; gate only on cargo-audit.
     if: always()
     steps:
       - name: Check status
+        # Both cargo-audit AND cargo-deny are hard gates as of
+        # 2026-05-13. The cargo-deny matrix has 4 children — any one
+        # of them failing turns `needs.cargo-deny.result == "failure"`.
         run: |
           if [[ "${{ needs.cargo-audit.result }}" == "failure" ]]; then
             echo "::error::cargo audit failed. See the cargo-audit job."
             exit 1
           fi
           if [[ "${{ needs.cargo-deny.result }}" == "failure" ]]; then
-            echo "::warning::cargo deny surfaced findings (non-gating during rollout)."
+            echo "::error::cargo deny failed. See the cargo deny matrix jobs."
+            exit 1
           fi
-          echo "Supply-chain audit complete."
+          echo "Supply-chain audit complete (both gates green)."
