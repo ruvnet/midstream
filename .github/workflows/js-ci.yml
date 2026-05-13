@@ -1,0 +1,170 @@
+name: JS / TS CI
+
+# Implements ADR-0029. Three npm packages live in-tree
+# (`npm/`, `npm-wasm/`, `lean-agentic-js/`) with ~1,400 LOC of test
+# code that had never run in CI. This workflow exercises lint +
+# typecheck + test on every PR and push to main.
+#
+# Initial rollout: the test jobs are non-blocking
+# (`continue-on-error: true`) so the workflow surfaces findings
+# without blocking the Rust-side merge cadence. Once the JS test
+# suite is brought up to date with the post-PR-7 API surface, this
+# flag goes away and the matrix becomes a hard gate (mirror of
+# audit.yml's promotion in PR #55).
+#
+# After ADR-0026's pnpm-monorepo migration the per-package `cd`
+# loops below collapse to a single `pnpm -r` invocation.
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  # The packages support Node 18 LTS minimum per their `engines.node`
+  # declaration; CI exercises 18, 20, 22 to catch divergence.
+  NODE_LTS_VERSIONS: "18 20 22"
+
+concurrency:
+  group: js-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-and-test:
+    name: ${{ matrix.package }} (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    # Non-blocking during rollout. The test suite was last green
+    # before the post-PR-7 Rust API changes; the JS bindings need
+    # follow-up updates. Promote to gating once the matrix is
+    # uniformly green on `main`.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20, 22]
+        package:
+          - npm
+          - lean-agentic-js
+          # npm-wasm requires wasm-pack + a headless browser for its
+          # `wasm-pack test --headless --chrome` script; it needs a
+          # different setup and is exercised by a separate matrix entry
+          # below.
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node ${{ matrix.node }}
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.package }}
+        # `--no-audit` avoids the wall of advisory noise that
+        # Dependabot already covers; `--prefer-offline` uses the
+        # cache.
+        run: npm ci --no-audit --prefer-offline
+
+      - name: Lint
+        working-directory: ${{ matrix.package }}
+        # `if` on the script existence — `lean-agentic-js` has the
+        # script, `npm-wasm` is excluded from this matrix entry.
+        run: |
+          if npm run | grep -qE '^  lint'; then
+            npm run lint
+          else
+            echo "::notice::no lint script defined for ${{ matrix.package }}"
+          fi
+
+      - name: Typecheck
+        working-directory: ${{ matrix.package }}
+        run: |
+          # Most packages keep typecheck under `tsc --noEmit` rather
+          # than a named script; run it directly.
+          npx --no-install tsc --noEmit || npx tsc --noEmit
+
+      - name: Test
+        working-directory: ${{ matrix.package }}
+        run: npm test
+
+  # The WASM package needs a Rust toolchain + wasm-pack + Chromium.
+  # Separate job so its setup doesn't pollute the JS matrix above.
+  wasm-pack:
+    name: '@midstream/wasm (wasm-pack)'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node 20
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 20
+
+      - name: Install Rust toolchain (wasm32 target)
+        uses: dtolnay/rust-toolchain@1.81
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.1
+        with:
+          shared-key: js-ci-wasm
+
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@0d098b89f6be02d6cc3f5b00a7a90c0d5aad8113 # v0.4.0
+        with:
+          version: latest
+
+      - name: Build @midstream/wasm
+        working-directory: npm-wasm
+        run: |
+          # Run only the `wasm-pack build` step — the `webpack`
+          # downstream step requires a chromium headless setup that's
+          # out of scope for the initial rollout.
+          npm ci --no-audit --prefer-offline
+          npm run build:wasm
+
+  # npm audit reports any high-severity advisories on the JS side
+  # to mirror cargo-audit's gate on the Rust side.
+  npm-audit:
+    name: npm audit (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [npm, npm-wasm, lean-agentic-js]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+      - name: npm audit (high-severity)
+        working-directory: ${{ matrix.package }}
+        run: npm audit --audit-level=high
+
+  js-ci-success:
+    name: JS CI gates passed
+    needs: [install-and-test, wasm-pack, npm-audit]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check status
+        # Initial rollout: all three jobs are `continue-on-error`, so
+        # this aggregator effectively just acknowledges they ran.
+        # When they're promoted to hard gates, switch to:
+        #   if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+        #     echo "::error::JS CI failed"; exit 1
+        #   fi
+        run: |
+          echo "install-and-test: ${{ needs.install-and-test.result }}"
+          echo "wasm-pack:        ${{ needs.wasm-pack.result }}"
+          echo "npm-audit:        ${{ needs.npm-audit.result }}"
+          echo "JS CI surfaced findings — see individual jobs for detail."
