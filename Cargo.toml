@@ -20,7 +20,7 @@ default-members = [
     "crates/temporal-neural-solver",
     "crates/strange-loop",
 ]
-exclude = ["npm-wasm"]
+exclude = ["npm-wasm", "fuzz"]
 
 # Per ADR-0034. Second-phase rollout: now that the workspace passes
 # `cargo clippy -- -D warnings` clean (PR #48 cleared the four

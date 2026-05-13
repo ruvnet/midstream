@@ -1,0 +1,48 @@
+# Fuzzing scaffold per ADR-0038.
+#
+# This crate is NOT a member of the root workspace (see the
+# `exclude = ["fuzz"]` entry in the root `Cargo.toml`). Reason: it
+# pulls in `libfuzzer-sys`, which is built with sanitizer-enabled
+# rustc flags and would force the same on the entire workspace.
+# Keeping it standalone means `cargo check --workspace` stays fast.
+#
+# To run a target:
+#
+#   cargo install cargo-fuzz
+#   cargo +nightly fuzz run <target_name>
+#
+# Targets are listed below as `[[bin]]` entries — cargo-fuzz
+# discovers them from this manifest. New targets go in
+# `fuzz_targets/<name>.rs` and a matching `[[bin]]` entry here.
+
+[package]
+name = "midstream-fuzz"
+version = "0.0.0"
+authors = ["midstream contributors"]
+publish = false
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+# Reference each crate under fuzz so its private fuzz targets can
+# exercise the public API surface.
+midstreamer-temporal-compare = { path = "../crates/temporal-compare" }
+midstreamer-scheduler = { path = "../crates/nanosecond-scheduler" }
+
+[[bin]]
+name = "temporal_compare_compare"
+path = "fuzz_targets/temporal_compare_compare.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "scheduler_event_loop"
+path = "fuzz_targets/scheduler_event_loop.rs"
+test = false
+doc = false
+bench = false
