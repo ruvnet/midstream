@@ -3,6 +3,7 @@ name = "midstream-wasm"
 version = "1.0.0"
 authors = ["Midstream Contributors"]
 edition = "2021"
+rust-version = "1.81"
 description = "WebAssembly bindings for Midstream temporal comparison, scheduling, and meta-learning"
 license = "MIT"
 repository = "https://github.com/midstream/midstream"

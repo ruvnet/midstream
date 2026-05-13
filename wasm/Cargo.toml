@@ -2,6 +2,7 @@
 name = "lean-agentic-wasm"
 version = "1.0.0"
 edition = "2021"
+rust-version = "1.81"
 description = "WASM bindings for Lean Agentic Learning System with WebSocket and SSE support"
 
 [lib]

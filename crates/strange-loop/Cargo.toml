@@ -2,6 +2,7 @@
 name = "midstreamer-strange-loop"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.81"
 description = "Self-referential systems and meta-learning"
 license = "MIT"
 repository = "https://github.com/ruvnet/midstream"
