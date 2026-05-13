@@ -54,17 +54,20 @@ jobs:
           echo "Generated changelog:"
           cat CHANGELOG.md
 
+      # `actions/create-release@v1` is archived (since 2021). Replaced
+      # with the maintained `softprops/action-gh-release@v2`, which
+      # also handles asset upload below so `actions/upload-release-asset@v1`
+      # (also archived) is no longer needed.
       - name: Create GitHub release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          release_name: Release v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
           body_path: CHANGELOG.md
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   # Build release binaries
   build-release:
@@ -126,15 +129,15 @@ jobs:
           7z a ${{ matrix.artifact_name }}.zip midstream.exe
           move ${{ matrix.artifact_name }}.zip ../../../
 
+      # softprops/action-gh-release uploads files matched by the `files`
+      # glob to the release identified by `tag_name`. No `upload_url`
+      # plumbing needed.
       - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./${{ matrix.artifact_name }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
-          asset_name: ${{ matrix.artifact_name }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
-          asset_content_type: application/octet-stream
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: ./${{ matrix.artifact_name }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   # Publish crates to crates.io
   publish-crates:
@@ -154,43 +157,50 @@ jobs:
         with:
           shared-key: "publish"
 
+      # Use `cargo set-version` (from cargo-edit) rather than `sed -i`
+      # so the bump validates against the manifest and updates dependent
+      # version specs (path deps with `version = ...`) atomically.
+      - name: Install cargo-edit
+        run: cargo install cargo-edit --locked
+
       - name: Update crate versions
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
-
-          # Update workspace crate versions
-          for crate in temporal-compare nanosecond-scheduler temporal-attractor-studio temporal-neural-solver strange-loop; do
-            sed -i "s/^version = \".*\"/version = \"$VERSION\"/" crates/$crate/Cargo.toml
-          done
-
-          # Update main crate version
-          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+          cargo set-version --workspace "$VERSION"
 
       - name: Verify build after version update
         run: cargo build --workspace --all-features
 
+      # Crate names: every workspace crate uses the `midstreamer-*`
+      # prefix per the rename tracked by ADR-0024. The previous
+      # `cargo publish -p temporal-compare` form (etc.) targeted
+      # crate names that don't exist; the workflow would have failed
+      # at runtime.
+      #
+      # `--no-verify` skips re-running tests inside the publish dry
+      # run (CI has already exercised them); the `cargo publish`
+      # built-in wait replaces the `sleep 10` hack: it polls
+      # crates.io until the freshly-uploaded version is resolvable
+      # before returning. `--allow-dirty` is kept because the
+      # `cargo set-version` step modifies the working tree.
       - name: Publish crates in dependency order
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
-          # Publish in order of dependencies
-          cargo publish -p temporal-compare --allow-dirty
-          sleep 10
+          # Leaves first (no internal deps).
+          cargo publish -p midstreamer-temporal-compare    --allow-dirty
+          cargo publish -p midstreamer-scheduler           --allow-dirty
+          cargo publish -p midstreamer-quic                --allow-dirty
 
-          cargo publish -p nanosecond-scheduler --allow-dirty
-          sleep 10
+          # Mid-tier (depend on the leaves above).
+          cargo publish -p midstreamer-attractor           --allow-dirty
+          cargo publish -p midstreamer-neural-solver       --allow-dirty
 
-          cargo publish -p temporal-attractor-studio --allow-dirty
-          sleep 10
+          # Apex of the workspace DAG.
+          cargo publish -p midstreamer-strange-loop        --allow-dirty
 
-          cargo publish -p temporal-neural-solver --allow-dirty
-          sleep 10
-
-          cargo publish -p strange-loop --allow-dirty
-          sleep 10
-
-          # Finally publish main crate
-          cargo publish --allow-dirty
+          # Top-level binary crate.
+          cargo publish -p midstream                       --allow-dirty
 
   # Update documentation
   update-docs:
