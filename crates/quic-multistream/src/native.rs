@@ -36,11 +36,11 @@ impl QuicConnection {
             .next()
             .ok_or_else(|| QuicError::InvalidConfig("Invalid address".to_string()))?;
 
-        // Create client config with TLS (skip verification for demo purposes)
-        let mut crypto = quinn::rustls::ClientConfig::builder()
-            .dangerous()
-            .with_custom_certificate_verifier(SkipServerVerification::new())
-            .with_no_client_auth();
+        // Build the TLS client config. Per ADR-0011 the default verifier is
+        // the OS platform trust store; consumers can opt into a skip-verify
+        // verifier via the `insecure-dev-only-skip-server-verification`
+        // cargo feature (intended for self-signed bench/test servers ONLY).
+        let mut crypto = build_client_tls_config()?;
 
         // Enable ALPN for QUIC
         crypto.alpn_protocols = vec![b"h3".to_vec()];
@@ -224,59 +224,39 @@ impl QuicSendStream {
     }
 }
 
-/// Skip server certificate verification (for testing only!)
-#[derive(Debug)]
-struct SkipServerVerification(Arc<quinn::rustls::crypto::CryptoProvider>);
+/// Build the `rustls::ClientConfig` used by `QuicConnection::connect`.
+///
+/// In default builds this returns a config wired to the OS platform trust
+/// store via `rustls-platform-verifier` (per ADR-0011). When the
+/// `insecure-dev-only-skip-server-verification` cargo feature is enabled
+/// the config substitutes a verifier that accepts every certificate and
+/// emits a runtime warning via `tracing::warn!`. That mode is intended for
+/// self-signed bench/test setups only and MUST NEVER be used in production
+/// builds.
+#[cfg(not(feature = "insecure-dev-only-skip-server-verification"))]
+fn build_client_tls_config() -> Result<quinn::rustls::ClientConfig, QuicError> {
+    use rustls_platform_verifier::BuilderVerifierExt;
 
-impl SkipServerVerification {
-    fn new() -> Arc<Self> {
-        Arc::new(Self(Arc::new(quinn::rustls::crypto::ring::default_provider())))
-    }
+    quinn::rustls::ClientConfig::builder()
+        .with_platform_verifier()
+        .map(|builder| builder.with_no_client_auth())
+        .map_err(|e| QuicError::TlsError(format!("platform verifier init failed: {e:?}")))
 }
 
-impl quinn::rustls::client::danger::ServerCertVerifier for SkipServerVerification {
-    fn verify_server_cert(
-        &self,
-        _end_entity: &quinn::rustls::pki_types::CertificateDer<'_>,
-        _intermediates: &[quinn::rustls::pki_types::CertificateDer<'_>],
-        _server_name: &quinn::rustls::pki_types::ServerName<'_>,
-        _ocsp: &[u8],
-        _now: quinn::rustls::pki_types::UnixTime,
-    ) -> Result<quinn::rustls::client::danger::ServerCertVerified, quinn::rustls::Error> {
-        Ok(quinn::rustls::client::danger::ServerCertVerified::assertion())
-    }
+#[cfg(feature = "insecure-dev-only-skip-server-verification")]
+fn build_client_tls_config() -> Result<quinn::rustls::ClientConfig, QuicError> {
+    tracing::warn!(
+        target: "midstreamer_quic",
+        "TLS server certificate verification is DISABLED \
+         (feature `insecure-dev-only-skip-server-verification`). \
+         This build accepts any certificate from any peer. \
+         NEVER ship a release built with this feature enabled."
+    );
 
-    fn verify_tls12_signature(
-        &self,
-        message: &[u8],
-        cert: &quinn::rustls::pki_types::CertificateDer<'_>,
-        dss: &quinn::rustls::DigitallySignedStruct,
-    ) -> Result<quinn::rustls::client::danger::HandshakeSignatureValid, quinn::rustls::Error> {
-        quinn::rustls::crypto::verify_tls12_signature(
-            message,
-            cert,
-            dss,
-            &self.0.signature_verification_algorithms,
-        )
-    }
-
-    fn verify_tls13_signature(
-        &self,
-        message: &[u8],
-        cert: &quinn::rustls::pki_types::CertificateDer<'_>,
-        dss: &quinn::rustls::DigitallySignedStruct,
-    ) -> Result<quinn::rustls::client::danger::HandshakeSignatureValid, quinn::rustls::Error> {
-        quinn::rustls::crypto::verify_tls13_signature(
-            message,
-            cert,
-            dss,
-            &self.0.signature_verification_algorithms,
-        )
-    }
-
-    fn supported_verify_schemes(&self) -> Vec<quinn::rustls::SignatureScheme> {
-        self.0.signature_verification_algorithms.supported_schemes()
-    }
+    Ok(quinn::rustls::ClientConfig::builder()
+        .dangerous()
+        .with_custom_certificate_verifier(crate::insecure::SkipServerVerification::new())
+        .with_no_client_auth())
 }
 
 #[cfg(test)]
