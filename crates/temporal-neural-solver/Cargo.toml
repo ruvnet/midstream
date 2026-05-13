@@ -20,3 +20,7 @@ ndarray = "0.16"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
+# Property-based test baseline per ADR-0038. Asserts the LTL
+# algebraic laws (double-negation, idempotence, globally/eventually
+# duality). See `tests/proptest_ltl.rs`.
+proptest = "1"
