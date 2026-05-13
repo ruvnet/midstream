@@ -21,3 +21,6 @@ ndarray = "0.16"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
+# Property-based test baseline per ADR-0038. See
+# `tests/proptest_attractor.rs`.
+proptest = "1"
