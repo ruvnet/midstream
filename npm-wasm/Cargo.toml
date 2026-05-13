@@ -11,12 +11,19 @@ repository = "https://github.com/midstream/midstream"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# Feature flags follow ADR-0025: additive, off-by-default, prefixed.
+# A consumer of `@midstream/wasm` opts into the subsystems they need;
+# the historical "everything by default" behaviour is preserved as the
+# `full` meta-feature for one release while ecosystem users migrate.
 [features]
-default = ["temporal", "scheduler", "strange-loop", "quic"]
+default = []
 temporal = []
 scheduler = []
 strange-loop = []
 quic = []
+# Meta-feature: enables every published subsystem. Equivalent to the
+# pre-ADR-0025 `default` set. Deprecate one minor after migration.
+full = ["temporal", "scheduler", "strange-loop", "quic"]
 
 [dependencies]
 wasm-bindgen = "0.2.89"
