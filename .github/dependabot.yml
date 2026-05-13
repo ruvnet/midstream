@@ -1,0 +1,126 @@
+# Dependabot configuration — see ADR-0039.
+#
+# Three ecosystems live in this repo: Cargo (Rust), npm (TypeScript),
+# and GitHub Actions. Each gets its own update schedule, grouped so
+# we don't get N separate PRs per week.
+
+version: 2
+updates:
+  # ----- Rust / Cargo -----
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:30"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "rust"
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    groups:
+      # Group patch-level bumps to avoid PR sprawl.
+      patch-updates:
+        applies-to: version-updates
+        update-types: ["patch"]
+      # Group minor-level updates for major dep families.
+      tokio-stack:
+        applies-to: version-updates
+        patterns:
+          - "tokio*"
+          - "tracing*"
+          - "futures*"
+      rustls-stack:
+        applies-to: version-updates
+        patterns:
+          - "rustls*"
+          - "webpki*"
+          - "quinn*"
+      serde-stack:
+        applies-to: version-updates
+        patterns:
+          - "serde*"
+    ignore:
+      # Keep the vendored hyprstream-main on whatever versions the
+      # upstream chooses — Dependabot can't reason about it usefully
+      # while ADR-0002 is in flight.
+      - dependency-name: "duckdb"
+      - dependency-name: "arrow*"
+      - dependency-name: "arrow-flight"
+      - dependency-name: "hyprstream"
+
+  # ----- AIMDS subproject (separate workspace today) -----
+  - package-ecosystem: cargo
+    directory: "/AIMDS"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "rust"
+      - "aimds"
+    commit-message:
+      prefix: "chore(aimds-deps)"
+
+  # ----- npm packages -----
+  - package-ecosystem: npm
+    directory: "/npm"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:30"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    labels: [dependencies, javascript]
+    commit-message:
+      prefix: "chore(npm-cli-deps)"
+    groups:
+      patch-updates:
+        applies-to: version-updates
+        update-types: ["patch"]
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+
+  - package-ecosystem: npm
+    directory: "/npm-wasm"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    labels: [dependencies, javascript, wasm]
+    commit-message:
+      prefix: "chore(wasm-deps)"
+
+  - package-ecosystem: npm
+    directory: "/lean-agentic-js"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:30"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    labels: [dependencies, javascript]
+    commit-message:
+      prefix: "chore(lean-js-deps)"
+
+  # ----- GitHub Actions used in CI -----
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: "chore(actions-deps)"

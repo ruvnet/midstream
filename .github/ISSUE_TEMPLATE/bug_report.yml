@@ -1,0 +1,76 @@
+name: "🐛 Bug report"
+description: Report a defect in midstream.
+title: "[bug]: "
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please fill in the form below — the
+        more reproducible the report, the faster we can act.
+
+        **Security issues do not go here.** See [SECURITY.md](../../SECURITY.md).
+  - type: input
+    id: crate
+    attributes:
+      label: Affected crate(s)
+      description: Which crate(s) does this bug affect? Multiple is fine.
+      placeholder: "e.g. midstreamer-quic, midstreamer-temporal-compare"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version (or git SHA)
+      description: From `cargo tree` or your `Cargo.toml`.
+      placeholder: "0.1.0 / git SHA abc1234"
+    validations:
+      required: true
+  - type: input
+    id: rustc
+    attributes:
+      label: rustc version
+      description: Output of `rustc --version`.
+      placeholder: "rustc 1.81.0 (eeb90cda1 2024-09-04)"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other (specify in repro)
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: |
+        Smallest possible code / commands that show the bug. Prefer a
+        runnable snippet or a link to a public branch.
+      render: rust
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include error messages, panics, and full stack traces.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Logs, screenshots, related issues, workarounds.

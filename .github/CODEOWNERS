@@ -1,0 +1,46 @@
+# CODEOWNERS — automatic review routing.
+#
+# Lines are matched in order; the LAST matching pattern wins. So put
+# broadest patterns first and most-specific last. Documented at:
+# https://docs.github.com/en/repositories/managing-your-repositories-settings-and-security/customizing-your-repository/about-code-owners
+#
+# All teams currently resolve to @ruv. As the maintainer set grows
+# (per GOVERNANCE.md), entries here split into real teams.
+
+# Default owner — every file the more-specific patterns below don't claim.
+*                                       @ruv
+
+# ----- Architectural decisions -----
+# Every change to an ADR or the ADR index needs the maintainer's eyes.
+/docs/adr/                              @ruv
+
+# ----- Security-sensitive surface -----
+# QUIC transport — TLS-touching code (cf. ADR-0011).
+/crates/quic-multistream/               @ruv
+# AIMDS — the AI manipulation defense subsystem.
+/AIMDS/                                 @ruv
+# Supply-chain policy.
+/deny.toml                              @ruv
+/.github/workflows/audit.yml            @ruv
+
+# ----- Hot-path crates -----
+# The scheduler's "sub-microsecond" claim has an SLO contract
+# (ADR-0033) — any change here needs a perf-aware review.
+/crates/nanosecond-scheduler/           @ruv
+# Temporal comparator — DTW / LCS / edit-distance hot path.
+/crates/temporal-compare/               @ruv
+
+# ----- CI / release machinery -----
+/.github/workflows/                     @ruv
+/.github/                               @ruv
+
+# ----- Top-level governance + licence -----
+/CODE_OF_CONDUCT.md                     @ruv
+/CONTRIBUTING.md                        @ruv
+/GOVERNANCE.md                          @ruv
+/SECURITY.md                            @ruv
+/LICENSE-MIT                            @ruv
+/LICENSE-APACHE                         @ruv
+/NOTICE                                 @ruv
+/CODEOWNERS                             @ruv
+/.github/CODEOWNERS                     @ruv

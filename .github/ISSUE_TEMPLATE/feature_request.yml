@@ -1,0 +1,49 @@
+name: "✨ Feature request"
+description: Suggest an enhancement or new capability.
+title: "[feat]: "
+labels: [enhancement, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Bigger architectural changes are
+        best discussed as a draft ADR — see `docs/adr/README.md`. Use
+        this template for smaller, focused requests.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: |
+        What problem are you trying to solve? Describe the use case
+        and the gap, not the solution yet.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: |
+        How would you like midstream to behave? API sketches and
+        example call-sites are welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you weigh, and why this one?
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Suspected scope
+      options:
+        - Small (single function / one crate)
+        - Medium (one crate, public API change)
+        - Large (multiple crates / architectural — likely needs an ADR)
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Links to prior art, related issues, motivating projects.
