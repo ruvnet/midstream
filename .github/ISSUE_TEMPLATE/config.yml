@@ -1,0 +1,24 @@
+# Issue-template chooser configuration.
+#
+# `blank_issues_enabled: false` forces users to pick one of the
+# structured templates above, which keeps triage cheap.
+
+blank_issues_enabled: false
+
+contact_links:
+  - name: "🔒 Security report"
+    url: https://github.com/ruvnet/midstream/security/advisories/new
+    about: |
+      DO NOT open a public issue for security reports. Use GitHub
+      Security Advisories (link above) or email security@ruv.net.
+      Full policy in SECURITY.md.
+  - name: "💬 Question or discussion"
+    url: https://github.com/ruvnet/midstream/discussions
+    about: |
+      Open-ended questions and design discussions belong in
+      Discussions, not Issues. Issues are for tracked work.
+  - name: "📚 Architecture Decision Records"
+    url: https://github.com/ruvnet/midstream/tree/main/docs/adr
+    about: |
+      Before requesting a large change, skim the ADRs — your idea may
+      already be captured there as accepted, deferred, or rejected.
