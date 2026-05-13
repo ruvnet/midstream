@@ -16,10 +16,13 @@ edition = "2021"
 description = "Real-time LLM streaming with inflight analysis"
 
 [dependencies]
-hyprstream = { path = "hyprstream-main" }
+# `hyprstream`, `arrow`, and `arrow-flight` were declared here but never
+# imported by any first-party code (verified via grep). They were
+# dragging in duckdb (bundled), tonic 0.12, and a dual rustls / hyper
+# graph at zero benefit. Removed per ADR-0002 (un-vendor hyprstream)
+# and ADR-0010 (drop unused arrow-flight). If we ever need Arrow-style
+# IPC again, re-add the specific module behind a feature flag.
 tokio = { version = "1.42.0", features = ["full"] }
-arrow = "54.0.0"
-arrow-flight = { version = "54.0.0", features = ["flight-sql-experimental"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 async-trait = "0.1"
