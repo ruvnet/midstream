@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = ["Midstream Contributors"]
 edition = "2021"
 description = "WebAssembly bindings for Midstream temporal comparison, scheduling, and meta-learning"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/midstream/midstream"
 
 [lib]
