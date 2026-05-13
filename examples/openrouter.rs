@@ -5,7 +5,7 @@ use reqwest::Client;
 use serde_json::{json, Value};
 use std::time::Duration;
 use eventsource_stream::Eventsource;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 
 struct OpenRouterClient {
     client: Client,
