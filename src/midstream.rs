@@ -1,6 +1,8 @@
+use std::borrow::Cow;
 use std::sync::Arc;
 use std::time::Duration;
 use async_trait::async_trait;
+use bytes::Bytes;
 use futures::stream::BoxStream;
 use tokio::sync::Mutex;
 use serde::{Serialize, Deserialize};
@@ -34,12 +36,27 @@ pub enum Intent {
     None,
 }
 
+/// A single chunk pulled from the LLM stream.
+///
+/// The `content` field is a [`Bytes`] handle so successive chunks share the
+/// underlying allocation owned by the transport layer (per ADR-0006). Use
+/// [`LLMMessage::content_str`] to lift the bytes into UTF-8 when needed.
 #[derive(Debug, Clone)]
 pub struct LLMMessage {
-    pub content: String,
+    pub content: Bytes,
     pub timestamp: chrono::DateTime<chrono::Utc>,
     pub intent: Option<Intent>,
     pub tool_response: Option<String>,
+}
+
+impl LLMMessage {
+    /// Lift the byte content into UTF-8.
+    ///
+    /// Invalid UTF-8 sequences are replaced with U+FFFD; no allocation occurs
+    /// when the content is already valid UTF-8.
+    pub fn content_str(&self) -> Cow<'_, str> {
+        String::from_utf8_lossy(&self.content)
+    }
 }
 
 #[async_trait]
@@ -49,8 +66,16 @@ pub trait StreamProcessor {
     async fn get_average_sentiment(&self, window: Duration) -> Result<f64, Box<dyn std::error::Error>>;
 }
 
+/// Source of LLM token chunks.
+///
+/// Per ADR-0006, the stream yields [`Bytes`] handles rather than owned
+/// `String`s so the streaming pipeline can pass token chunks through the
+/// system without per-chunk heap allocation. Implementations targeting
+/// transports that already produce `Bytes` (`reqwest`, `quinn`, codec-based
+/// frames) can forward those handles directly; implementations that hold
+/// `String` data can use `Bytes::from(s.into_bytes())`.
 pub trait LLMClient: Send + Sync {
-    fn stream(&self) -> BoxStream<'static, String>;
+    fn stream(&self) -> BoxStream<'static, Bytes>;
 }
 
 #[async_trait]
@@ -112,44 +137,53 @@ impl Midstream {
         content.to_uppercase().starts_with("URGENT")
     }
 
-    async fn process_message(&self, content: String) -> Result<LLMMessage, Box<dyn std::error::Error>> {
+    async fn process_message(&self, content: Bytes) -> Result<LLMMessage, Box<dyn std::error::Error>> {
         // Validate content
         if content.is_empty() {
             return Err("Empty message content".into());
         }
 
         let timestamp = chrono::Utc::now();
-        let intent = self.detect_intent(&content);
+        // Lift the byte content to UTF-8 once for intent / urgent classification.
+        // `from_utf8_lossy` borrows when input is already valid UTF-8.
+        let content_str = String::from_utf8_lossy(&content);
+        let intent = self.detect_intent(&content_str);
+        let urgent = self.is_urgent(&content_str);
         let mut tool_response = None;
 
         // Handle urgent requests immediately
-        if self.is_urgent(&content) && intent != Intent::None {
+        if urgent && intent != Intent::None {
             if let Some(tool) = &self.tool_integration {
                 tool_response = match intent {
-                    Intent::Weather => Some(tool.handle_weather_intent(&content)?),
-                    Intent::Calendar => Some(tool.handle_calendar_intent(&content)?),
+                    Intent::Weather => Some(tool.handle_weather_intent(&content_str)?),
+                    Intent::Calendar => Some(tool.handle_calendar_intent(&content_str)?),
                     Intent::None => None,
                 };
             }
         }
 
-        let message = LLMMessage { 
-            content, 
+        // Capture metric fields that need the byte handle before we move it.
+        let content_len = content.len();
+        drop(content_str);
+
+        let message = LLMMessage {
+            content,
             timestamp,
             intent: Some(intent),
             tool_response,
         };
 
-        // Create and ingest metric
+        // Create and ingest metric. (MetricRecord shape is unchanged by ADR-0006;
+        // its per-chunk allocations are the subject of a follow-up ADR.)
         let metric = MetricRecord {
             timestamp: timestamp.timestamp() as u64,
             name: "llm_stream".to_string(),
-            value: message.content.len() as f64,
+            value: content_len as f64,
             labels: vec![
                 ("type".to_string(), "message".to_string()),
-                ("size".to_string(), message.content.len().to_string()),
+                ("size".to_string(), content_len.to_string()),
                 ("intent".to_string(), format!("{:?}", message.intent)),
-                ("urgent".to_string(), self.is_urgent(&message.content).to_string()),
+                ("urgent".to_string(), urgent.to_string()),
             ],
         };
 

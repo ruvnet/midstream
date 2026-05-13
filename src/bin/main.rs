@@ -1,4 +1,5 @@
 use midstream::{Midstream, HyprSettings, HyprServiceImpl, StreamProcessor, LLMClient};
+use bytes::Bytes;
 use futures::stream::BoxStream;
 use futures::stream::iter;
 use std::time::Duration;
@@ -7,11 +8,11 @@ use std::time::Duration;
 struct ExampleLLMClient;
 
 impl LLMClient for ExampleLLMClient {
-    fn stream(&self) -> BoxStream<'static, String> {
+    fn stream(&self) -> BoxStream<'static, Bytes> {
         Box::pin(iter(vec![
-            "URGENT: What's the weather like?".to_string(),
-            "Schedule a meeting for tomorrow".to_string(),
-            "Just a normal message".to_string(),
+            Bytes::from_static(b"URGENT: What's the weather like?"),
+            Bytes::from_static(b"Schedule a meeting for tomorrow"),
+            Bytes::from_static(b"Just a normal message"),
         ]))
     }
 }
@@ -37,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let messages = midstream.process_stream().await?;
     println!("\nProcessed messages:");
     for msg in &messages {
-        println!("- Content: {}", msg.content);
+        println!("- Content: {}", msg.content_str());
         println!("  Intent: {:?}", msg.intent);
         if let Some(response) = &msg.tool_response {
             println!("  Tool Response: {}", response);

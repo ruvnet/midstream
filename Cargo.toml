@@ -75,6 +75,8 @@ eventsource-stream = "0.2"
 tokio-stream = "0.1"
 dotenv = "0.15"
 async-stream = "0.3"
+# Zero-copy buffers on the streaming hot path (ADR-0006).
+bytes = "1"
 # Lean Agentic dependencies
 thiserror = "2.0"
 dashmap = "6.1"
