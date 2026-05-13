@@ -116,7 +116,7 @@ jobs:
           shared-key: js-ci-wasm
 
       - name: Install wasm-pack
-        uses: jetli/wasm-pack-action@0d098b89f6be02d6cc3f5b00a7a90c0d5aad8113 # v0.4.0
+        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
         with:
           version: latest
 

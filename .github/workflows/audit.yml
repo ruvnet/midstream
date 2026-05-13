@@ -41,7 +41,7 @@ jobs:
       - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.1
         with:
           shared-key: audit
-      - uses: rustsec/audit-check@9b67f7423bce0b1f06c2c39e1ff8c4cfd9b21f43 # v2.0.0
+      - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,15 +72,22 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
         with:
-          # `arguments` flows verbatim into `cargo deny check <ARGS>`.
-          arguments: --workspace ${{ matrix.check }}
+          # Correct cargo-deny 0.19 invocation is:
+          #   cargo deny [TOP_OPTS] check [CHECK_OPTS] [WHICH...]
+          # The Embark action expands to:
+          #   cargo deny ${command-arguments} ${command} ${arguments}
+          # so:
+          #   command-arguments  → top-level options (e.g. --workspace)
+          #   command            → check
+          #   arguments          → check-level options + WHICH
+          # Older configs passed `--workspace` and `--hide-inclusion-graph`
+          # on the wrong side, which silently passed on older cargo-deny
+          # but breaks on 0.19+.
+          command-arguments: --workspace
+          command: check
+          arguments: --hide-inclusion-graph ${{ matrix.check }}
           # log-level: surface warnings but only fail on errors.
           log-level: warn
-          # Pin cargo-deny version so the policy semantics don't drift
-          # under us across CI runs. Bumped via ADR if the version
-          # ever needs to move.
-          command: check
-          command-arguments: --hide-inclusion-graph
 
   audit-success:
     name: Audit gates passed

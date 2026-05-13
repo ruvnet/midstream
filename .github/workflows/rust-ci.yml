@@ -127,12 +127,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # Crate names match the `[package].name` in each
+        # `crates/*/Cargo.toml` (the published crate names since the
+        # `midstreamer-*` rename in PR #2). The on-disk directory
+        # names (e.g. `crates/nanosecond-scheduler/`) are independent
+        # of the package name cargo cares about.
         crate:
-          - temporal-compare
-          - nanosecond-scheduler
-          - temporal-attractor-studio
-          - temporal-neural-solver
-          - strange-loop
+          - midstreamer-temporal-compare
+          - midstreamer-scheduler
+          - midstreamer-attractor
+          - midstreamer-neural-solver
+          - midstreamer-strange-loop
 
     steps:
       - uses: actions/checkout@v4
@@ -158,9 +163,9 @@ jobs:
     strategy:
       matrix:
         crate:
-          - temporal-compare
-          - nanosecond-scheduler
-          - strange-loop
+          - midstreamer-temporal-compare
+          - midstreamer-scheduler
+          - midstreamer-strange-loop
 
     steps:
       - uses: actions/checkout@v4
