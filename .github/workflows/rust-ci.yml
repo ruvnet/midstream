@@ -46,6 +46,38 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+  # MSRV (Minimum Supported Rust Version) check per ADR-0023.
+  # Every published crate declares rust-version = "1.81"; this job
+  # proves the workspace still compiles + tests on that toolchain so
+  # the declared MSRV doesn't quietly drift forward. --locked is
+  # mandatory: an unlocked update could pull a transitive dep that
+  # requires newer rustc, masking the MSRV check.
+  msrv:
+    name: MSRV (1.81)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust 1.81 toolchain
+        uses: dtolnay/rust-toolchain@1.81
+
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "msrv-1.81"
+
+      - name: cargo check (workspace, locked)
+        # Exclude `midstream` and `hyprstream` while ADR-0002 / ADR-0014
+        # un-vendoring is in flight: those two crates currently fail to
+        # build on any toolchain due to arrow-schema version skew via
+        # the vendored hyprstream-main. Re-include both once ADR-0002
+        # lands. The 6 published `midstreamer-*` crates plus the WASM
+        # bindings are covered.
+        run: cargo check --workspace --exclude midstream --exclude hyprstream --locked
+
+      - name: cargo test --lib (workspace, locked)
+        run: cargo test --workspace --exclude midstream --exclude hyprstream --lib --locked
+
   # Build and test matrix
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.rust }})
@@ -259,6 +291,7 @@ jobs:
     needs:
       - format
       - clippy
+      - msrv
       - test
       - build-crates
       - wasm
