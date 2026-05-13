@@ -9,6 +9,32 @@ members = [
 ]
 exclude = ["npm-wasm"]
 
+# Per ADR-0034. Initial rollout is conservative: only lints that the
+# existing codebase already passes are added, so this PR lands as a
+# pure policy change with zero source modifications required.
+# Subsequent ADR-0034 follow-ups tighten the bar (clippy::pedantic,
+# unwrap_used/expect_used/panic, missing_docs, broken_intra_doc_links)
+# as the relevant remediation lands.
+#
+# Per-crate `[lints] workspace = true` inherits this table.
+[workspace.lints.rust]
+# Verified zero `unsafe ` blocks in workspace code (security review,
+# 2026-05-13). `deny` lets specific crates opt in later via `#[allow]`
+# plus a doc-comment justification; `forbid` would be stricter still
+# but blocks even the opt-in path.
+unsafe_code = "deny"
+# Catches `let _ = … ;` on Results / Futures / iterators that the
+# author meant to handle. Real-bug class; no false positives expected.
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+# Footgun macros. None of these are intentional in production code.
+# `warn` so they show up in PR review without blocking; promote to
+# `deny` after the workspace-wide lint sweep ADR follow-up.
+dbg_macro = "warn"
+todo = "warn"
+unimplemented = "warn"
+
 [package]
 name = "midstream"
 version = "0.1.0"
