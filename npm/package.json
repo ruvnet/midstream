@@ -63,7 +63,7 @@
     "@types/ws": "^8.5.10",
     "@types/eventsource": "^1.1.15",
     "@types/inquirer": "^9.0.7",
-    "@types/jest": "^29.5.11",
+    "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^8.59.3",
     "eslint": "^8.56.0",
