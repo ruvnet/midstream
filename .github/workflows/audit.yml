@@ -72,20 +72,21 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
         with:
-          # Correct cargo-deny 0.19 invocation is:
-          #   cargo deny [TOP_OPTS] check [CHECK_OPTS] [WHICH...]
-          # The Embark action expands to:
-          #   cargo deny ${command-arguments} ${command} ${arguments}
-          # so:
-          #   command-arguments  → top-level options (e.g. --workspace)
-          #   command            → check
-          #   arguments          → check-level options + WHICH
-          # Older configs passed `--workspace` and `--hide-inclusion-graph`
-          # on the wrong side, which silently passed on older cargo-deny
-          # but breaks on 0.19+.
-          command-arguments: --workspace
+          # The Embark action expands to (per its action.yml + entrypoint.sh):
+          #   cargo-deny [hardcoded log/manifest] ${arguments} ${command} ${command-arguments}
+          # So in our usage:
+          #   arguments         → top-level options (--workspace)
+          #   command           → check
+          #   command-arguments → check-level options + WHICH
+          # cargo-deny 0.19 makes `--workspace` a top-level option and
+          # `--hide-inclusion-graph` a check-level option; the WHICH
+          # value (advisories/bans/licenses/sources) is a positional arg
+          # to `check`. The previous config had --workspace AFTER `check`,
+          # which caused the parser to see WHICH as an unrecognized
+          # top-level subcommand.
+          arguments: --workspace
           command: check
-          arguments: --hide-inclusion-graph ${{ matrix.check }}
+          command-arguments: --hide-inclusion-graph ${{ matrix.check }}
           # log-level: surface warnings but only fail on errors.
           log-level: warn
 
