@@ -37,11 +37,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: dtolnay/rust-toolchain@1.81
+      # `stable`, not MSRV. The audit action installs the latest
+      # `cargo-audit` (currently 0.22, which requires rustc 1.85+).
+      # MSRV gates compile, not tooling.
+      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.1
         with:
           shared-key: audit
-      - uses: rustsec/audit-check@9b67f7423bce0b1f06c2c39e1ff8c4cfd9b21f43 # v2.0.0
+      - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,15 +75,23 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
         with:
-          # `arguments` flows verbatim into `cargo deny check <ARGS>`.
-          arguments: --workspace ${{ matrix.check }}
+          # The Embark action expands to (per its action.yml + entrypoint.sh):
+          #   cargo-deny [hardcoded log/manifest] ${arguments} ${command} ${command-arguments}
+          # So in our usage:
+          #   arguments         → top-level options (--workspace)
+          #   command           → check
+          #   command-arguments → check-level options + WHICH
+          # cargo-deny 0.19 makes `--workspace` a top-level option and
+          # `--hide-inclusion-graph` a check-level option; the WHICH
+          # value (advisories/bans/licenses/sources) is a positional arg
+          # to `check`. The previous config had --workspace AFTER `check`,
+          # which caused the parser to see WHICH as an unrecognized
+          # top-level subcommand.
+          arguments: --workspace
+          command: check
+          command-arguments: --hide-inclusion-graph ${{ matrix.check }}
           # log-level: surface warnings but only fail on errors.
           log-level: warn
-          # Pin cargo-deny version so the policy semantics don't drift
-          # under us across CI runs. Bumped via ADR if the version
-          # ever needs to move.
-          command: check
-          command-arguments: --hide-inclusion-graph
 
   audit-success:
     name: Audit gates passed
