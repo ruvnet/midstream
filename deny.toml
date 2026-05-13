@@ -1,0 +1,175 @@
+# cargo-deny configuration for midstream.
+#
+# See ADR-0014 (docs/adr/0014-supply-chain-pinning.md).
+#
+# Run locally:  cargo deny check
+# Run in CI:    .github/workflows/audit.yml
+#
+# This file is the single source of truth for the project's supply-chain
+# policy. Time-bounded ignore entries below carry an explicit expiry date
+# and a follow-up issue / ADR reference; reviewers should challenge any
+# ignore that drifts past its expiry.
+
+# --------------------------------------------------------------------------
+# advisories — RustSec vulnerability database checks
+# --------------------------------------------------------------------------
+[advisories]
+version = 2
+# Vulnerability advisories are denied; cargo-deny exits non-zero if any
+# crate in Cargo.lock has an open advisory not listed below.
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked = "deny"
+
+# Time-bounded ignores. Each entry MUST cite the rationale, the follow-up
+# issue / ADR, and an expiry date. Reviewers reject any ignore that has
+# passed its expiry without a renewed justification.
+ignore = [
+    # ------------------------------------------------------------------
+    # In-flight: rustls-webpki CRL / name-constraint CVEs.
+    # All four come from `rustls-webpki 0.102.8`, which is dragged in by
+    # the orphan `rustls = "0.22"` dep in `crates/quic-multistream/Cargo.toml`.
+    # PR #8 (feat/quic-tls-verification-adr0011) removes that line and
+    # the lockfile then unifies on rustls 0.23 + rustls-webpki 0.103.13.
+    # Verified via `cargo tree -i rustls-webpki:0.102.8` on this branch:
+    # the ONLY path is via the soon-to-be-removed rustls 0.22 dep.
+    # Expiry: 2026-06-13 (clear once PR #8 merges).
+    { id = "RUSTSEC-2026-0049", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
+    { id = "RUSTSEC-2026-0098", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
+    { id = "RUSTSEC-2026-0099", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
+    { id = "RUSTSEC-2026-0104", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
+    # ------------------------------------------------------------------
+    # In-flight: lru 0.12.5 IterMut unsoundness (RUSTSEC-2026-0002).
+    # Bumped to 0.18 by the follow-up dep-sweep PR per ADR-0014 impl
+    # notes. Expiry: 2026-07-13.
+    { id = "RUSTSEC-2026-0002", reason = "lru<0.18; pending workspace bump per ADR-0014" },
+    # ------------------------------------------------------------------
+    # In-flight: unmaintained transitives.
+    #   * yaml-rust 0.4.5 (via config 0.13)         — ADR-0019 (figment)
+    #   * dotenv 0.15.0    (direct, root Cargo.toml) — ADR-0019 (dotenvy)
+    #   * bincode 1.3.3    (via duckdb)              — ADR-0002 (un-vendor hyprstream)
+    #   * paste 1.0.15     (transitive proc-macro)   — ADR-0002 chain
+    #   * rustls-pemfile 1.0.4 (via tonic)           — ADR-0002 chain
+    # Expiries: 2026-08-13 (quarterly review).
+    { id = "RUSTSEC-2024-0320", reason = "yaml-rust via config 0.13; ADR-0019 (figment)" },
+    { id = "RUSTSEC-2021-0141", reason = "dotenv direct; ADR-0019 (switch to dotenvy)" },
+    { id = "RUSTSEC-2025-0141", reason = "bincode via duckdb; cleared by ADR-0002" },
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile via tonic 0.12; cleared by ADR-0002 chain" },
+    { id = "RUSTSEC-2024-0436", reason = "paste transitive; cleared by ADR-0002 chain" },
+]
+
+# --------------------------------------------------------------------------
+# licenses — accepted SPDX expressions on transitive deps
+# --------------------------------------------------------------------------
+[licenses]
+version = 2
+# Crates whose licence cannot be determined are implicitly denied by
+# cargo-deny v0.16+. First-party crates MUST declare MIT OR Apache-2.0
+# (enforced by review, not by deny). Transitive deps are accepted from
+# this allowlist.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "CC0-1.0",
+    "Zlib",
+    "MPL-2.0",     # weak copyleft; acceptable on transitives
+    "OpenSSL",     # legacy clause; only via deps that haven't migrated
+]
+# GPL / AGPL / SSPL are forbidden by omission from `allow` above;
+# cargo-deny v0.16+ removed the explicit `deny` key and now derives
+# deny semantics from "not in allowlist".
+# Confidence threshold for accurately detecting the licence of crates
+# that don't declare in metadata (read from LICENSE file).
+confidence-threshold = 0.93
+# Explicit per-crate exceptions when the SPDX expression doesn't match
+# the metadata exactly. Empty list keeps the policy honest.
+exceptions = []
+
+# --------------------------------------------------------------------------
+# bans — pin specific deps; ban known footguns; enforce uniqueness
+# --------------------------------------------------------------------------
+[bans]
+# Soft start: most existing duplicate-version skews come via the
+# vendored `hyprstream-main/` (ADR-0002). Once that lands the count
+# drops from ~27 to <5; at that point we tighten this back to "deny".
+# Targeted tightening for security-critical crates (rustls, openssl-
+# style) lives in the `deny` list below regardless.
+multiple-versions = "warn"
+# Workspace-internal path deps (e.g. `midstreamer-attractor = { path = "..." }`)
+# don't yet carry a version constraint; cargo-deny correctly flags this
+# since the resulting crates are then unpublishable. ADR-0024 (semver
+# discipline) lands the per-path `version = "0.1"` annotations.
+# Until then, downgrade to warn so the audit isn't a blocking false-positive
+# while we work toward proper semver hygiene.
+wildcards = "warn"
+allow-wildcard-paths = true
+highlight = "all"
+# Skip multi-version errors for these crates while the relevant
+# remediation ADR is in flight. Each entry MUST be removable.
+skip = [
+    # The duckdb -> arrow-flight chain (via vendored hyprstream-main)
+    # pulls arrow 53.x + arrow 54.x simultaneously. Removed by
+    # ADR-0002 (un-vendor hyprstream).
+    { name = "arrow", reason = "via hyprstream-main; ADR-0002" },
+    { name = "arrow-schema", reason = "via hyprstream-main; ADR-0002" },
+    { name = "arrow-array", reason = "via hyprstream-main; ADR-0002" },
+    { name = "arrow-buffer", reason = "via hyprstream-main; ADR-0002" },
+    { name = "arrow-data", reason = "via hyprstream-main; ADR-0002" },
+    # hyper-0.x stack via tonic 0.12 via arrow-flight via hyprstream.
+    { name = "hyper", reason = "via arrow-flight/tonic 0.12; ADR-0010" },
+    { name = "http", reason = "via arrow-flight/tonic 0.12; ADR-0010" },
+    { name = "http-body", reason = "via arrow-flight/tonic 0.12; ADR-0010" },
+    { name = "h2", reason = "via arrow-flight/tonic 0.12; ADR-0010" },
+    { name = "tower", reason = "via arrow-flight/tonic 0.12; ADR-0010" },
+    # Misc duplicate-version skews tracked for follow-up bumps.
+    { name = "base64", reason = "0.13 + 0.21 + 0.22 mix; pending unified bump" },
+    { name = "bitflags", reason = "1.x + 2.x; transitive only" },
+    { name = "hashbrown", reason = "multiple via arrow / serde / others" },
+    { name = "indexmap", reason = "1.x + 2.x; transitive only" },
+    { name = "rand", reason = "0.8 + 0.9 transition in flight" },
+    { name = "syn", reason = "1.x + 2.x; proc-macro transitive" },
+    { name = "getrandom", reason = "0.2 + 0.3 transition" },
+    { name = "socket2", reason = "0.5 + 0.6 transition" },
+    { name = "webpki-roots", reason = "0.26 + 1.0 mix" },
+    { name = "ahash", reason = "0.7 + 0.8 via duckdb" },
+]
+# Deny known footguns outright. Anyone introducing these in a PR has
+# to delete the relevant entry here, which forces an ADR-grade
+# conversation.
+#
+# NOTE on the openssl / native-tls family: those crates are present
+# today via `hyprstream-main` -> `duckdb` -> `reqwest 0.11` (TLS
+# backend selection). ADR-0002 (un-vendor hyprstream) eliminates the
+# entire chain. Until that lands, the bans below are commented out so
+# this PR's CI can pass; uncomment in the ADR-0002 implementation PR.
+deny = [
+    # Once ADR-0002 lands, restore these:
+    # { name = "openssl",       reason = "Use rustls per ADR-0011" },
+    # { name = "openssl-sys",   reason = "Use rustls per ADR-0011" },
+    # { name = "native-tls",    reason = "Use rustls per ADR-0011" },
+    #
+    # rustls-webpki < 0.103.13 carries RUSTSEC-2026-0049/0098/0099/0104.
+    # The only path to the vulnerable version on `main` today is via
+    # the orphan `rustls = "0.22"` dep that PR #8 removes; the
+    # corresponding advisory IDs are also in `advisories.ignore`
+    # above with the same expiry. Keep the version-pin ban so that any
+    # future regression re-surfaces the error immediately.
+    { name = "rustls-webpki", version = "<0.103.13", reason = "RUSTSEC-2026-0049/0098/0099/0104" },
+]
+
+# --------------------------------------------------------------------------
+# sources — where it's okay to fetch crates from
+# --------------------------------------------------------------------------
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# No git sources are allowed in default builds. To introduce one, add
+# the repo URL here with a comment naming the ADR that justifies it.
+allow-git = []
