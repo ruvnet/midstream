@@ -279,7 +279,7 @@ jobs:
         run: cargo tarpaulin --workspace --all-features --out Xml --output-dir coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v6
         with:
           files: ./coverage/cobertura.xml
           fail_ci_if_error: false
