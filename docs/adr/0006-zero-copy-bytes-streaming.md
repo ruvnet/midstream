@@ -1,6 +1,6 @@
 # 0006 — Zero-copy `bytes::Bytes` end-to-end streaming pipeline
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #7)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** perf, streaming, alloc

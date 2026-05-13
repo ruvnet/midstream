@@ -1,6 +1,6 @@
 # 0011 — QUIC TLS verification: secure-by-default, no `SkipServerVerification`
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #8)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** security, transport, tls

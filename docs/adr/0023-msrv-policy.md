@@ -1,6 +1,6 @@
 # 0023 — Minimum Supported Rust Version (MSRV) policy
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #11 — MSRV = 1.81 + CI gate)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** policy, releases, dependencies

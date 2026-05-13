@@ -16,29 +16,29 @@ that *supersedes* the old one (the old file stays, with its Status updated).
 |------|--------------------------------------------------------------------|----------|
 | 0000 | [Use ADRs to record architectural decisions](0000-use-adrs.md)     | Accepted |
 | 0001 | [Single Cargo workspace for all Rust crates](0001-single-cargo-workspace.md) | Proposed |
-| 0002 | [Stop vendoring hyprstream, depend on it externally](0002-unvendor-hyprstream.md) | Proposed |
+| 0002 | [Stop vendoring hyprstream, depend on it externally](0002-unvendor-hyprstream.md) | Accepted (#13) |
 | 0003 | [One canonical WASM crate, three publish targets](0003-wasm-consolidation.md) | Proposed |
 | 0004 | [AIMDS as a first-class workspace member](0004-aimds-workspace-member.md) | Proposed |
-| 0005 | [Remove src/lean_agentic duplication of workspace crates](0005-deduplicate-lean-agentic.md) | Proposed |
+| 0005 | [Remove src/lean_agentic duplication of workspace crates](0005-deduplicate-lean-agentic.md) | Accepted (#14) |
 
 ### Performance and SOTA
 
 | #    | Title                                                              | Status   |
 |------|--------------------------------------------------------------------|----------|
-| 0006 | [Zero-copy `bytes::Bytes` end-to-end streaming pipeline](0006-zero-copy-bytes-streaming.md) | Proposed |
+| 0006 | [Zero-copy `bytes::Bytes` end-to-end streaming pipeline](0006-zero-copy-bytes-streaming.md) | Accepted (#7) |
 | 0007 | [Bounded backpressure: mpsc + Semaphore, never unbounded](0007-bounded-backpressure.md) | Proposed |
 | 0008 | [Lock-free scheduler and cache rewrite](0008-lock-free-scheduler-cache.md) | Proposed |
 | 0009 | [Benchmarks against real workloads, not mocks](0009-honest-benchmarks.md) | Proposed |
-| 0010 | [Allocator and observability baseline (mimalloc + OTLP)](0010-allocator-observability.md) | Proposed |
+| 0010 | [Allocator and observability baseline (mimalloc + OTLP)](0010-allocator-observability.md) | Proposed (partial: arrow drop only) |
 
 ### Security and supply chain
 
 | #    | Title                                                              | Status   |
 |------|--------------------------------------------------------------------|----------|
-| 0011 | [QUIC TLS verification: secure-by-default](0011-quic-tls-verification.md) | Proposed |
+| 0011 | [QUIC TLS verification: secure-by-default](0011-quic-tls-verification.md) | Accepted (#8) |
 | 0012 | [Streaming input bounds (size, rate, buffer)](0012-streaming-input-bounds.md) | Proposed |
 | 0013 | [AIMDS integration contract](0013-aimds-integration-contract.md)   | Proposed |
-| 0014 | [Supply-chain hygiene: cargo audit + cargo deny in CI](0014-supply-chain-pinning.md) | Proposed |
+| 0014 | [Supply-chain hygiene: cargo audit + cargo deny in CI](0014-supply-chain-pinning.md) | Accepted (#10, #55) |
 | 0015 | [WASM network egress allowlist](0015-wasm-egress-allowlist.md)     | Proposed |
 
 ### API, release, configuration, hygiene
@@ -46,10 +46,10 @@ that *supersedes* the old one (the old file stays, with its Status updated).
 | #    | Title                                                              | Status   |
 |------|--------------------------------------------------------------------|----------|
 | 0016 | [Redesign the `LLMClient` provider trait](0016-llm-provider-trait-redesign.md) | Proposed |
-| 0017 | [Release model: release-plz + git-cliff, drop hand-written scripts](0017-release-and-publishing.md) | Proposed |
+| 0017 | [Release model: release-plz + git-cliff, drop hand-written scripts](0017-release-and-publishing.md) | Accepted (#51) |
 | 0018 | [Error-handling policy: `thiserror` for libs, `anyhow` for binaries](0018-error-policy.md) | Proposed |
-| 0019 | [Configuration system: replace `config` with `figment`](0019-config-system.md) | Proposed |
-| 0020 | [Documentation triage: retire the `*_REPORT.md` sprawl](0020-docs-triage.md) | Proposed |
+| 0019 | [Configuration system: replace `config` with `figment`](0019-config-system.md) | Accepted (#52) |
+| 0020 | [Documentation triage: retire the `*_REPORT.md` sprawl](0020-docs-triage.md) | Accepted (#17, #18, #19, #20, #50) |
 
 ### Transport, persistence, policy
 
@@ -57,9 +57,9 @@ that *supersedes* the old one (the old file stays, with its Status updated).
 |------|--------------------------------------------------------------------|----------|
 | 0021 | [QUIC implementation: quinn default + optional s2n-quic](0021-quic-implementation-quinn.md) | Proposed |
 | 0022 | [Persistence: delete ruvector.db; redb when needed](0022-persistence-layer.md) | Proposed |
-| 0023 | [MSRV policy: declared, N-3, CI-enforced](0023-msrv-policy.md)     | Proposed |
+| 0023 | [MSRV policy: declared, N-3, CI-enforced](0023-msrv-policy.md)     | Accepted (#11) |
 | 0024 | [Semver discipline + stability tiers (alpha/beta/stable)](0024-semver-and-api-stability.md) | Proposed |
-| 0025 | [Feature-flag policy: additive, off-by-default, prefixed](0025-feature-flags-policy.md) | Proposed |
+| 0025 | [Feature-flag policy: additive, off-by-default, prefixed](0025-feature-flags-policy.md) | Proposed (partial: #16 — npm-wasm only) |
 
 ### TypeScript / JS surface
 
@@ -68,7 +68,7 @@ that *supersedes* the old one (the old file stays, with its Status updated).
 | 0026 | [TypeScript monorepo via pnpm workspaces](0026-typescript-monorepo.md) | Proposed |
 | 0027 | [Rust ↔ JS boundary: WASM in-process, MCP cross-process](0027-rust-js-boundary.md) | Proposed |
 | 0028 | [Multi-modal scope: trim README to what code backs](0028-multimodal-scope.md) | Proposed |
-| 0029 | [JS/TS CI matrix: lint, typecheck, test on every PR](0029-js-ci-matrix.md) | Proposed |
+| 0029 | [JS/TS CI matrix: lint, typecheck, test on every PR](0029-js-ci-matrix.md) | Accepted (#56) |
 | 0030 | [`integrations/` is a package, not a stray file](0030-integrations-directory.md) | Proposed |
 
 ### Dashboard, MCP surface, SLO, lints, deployment
@@ -78,17 +78,17 @@ that *supersedes* the old one (the old file stays, with its Status updated).
 | 0031 | [Console dashboard: ratatui, split rendering from state](0031-dashboard-architecture.md) | Proposed |
 | 0032 | [MCP tool surface: namespaced, versioned, lifecycle-split](0032-mcp-tool-surface.md) | Proposed |
 | 0033 | [Real-time scheduler SLO contract](0033-scheduler-slo-contract.md) | Proposed |
-| 0034 | [Workspace-wide lint policy via `[workspace.lints]`](0034-workspace-lints.md) | Proposed |
+| 0034 | [Workspace-wide lint policy via `[workspace.lints]`](0034-workspace-lints.md) | Accepted (#15, #49) |
 | 0035 | [Deployment shape: one Dockerfile + Helm chart](0035-deployment-docker-k8s.md) | Proposed |
 
 ### Licence, automation, testing, governance, deferred
 
 | #    | Title                                                              | Status   |
 |------|--------------------------------------------------------------------|----------|
-| 0036 | [Licence reconciliation: dual MIT OR Apache-2.0](0036-license-reconciliation.md) | Proposed |
-| 0037 | [`xtask` build automation: replace shell scripts with Rust](0037-xtask-build-automation.md) | Proposed |
-| 0038 | [Fuzz + property tests for the parsing/streaming surface](0038-fuzz-and-property-tests.md) | Proposed |
-| 0039 | [Governance: CONTRIBUTING, CoC, SECURITY, CODEOWNERS](0039-governance.md) | Proposed |
+| 0036 | [Licence reconciliation: dual MIT OR Apache-2.0](0036-license-reconciliation.md) | Accepted (#9) |
+| 0037 | [`xtask` build automation: replace shell scripts with Rust](0037-xtask-build-automation.md) | Accepted (#57) |
+| 0038 | [Fuzz + property tests for the parsing/streaming surface](0038-fuzz-and-property-tests.md) | Accepted (#58–#67) |
+| 0039 | [Governance: CONTRIBUTING, CoC, SECURITY, CODEOWNERS](0039-governance.md) | Accepted (#12) |
 | 0040 | [Web dashboard: deferred behind a stable event stream](0040-web-dashboard-deferred.md) | Proposed (deferred) |
 
 ADRs 0041+ will be added as further iterations of `/loop deep review and

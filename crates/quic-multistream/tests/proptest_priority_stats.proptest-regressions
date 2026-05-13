@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 7448528d2d7a4d6ebc2000f4b16be0f0fd419d36a5b30a842395e4b67696a175 # shrinks to s = ConnectionStats { active_bi_streams: 0, active_uni_streams: 0, bytes_sent: 0, bytes_received: 0, rtt_ms: 9118.137805496757 }

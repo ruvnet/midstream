@@ -1,6 +1,6 @@
 # 0037 — `xtask` build automation: replace shell scripts with Rust
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #57 — xtask crate + 7 legacy scripts retired)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** automation, build, tooling

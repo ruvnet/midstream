@@ -1,6 +1,6 @@
 # 0038 — Fuzz + property tests for the parsing/streaming surface
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #58–#67 — proptest baseline across 6 crates + fuzz scaffold)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** testing, security, fuzz

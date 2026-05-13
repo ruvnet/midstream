@@ -1,6 +1,6 @@
 # 0020 — Documentation triage: retire the `*_REPORT.md` sprawl
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #17, #18, #19, #20, #50 — 4 canonical docs + archive sweep)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** documentation, hygiene

@@ -1,6 +1,6 @@
 # 0014 — Supply-chain hygiene: `cargo audit`/`cargo deny` in CI, version pinning policy
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #10; promoted to hard gate in #55)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** security, supply-chain, ci

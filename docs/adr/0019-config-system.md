@@ -1,6 +1,6 @@
 # 0019 — Configuration system: replace `config = "0.13"` with `figment`
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #52)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** config, dependencies, supply-chain

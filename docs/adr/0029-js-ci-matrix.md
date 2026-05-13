@@ -1,6 +1,6 @@
 # 0029 — JS/TS CI matrix: lint, typecheck, test on every PR
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #56)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** ci, typescript, quality

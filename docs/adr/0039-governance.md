@@ -1,6 +1,6 @@
 # 0039 — Governance: CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CODEOWNERS
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #12)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** governance, process, security
