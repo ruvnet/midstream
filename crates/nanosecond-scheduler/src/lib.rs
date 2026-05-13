@@ -133,9 +133,27 @@ impl<T> PartialOrd for ScheduledTask<T> {
 
 impl<T> Ord for ScheduledTask<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        // Higher priority first, earlier deadline first
-        other.priority.cmp(&self.priority)
-            .then_with(|| self.deadline.absolute_time.cmp(&other.deadline.absolute_time))
+        // Higher priority first, earlier deadline first.
+        //
+        // `RealtimeScheduler` stores tasks in a `BinaryHeap` (max-heap)
+        // and pops via `BinaryHeap::pop`, which returns the greatest
+        // element by this `Ord` impl. So "Critical pops first" means
+        // `Critical > Background` in this comparison.
+        //
+        // Priority's derived `Ord` compares by discriminant value
+        // (Critical=100, ..., Background=10), so `Critical.cmp(&Background)
+        // = Greater`. We therefore want `self.priority.cmp(&other.priority)`
+        // *without* inversion — historical drafts swapped this and
+        // produced the exact opposite (lower-priority popping first);
+        // see PR #59's proptest counterexamples for the discovery
+        // story.
+        //
+        // The deadline tie-break is the opposite shape: in the
+        // max-heap, the LATER deadline is "greater" by default, but
+        // we want EARLIER deadlines first. So we *do* swap the
+        // deadline comparison.
+        self.priority.cmp(&other.priority)
+            .then_with(|| other.deadline.absolute_time.cmp(&self.deadline.absolute_time))
     }
 }
 
