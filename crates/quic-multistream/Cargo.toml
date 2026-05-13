@@ -1,6 +1,6 @@
 [package]
 name = "midstreamer-quic"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.81"
 description = "QUIC multi-stream support for native and WASM targets"
@@ -12,15 +12,26 @@ categories = ["network-programming", "wasm", "web-programming"]
 [lints]
 workspace = true
 
+[features]
+# By default, midstreamer-quic verifies server certificates using the OS
+# platform trust store (per ADR-0011). The feature below substitutes a
+# verifier that accepts ALL certificates; it is intended for benches and
+# integration tests against self-signed loopback servers and MUST NEVER be
+# enabled in production builds. Enabling it also emits a runtime warning
+# on every `QuicConnection::connect`.
+default = []
+insecure-dev-only-skip-server-verification = []
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
 futures = "0.3"
+tracing = "0.1"
 
 # Native dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 quinn = "0.11"
-rustls = { version = "0.22", features = ["ring"] }
+rustls-platform-verifier = "0.6"
 rcgen = "0.12"
 tokio = { version = "1.42", features = ["full"] }
 

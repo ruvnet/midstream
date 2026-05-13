@@ -58,6 +58,12 @@ use thiserror::Error;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
+
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    feature = "insecure-dev-only-skip-server-verification"
+))]
+mod insecure;
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
 
