@@ -337,9 +337,14 @@ where
 
         let mut dp = vec![vec![0; m + 1]; n + 1];
 
+        // DP base cases: indexed-loop form is the textbook shape;
+        // the iter_mut().enumerate() rewrite suggested by clippy is
+        // less readable for two-dimensional matrices.
+        #[allow(clippy::needless_range_loop)]
         for i in 0..=n {
             dp[i][0] = i;
         }
+        #[allow(clippy::needless_range_loop)]
         for j in 0..=m {
             dp[0][j] = j;
         }
@@ -555,7 +560,7 @@ where
 
                 pattern_map
                     .entry(pattern_seq)
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(start_idx);
             }
         }
