@@ -9,12 +9,14 @@ members = [
 ]
 exclude = ["npm-wasm"]
 
-# Per ADR-0034. Initial rollout is conservative: only lints that the
-# existing codebase already passes are added, so this PR lands as a
-# pure policy change with zero source modifications required.
-# Subsequent ADR-0034 follow-ups tighten the bar (clippy::pedantic,
-# unwrap_used/expect_used/panic, missing_docs, broken_intra_doc_links)
-# as the relevant remediation lands.
+# Per ADR-0034. Second-phase rollout: now that the workspace passes
+# `cargo clippy -- -D warnings` clean (PR #48 cleared the four
+# pre-existing `clippy::all` hits), the previously-`warn` foot-gun
+# lints get promoted to `deny`. Higher-impact lints
+# (clippy::pedantic, unwrap_used, expect_used, panic, missing_docs,
+# broken_intra_doc_links) are still deferred — each requires its
+# own targeted cleanup PR before we can flip it without breaking
+# `-D warnings` CI.
 #
 # Per-crate `[lints] workspace = true` inherits this table.
 [workspace.lints.rust]
@@ -28,12 +30,15 @@ unsafe_code = "deny"
 unused_must_use = "deny"
 
 [workspace.lints.clippy]
-# Footgun macros. None of these are intentional in production code.
-# `warn` so they show up in PR review without blocking; promote to
-# `deny` after the workspace-wide lint sweep ADR follow-up.
-dbg_macro = "warn"
-todo = "warn"
-unimplemented = "warn"
+# Footgun macros. Verified zero hits across `crates/*/src/` and
+# `src/` (PR #15 audit) — promoted from warn -> deny so any future
+# regression fails CI.
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+# Calls `std::mem::forget` on something that owns resources -
+# almost always a bug. Verified zero hits in workspace code.
+mem_forget = "deny"
 
 [package]
 name = "midstream"
