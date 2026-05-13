@@ -1,0 +1,246 @@
+# Getting Started with midstream
+
+- **Status:** current as of 2026-05-13
+- **Audience:** new contributors and integrators going from zero to a
+  working local build.
+- **Supersedes:** the pre-2026-05-13 quick-start guides archived under
+  [`archive/2026-pre-cleanup/`](archive/2026-pre-cleanup/). The
+  surviving `QUICK_START.md`, `QUICK_TEST_GUIDE.md`,
+  `QUICK_BENCHMARK_GUIDE.md`, `INTEGRATION_TEST_GUIDE.md`, and
+  `BENCHMARK_GUIDE.md` continue to exist for now but are due for
+  consolidation into this file in the ADR-0020 second-pass sweep.
+
+This document is a single linear path: prerequisites → clone → build
+→ test → run an example → contribute. If you only have five minutes,
+read Section 2.
+
+---
+
+## 1. Prerequisites
+
+| Requirement | Minimum | Why |
+|---|---|---|
+| **Rust toolchain** | 1.81 (the project's MSRV per [ADR-0023](adr/0023-msrv-policy.md)) | Workspace declares `rust-version = "1.81"` |
+| **Cargo** | bundled with rustc | Build system |
+| **Git** | any recent | Cloning, working tree |
+| **C compiler** | gcc / clang on Unix, MSVC on Windows | A few transitive deps (zstd, ring) build C code |
+| **Node.js** | 18 LTS or 20+ | Only if you touch the TypeScript packages under `npm/`, `npm-wasm/`, `lean-agentic-js/` |
+| **pnpm** | 9+ (`corepack enable pnpm`) | After [ADR-0026](adr/0026-typescript-monorepo.md) lands; for now plain `npm` works in each package |
+| **wasm-pack** | 0.12+ | Only if you touch the WASM crates |
+
+Install Rust:
+
+```bash
+# rustup is the standard installer; instructions at https://rustup.rs/
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup default 1.81           # match the project MSRV
+rustup component add clippy rustfmt
+```
+
+## 2. The five-minute path
+
+```bash
+# 1. Clone.
+git clone https://github.com/ruvnet/midstream.git
+cd midstream
+
+# 2. Build the publishable workspace.
+#    `--exclude midstream` and `--exclude hyprstream` are temporarily
+#    needed only on pre-PR-13/14 checkouts; on current main they can
+#    be dropped.
+cargo check --workspace --exclude midstream --exclude hyprstream
+
+# 3. Run the unit tests.
+cargo test  --workspace --exclude midstream --exclude hyprstream --lib
+
+# 4. (Optional) Run the bench harness — see Section 5.
+cargo bench --workspace --no-run
+
+# 5. Read the canonical docs to know what's where:
+#    - this file
+#    - docs/ARCHITECTURE.md
+#    - docs/SECURITY.md
+#    - docs/adr/README.md   (decision history)
+```
+
+That's it. You're set up.
+
+## 3. Repository orientation
+
+Once you're built, the two minutes of orientation:
+
+- **`docs/ARCHITECTURE.md`** — what midstream is and how the
+  pieces fit together. Read this before touching `src/` or
+  `crates/*/src/`.
+- **`docs/adr/README.md`** — every architectural decision with a
+  pointer to the implementing PR. Read this before challenging the
+  shape of anything.
+- **`CONTRIBUTING.md`** — DCO sign-off, branch naming, conventional
+  commits, build/test cheat sheet.
+- **`SECURITY.md`** (repo root) — how to report a vulnerability.
+- **`docs/SECURITY.md`** — what midstream defends against (and
+  doesn't).
+- **`docs/archive/2026-pre-cleanup/README.md`** — what got moved
+  there and why, so you don't waste time on a stale report.
+
+## 4. The Rust workspace
+
+Six published crates plus the root binary:
+
+| Crate                              | Tier | What it does |
+|------------------------------------|------|--------------|
+| `midstreamer-temporal-compare`     | beta | DTW, LCS, edit-distance, pattern detection |
+| `midstreamer-scheduler`            | beta | priority queue + deadline scheduling |
+| `midstreamer-quic`                 | alpha | QUIC multi-stream over `quinn` |
+| `midstreamer-attractor`            | alpha | Lyapunov / chaos analysis |
+| `midstreamer-neural-solver`        | alpha | LTL verification with neural reasoning |
+| `midstreamer-strange-loop`         | alpha | meta-learning / self-reference (apex of the DAG) |
+| `midstream` (top-level)            | alpha | streaming pipeline binary + lib |
+
+Build a single crate:
+
+```bash
+cargo check -p midstreamer-temporal-compare
+cargo test  -p midstreamer-temporal-compare --lib
+```
+
+Build everything but the top-level binary (useful while
+[ADR-0005](adr/0005-deduplicate-lean-agentic.md) lean_agentic
+dedup is in flight):
+
+```bash
+cargo check --workspace --exclude midstream
+```
+
+## 5. Benchmarks
+
+Bench harness uses `criterion`:
+
+```bash
+# Quick — no run, just compile-check the benches.
+cargo bench --workspace --no-run
+
+# Full — every bench in every crate.
+cargo bench --workspace
+
+# A specific crate.
+cargo bench -p midstreamer-temporal-compare
+
+# A specific bench.
+cargo bench -p midstreamer-scheduler -- schedule_overhead
+```
+
+**Caveat**: per [ADR-0009](adr/0009-honest-benchmarks.md), several
+headline benchmark numbers in the README and the archived
+`docs/BENCHMARK_*.md` reports were measured against in-memory
+mocks or included struct-construction overhead. Treat any number
+not regenerated by the upcoming criterion rewrite with caution.
+The bench harness *runs*, but the contracts (`docs/BENCHMARKS.md`
+once ADR-0009 lands) will be the authoritative reference.
+
+## 6. Integration tests
+
+```bash
+cargo test --workspace --test '*'
+```
+
+Specific test files live under each crate's `tests/`:
+
+```bash
+cargo test -p midstreamer-temporal-compare --test compare_integration
+```
+
+[ADR-0038](adr/0038-fuzz-and-property-tests.md) will add `proptest`
+and `cargo-fuzz` baselines in a follow-up. Today's coverage is
+unit-test + integration-test only.
+
+## 7. The TypeScript packages
+
+Three npm packages live in-tree (post-ADR-0026 they move under
+`packages/`):
+
+| Today's path           | Package name              |
+|------------------------|---------------------------|
+| `npm/`                 | `midstream-cli`           |
+| `npm-wasm/`            | `@midstream/wasm`         |
+| `lean-agentic-js/`     | `@midstream/lean-agentic` |
+
+Each builds the same way today:
+
+```bash
+cd npm  &&  npm install  &&  npm run build
+cd npm-wasm  &&  npm install  &&  npm run build       # needs wasm-pack
+cd lean-agentic-js  &&  npm install  &&  npm run build
+```
+
+After [ADR-0026](adr/0026-typescript-monorepo.md) lands you switch
+to `pnpm -r build` from the repo root.
+
+## 8. Running the example binary
+
+The top-level `midstream` binary compiles by default on current
+main (post-PR-13 un-vendor + post-PR-14 lean_agentic gating):
+
+```bash
+cargo run --bin midstream
+```
+
+It uses `ExampleLLMClient` (a canned-response stub) by default;
+provide a real provider via the patterns in `examples/openrouter.rs`
+or `examples/lean_agentic_streaming.rs`.
+
+For the streaming-with-OpenRouter example:
+
+```bash
+export OPENROUTER_API_KEY=...
+cargo run --example openrouter
+```
+
+## 9. CI / local-CI parity
+
+Two GitHub Actions workflows fire on every PR:
+
+- `.github/workflows/rust-ci.yml` — format, clippy, msrv (1.81),
+  test (Linux+macOS+Windows × stable+nightly), build-crates, wasm,
+  docs, security, coverage.
+- `.github/workflows/audit.yml` — `cargo-audit` (hard gate) +
+  `cargo-deny` (advisories / bans / licenses / sources;
+  `continue-on-error` during rollout, see
+  [ADR-0014](adr/0014-supply-chain-pinning.md)).
+
+Reproduce locally:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace --lib
+cargo audit
+cargo deny check          # if you have cargo-deny installed
+```
+
+[ADR-0037](adr/0037-xtask-build-automation.md) introduces
+`cargo xtask ci` as the single command that runs every CI gate
+locally — implementation follow-up.
+
+## 10. Common gotchas
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `error: failed to select a version for the requirement` | Old toolchain | `rustup update; rustup default 1.81` |
+| `cargo check -p midstream` fails with `unresolved import knowledge::TheoremStore` etc. | Building the legacy `lean_agentic` subsystem | Don't enable `--features lean-agentic`; the default build doesn't compile that code ([ADR-0005](adr/0005-deduplicate-lean-agentic.md)) |
+| QUIC bench fails with TLS errors | Bench uses self-signed certs | Enable `--features insecure-dev-only-skip-server-verification` on the bench crate (per [ADR-0011](adr/0011-quic-tls-verification.md)) |
+| `cargo audit` reports advisories | Old `Cargo.lock` | `cargo update` and re-run; advisory ignore list in `deny.toml` with ADR-tracked expiries |
+| WASM build fails with "linker `wasm-ld` not found" | Missing `wasm32-unknown-unknown` target | `rustup target add wasm32-unknown-unknown` |
+| `pnpm: command not found` | Corepack disabled | `corepack enable pnpm` |
+
+## 11. Where to go next
+
+- **Contributing**: [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
+- **Decision history**: [`adr/README.md`](adr/README.md).
+- **Code of Conduct**: [`../CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md).
+- **Security**: [`../SECURITY.md`](../SECURITY.md) (reporting) and
+  [`SECURITY.md`](SECURITY.md) (posture).
+- **Governance**: [`../GOVERNANCE.md`](../GOVERNANCE.md).
+
+If you find anything wrong in this doc, send a PR — it ages quickly
+because the repo is moving fast.
