@@ -7,19 +7,20 @@
 //! 
 //! ```rust,no_run
 //! use midstream::{Midstream, HyprSettings, HyprServiceImpl, StreamProcessor, LLMClient};
+//! use bytes::Bytes;
 //! use futures::stream::BoxStream;
 //! use futures::stream::iter;
 //! use std::time::Duration;
-//! 
+//!
 //! // Example LLM client implementation
 //! struct ExampleLLMClient;
-//! 
+//!
 //! impl LLMClient for ExampleLLMClient {
-//!     fn stream(&self) -> BoxStream<'static, String> {
+//!     fn stream(&self) -> BoxStream<'static, Bytes> {
 //!         Box::pin(iter(vec![
-//!             "Processing".to_string(),
-//!             "the".to_string(),
-//!             "stream".to_string(),
+//!             Bytes::from_static(b"Processing"),
+//!             Bytes::from_static(b"the"),
+//!             Bytes::from_static(b"stream"),
 //!         ]))
 //!     }
 //! }
