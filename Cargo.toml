@@ -6,6 +6,19 @@ members = [
     "crates/temporal-attractor-studio",
     "crates/temporal-neural-solver",
     "crates/strange-loop",
+    "xtask",
+]
+# `xtask` is excluded from default-members so `cargo check / build`
+# without an explicit `-p` flag doesn't compile it (it's a chore
+# runner, not a published crate). Invoke via the alias in
+# `.cargo/config.toml`: `cargo xtask <cmd>`.
+default-members = [
+    "crates/quic-multistream",
+    "crates/temporal-compare",
+    "crates/nanosecond-scheduler",
+    "crates/temporal-attractor-studio",
+    "crates/temporal-neural-solver",
+    "crates/strange-loop",
 ]
 exclude = ["npm-wasm"]
 

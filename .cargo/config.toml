@@ -1,0 +1,10 @@
+# Cargo aliases.
+#
+# Per ADR-0037, the chore-command surface lives in the `xtask` crate
+# (workspace member at `xtask/`). `cargo xtask <cmd>` is the canonical
+# entry-point; `cargo xt <cmd>` is the same with a shorter prefix for
+# typing.
+
+[alias]
+xtask = "run --package xtask --release --"
+xt = "run --package xtask --release --"
