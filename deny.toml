@@ -80,6 +80,11 @@ allow = [
     "Zlib",
     "MPL-2.0",     # weak copyleft; acceptable on transitives
     "OpenSSL",     # legacy clause; only via deps that haven't migrated
+    # CDLA-Permissive-2.0 = Linux Foundation's permissive data
+    # licence (https://cdla.dev/permissive-2-0/). Used by
+    # `webpki-root-certs` for the Mozilla CA root corpus. OSI-
+    # approved-equivalent permissive; safe alongside MIT/Apache.
+    "CDLA-Permissive-2.0",
 ]
 # GPL / AGPL / SSPL are forbidden by omission from `allow` above;
 # cargo-deny v0.16+ removed the explicit `deny` key and now derives
