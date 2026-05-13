@@ -61,6 +61,13 @@ pub mod config;
 pub mod midstream;
 pub mod hypr_service;
 pub mod tests;
+
+// `lean_agentic` is the legacy in-tree subsystem that ADR-0005 retires.
+// It currently fails to compile and duplicates functionality in the
+// `midstreamer-*` workspace crates. Gated off-by-default until the
+// dedup refactor lands; consumers wanting the old API still build with
+// `--features lean-agentic` and accept the broken-build risk.
+#[cfg(feature = "lean-agentic")]
 pub mod lean_agentic;
 
 pub use config::HyprSettings;
@@ -78,7 +85,10 @@ pub use midstream::{
 };
 pub use hypr_service::HyprServiceImpl;
 
-// Lean Agentic Learning System exports
+// Lean Agentic Learning System exports — gated behind the same feature.
+// Once ADR-0005's dedup ships, the canonical home for these types is
+// the published `midstreamer-*` crates; this re-export block goes away.
+#[cfg(feature = "lean-agentic")]
 pub use lean_agentic::{
     LeanAgenticSystem,
     LeanAgenticConfig,

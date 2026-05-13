@@ -37,12 +37,23 @@ unimplemented = "warn"
 
 [package]
 name = "midstream"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.81"
 description = "Real-time LLM streaming with inflight analysis"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ruvnet/midstream"
+
+# Per ADR-0005, the in-tree `src/lean_agentic/` subsystem duplicates
+# (and silently diverges from) the published `midstreamer-*` workspace
+# crates. It also currently fails to compile (~27 errors across
+# knowledge.rs / optimized.rs / strange_loop.rs / temporal_neural.rs
+# / etc.). The full clean-up is a major refactor; in the meantime we
+# expose it behind an off-by-default feature so the core `midstream`
+# binary + library compile against the published API contract.
+[features]
+default = []
+lean-agentic = []
 
 [dependencies]
 # `hyprstream`, `arrow`, and `arrow-flight` were declared here but never
