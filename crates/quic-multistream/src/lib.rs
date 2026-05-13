@@ -132,22 +132,19 @@ impl From<wasm_bindgen::JsValue> for QuicError {
 
 /// Stream priority for quality-of-service control
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default)]
 pub enum StreamPriority {
     /// Critical priority (highest)
     Critical = 0,
     /// High priority
     High = 1,
     /// Normal priority (default)
+    #[default]
     Normal = 2,
     /// Low priority
     Low = 3,
 }
 
-impl Default for StreamPriority {
-    fn default() -> Self {
-        StreamPriority::Normal
-    }
-}
 
 impl fmt::Display for StreamPriority {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

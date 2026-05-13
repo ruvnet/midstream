@@ -124,7 +124,13 @@ impl TemporalFormula {
         }
     }
 
-    /// Create a Not formula (¬φ)
+    /// Create a Not formula (¬φ).
+    ///
+    /// Named `not` for symmetry with the other LTL constructors
+    /// (`and`, `or`, `globally`, `eventually`, ...). This is *not*
+    /// `std::ops::Not::not`; that trait expects a `Self -> Self`
+    /// unary operator and this constructor takes a `TemporalFormula`.
+    #[allow(clippy::should_implement_trait)]
     pub fn not(formula: TemporalFormula) -> Self {
         TemporalFormula::Unary {
             op: TemporalOperator::Not,

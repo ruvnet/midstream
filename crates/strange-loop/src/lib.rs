@@ -217,7 +217,7 @@ impl StrangeLoop {
         // Store meta-knowledge
         self.meta_knowledge
             .entry(level)
-            .or_insert_with(Vec::new)
+            .or_default()
             .extend(patterns.clone());
 
         // If not at max depth, meta-learn from this level
