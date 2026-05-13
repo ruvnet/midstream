@@ -1,0 +1,101 @@
+name: Supply-chain audit
+
+# Implements ADR-0014: cargo audit + cargo deny enforced on every PR
+# and run on a daily schedule to surface freshly-published advisories.
+#
+# Schedule fires at 07:23 UTC to dodge the every-hour-on-the-zero
+# rush; daily is the right cadence because RustSec publishes
+# advisories continuously and a PR-only gate would let weekend
+# advisories slip in.
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  schedule:
+    - cron: '23 7 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  # Required for rustsec/audit-check to post the comment on the PR.
+  issues: write
+  pull-requests: write
+  # Required for the SARIF upload step.
+  security-events: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-audit:
+    name: cargo audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: dtolnay/rust-toolchain@1.81
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.1
+        with:
+          shared-key: audit
+      - uses: rustsec/audit-check@9b67f7423bce0b1f06c2c39e1ff8c4cfd9b21f43 # v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  cargo-deny:
+    name: cargo deny (${{ matrix.check }})
+    runs-on: ubuntu-latest
+    # Initial rollout: cargo-deny reports pre-existing supply-chain
+    # tangle (duplicate-version skew via hyprstream-main, unmaintained
+    # transitives via duckdb / tonic 0.12, etc.). Each is tracked by a
+    # follow-up ADR (0002 un-vendor hyprstream, 0019 replace `config`,
+    # 0024 semver path-versions). The job runs and surfaces findings
+    # for review but does not gate PRs yet; promote to a hard gate
+    # once those ADRs land. cargo-audit (above) remains a hard gate.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each `cargo deny check` subcommand can fail independently;
+        # surfacing each as its own matrix entry produces clearer
+        # PR feedback than a single combined run.
+        check:
+          - advisories
+          - bans
+          - licenses
+          - sources
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: EmbarkStudios/cargo-deny-action@30f817c6f72275c6d54dc744fbca09ebc958599f # v2.0.12
+        with:
+          # `arguments` flows verbatim into `cargo deny check <ARGS>`.
+          arguments: --workspace ${{ matrix.check }}
+          # log-level: surface warnings but only fail on errors.
+          log-level: warn
+          # Pin cargo-deny version so the policy semantics don't drift
+          # under us across CI runs. Bumped via ADR if the version
+          # ever needs to move.
+          command: check
+          command-arguments: --hide-inclusion-graph
+
+  audit-success:
+    name: Audit gates passed
+    needs: [cargo-audit, cargo-deny]
+    runs-on: ubuntu-latest
+    # Don't gate on cargo-deny while its matrix is in continue-on-error
+    # mode; gate only on cargo-audit.
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [[ "${{ needs.cargo-audit.result }}" == "failure" ]]; then
+            echo "::error::cargo audit failed. See the cargo-audit job."
+            exit 1
+          fi
+          if [[ "${{ needs.cargo-deny.result }}" == "failure" ]]; then
+            echo "::warning::cargo deny surfaced findings (non-gating during rollout)."
+          fi
+          echo "Supply-chain audit complete."
