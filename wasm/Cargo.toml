@@ -3,6 +3,8 @@ name = "lean-agentic-wasm"
 version = "1.0.0"
 edition = "2021"
 description = "WASM bindings for Lean Agentic Learning System with WebSocket and SSE support"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ruvnet/midstream"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

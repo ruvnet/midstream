@@ -41,7 +41,7 @@
     "performance"
   ],
   "author": "Midstream Contributors",
-  "license": "MIT",
+  "license": "(MIT OR Apache-2.0)",
   "dependencies": {
     "@peculiar/webcrypto": "^1.4.3"
   },

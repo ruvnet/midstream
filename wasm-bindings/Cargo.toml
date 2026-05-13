@@ -3,6 +3,8 @@ name = "midstream-wasm"
 version = "0.1.0"
 edition = "2021"
 description = "WASM bindings for MidStream Lean Agentic Learning System"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ruvnet/midstream"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

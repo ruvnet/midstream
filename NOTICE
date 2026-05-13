@@ -1,0 +1,31 @@
+midstream
+=========
+
+Copyright (c) 2026 rUv and the midstream contributors.
+
+midstream is dual-licensed under the terms of either of:
+
+  * the MIT License (see `LICENSE-MIT`), or
+  * the Apache License, Version 2.0 (see `LICENSE-APACHE`),
+
+at the consumer's option. By using, modifying, or distributing this
+software you accept the terms of one of these two licences.
+
+Unless you explicitly state otherwise, any contribution intentionally
+submitted for inclusion in this project by you, as defined in the
+Apache-2.0 licence, shall be dual licensed as above, without any
+additional terms or conditions. Contributions must carry a
+`Signed-off-by:` trailer per the Developer Certificate of Origin
+(<https://developercertificate.org/>) — there is no CLA.
+
+The MIT/Apache-2.0 dual licence matches the Rust ecosystem convention
+followed by the standard library, tokio, serde, and most published
+crates. See `docs/adr/0036-license-reconciliation.md` for the
+rationale.
+
+Third-party code carried in this repository under its own licence:
+
+  * `hyprstream-main/`  - vendored copy of the upstream `hyprstream`
+                          crate, distributed under the Apache License,
+                          Version 2.0. See `hyprstream-main/LICENSE`.
+                          Subject to retirement per ADR-0002.

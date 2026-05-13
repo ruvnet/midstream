@@ -14,6 +14,8 @@ name = "midstream"
 version = "0.1.0"
 edition = "2021"
 description = "Real-time LLM streaming with inflight analysis"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ruvnet/midstream"
 
 [dependencies]
 hyprstream = { path = "hyprstream-main" }
