@@ -1,6 +1,6 @@
 [package]
 name = "midstreamer-attractor"
-version = "0.1.1"
+version = "0.2.1"
 edition = "2021"
 rust-version = "1.81"
 description = "Dynamical systems and strange attractors analysis"
@@ -13,7 +13,7 @@ categories = ["algorithms", "science", "visualization"]
 workspace = true
 
 [dependencies]
-midstreamer-temporal-compare = { version = "0.1.1", path = "../temporal-compare" }
+midstreamer-temporal-compare = { version = "0.2.1", path = "../temporal-compare" }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
 nalgebra = "0.33"

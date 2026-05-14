@@ -1,6 +1,6 @@
 [package]
 name = "midstreamer-quic"
-version = "0.1.1"
+version = "0.2.1"
 edition = "2021"
 rust-version = "1.81"
 description = "QUIC multi-stream support for native and WASM targets"
