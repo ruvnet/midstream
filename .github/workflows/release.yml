@@ -248,7 +248,11 @@ jobs:
           shared-key: "docs-release"
 
       - name: Build documentation
-        run: cargo doc --workspace --all-features --no-deps
+        # Same midstream/hyprstream exclusion as rust-ci.yml's docs +
+        # release.yml's verify step: `--all-features` enables the
+        # off-by-default `lean-agentic` feature, which hits 27 errors
+        # in src/lean_agentic/. ADR-0005 deprecates that module.
+        run: cargo doc --workspace --exclude midstream --exclude hyprstream --all-features --no-deps
 
       - name: Add version badge to docs
         run: |
