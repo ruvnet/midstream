@@ -1,10 +1,10 @@
 //! Agentic loop for autonomous decision-making (Plan-Act-Observe-Learn)
 
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use async_trait::async_trait;
 
-use super::types::{Context, AgentState, Goal, Policy, Reward};
+use super::types::{AgentState, Context, Goal, Policy, Reward};
 use super::LeanAgenticConfig;
 
 /// Agentic loop orchestrator
@@ -57,7 +57,11 @@ impl AgenticLoop {
         let ranked_actions = self.rank_actions(actions).await;
 
         // Add top actions to plan
-        for (i, action) in ranked_actions.iter().take(self.config.max_planning_depth).enumerate() {
+        for (i, action) in ranked_actions
+            .iter()
+            .take(self.config.max_planning_depth)
+            .enumerate()
+        {
             plan.steps.push(PlanStep {
                 sequence: i,
                 action: action.clone(),
@@ -66,7 +70,8 @@ impl AgenticLoop {
             });
         }
 
-        plan.estimated_reward = ranked_actions.first()
+        plan.estimated_reward = ranked_actions
+            .first()
             .map(|a| a.expected_reward)
             .unwrap_or(0.0);
 
@@ -125,8 +130,12 @@ impl AgenticLoop {
         };
 
         // Check if similar policy exists
-        if let Some(existing) = self.state.policies.iter_mut()
-            .find(|p| p.action == policy.action) {
+        if let Some(existing) = self
+            .state
+            .policies
+            .iter_mut()
+            .find(|p| p.action == policy.action)
+        {
             // Update existing policy with exponential moving average
             existing.expected_reward = 0.9 * existing.expected_reward + 0.1 * signal.reward;
             existing.usage_count += 1;
@@ -151,9 +160,7 @@ impl AgenticLoop {
             candidates.push(Action {
                 action_type: "get_weather".to_string(),
                 description: "Fetch weather information".to_string(),
-                parameters: HashMap::from([
-                    ("query".to_string(), input.to_string()),
-                ]),
+                parameters: HashMap::from([("query".to_string(), input.to_string())]),
                 tool_calls: vec!["weather_api".to_string()],
                 expected_outcome: Some("Weather data".to_string()),
                 expected_reward: 0.8,
@@ -164,9 +171,7 @@ impl AgenticLoop {
             candidates.push(Action {
                 action_type: "update_knowledge".to_string(),
                 description: "Update knowledge graph".to_string(),
-                parameters: HashMap::from([
-                    ("content".to_string(), input.to_string()),
-                ]),
+                parameters: HashMap::from([("content".to_string(), input.to_string())]),
                 tool_calls: vec![],
                 expected_outcome: Some("Knowledge updated".to_string()),
                 expected_reward: 0.9,
@@ -177,9 +182,7 @@ impl AgenticLoop {
         candidates.push(Action {
             action_type: "process_text".to_string(),
             description: format!("Process: {}", input),
-            parameters: HashMap::from([
-                ("text".to_string(), input.to_string()),
-            ]),
+            parameters: HashMap::from([("text".to_string(), input.to_string())]),
             tool_calls: vec![],
             expected_outcome: Some("Processed text".to_string()),
             expected_reward: 0.5,
@@ -191,12 +194,18 @@ impl AgenticLoop {
     async fn rank_actions(&self, mut actions: Vec<Action>) -> Vec<Action> {
         // Sort by expected reward and learned policies
         actions.sort_by(|a, b| {
-            let a_boost = self.state.policies.iter()
+            let a_boost = self
+                .state
+                .policies
+                .iter()
                 .find(|p| p.action == a.action_type)
                 .map(|p| p.expected_reward)
                 .unwrap_or(0.0);
 
-            let b_boost = self.state.policies.iter()
+            let b_boost = self
+                .state
+                .policies
+                .iter()
                 .find(|p| p.action == b.action_type)
                 .map(|p| p.expected_reward)
                 .unwrap_or(0.0);

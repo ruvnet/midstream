@@ -98,10 +98,7 @@ fn formula_strategy() -> impl Strategy<Value = TemporalFormula> {
 
 const PROPS: &[&str] = &["p", "q", "r"];
 
-fn verify_satisfied(
-    solver: &TemporalNeuralSolver,
-    formula: &TemporalFormula,
-) -> bool {
+fn verify_satisfied(solver: &TemporalNeuralSolver, formula: &TemporalFormula) -> bool {
     solver.verify(formula).map(|r| r.satisfied).unwrap_or(false)
 }
 

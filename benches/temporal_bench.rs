@@ -12,12 +12,10 @@
 //! - LCS n=100: <5ms
 //! - Edit distance n=100: <3ms
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_temporal_compare::{
-    TemporalCompare, TemporalData, TemporalPattern, CachedCompare,
-    dtw::dtw_distance,
-    lcs::longest_common_subsequence,
-    edit::edit_distance,
+    dtw::dtw_distance, edit::edit_distance, lcs::longest_common_subsequence, CachedCompare,
+    TemporalCompare, TemporalData, TemporalPattern,
 };
 
 // ============================================================================
@@ -64,52 +62,25 @@ fn bench_dtw_various_sizes(c: &mut Criterion) {
         group.throughput(Throughput::Elements(*size as u64));
 
         // Linear sequences
-        group.bench_with_input(
-            BenchmarkId::new("linear", size),
-            size,
-            |b, &size| {
-                let seq1 = generate_sequence(size, "linear");
-                let seq2 = generate_similar_sequence(&seq1, 0.9);
-                b.iter(|| {
-                    black_box(dtw_distance(
-                        black_box(&seq1),
-                        black_box(&seq2)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("linear", size), size, |b, &size| {
+            let seq1 = generate_sequence(size, "linear");
+            let seq2 = generate_similar_sequence(&seq1, 0.9);
+            b.iter(|| black_box(dtw_distance(black_box(&seq1), black_box(&seq2))));
+        });
 
         // Sine wave sequences
-        group.bench_with_input(
-            BenchmarkId::new("sine", size),
-            size,
-            |b, &size| {
-                let seq1 = generate_sequence(size, "sine");
-                let seq2 = generate_similar_sequence(&seq1, 0.9);
-                b.iter(|| {
-                    black_box(dtw_distance(
-                        black_box(&seq1),
-                        black_box(&seq2)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("sine", size), size, |b, &size| {
+            let seq1 = generate_sequence(size, "sine");
+            let seq2 = generate_similar_sequence(&seq1, 0.9);
+            b.iter(|| black_box(dtw_distance(black_box(&seq1), black_box(&seq2))));
+        });
 
         // Random sequences (worst case)
-        group.bench_with_input(
-            BenchmarkId::new("random", size),
-            size,
-            |b, &size| {
-                let seq1 = generate_sequence(size, "random");
-                let seq2 = generate_sequence(size, "random");
-                b.iter(|| {
-                    black_box(dtw_distance(
-                        black_box(&seq1),
-                        black_box(&seq2)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("random", size), size, |b, &size| {
+            let seq1 = generate_sequence(size, "random");
+            let seq2 = generate_sequence(size, "random");
+            b.iter(|| black_box(dtw_distance(black_box(&seq1), black_box(&seq2))));
+        });
     }
 
     group.finish();
@@ -126,13 +97,8 @@ fn bench_dtw_similarity_variations(c: &mut Criterion) {
             similarity,
             |b, &sim| {
                 let seq2 = generate_similar_sequence(&base_seq, sim);
-                b.iter(|| {
-                    black_box(dtw_distance(
-                        black_box(&base_seq),
-                        black_box(&seq2)
-                    ))
-                });
-            }
+                b.iter(|| black_box(dtw_distance(black_box(&base_seq), black_box(&seq2))));
+            },
         );
     }
 
@@ -149,49 +115,32 @@ fn bench_lcs_various_sizes(c: &mut Criterion) {
     for size in [10, 50, 100, 500, 1000].iter() {
         group.throughput(Throughput::Elements(*size as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("identical", size),
-            size,
-            |b, &size| {
-                let seq = generate_string_sequence(size, 26);
-                b.iter(|| {
-                    black_box(longest_common_subsequence(
-                        black_box(&seq),
-                        black_box(&seq)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("identical", size), size, |b, &size| {
+            let seq = generate_string_sequence(size, 26);
+            b.iter(|| black_box(longest_common_subsequence(black_box(&seq), black_box(&seq))));
+        });
 
-        group.bench_with_input(
-            BenchmarkId::new("similar", size),
-            size,
-            |b, &size| {
-                let seq1 = generate_string_sequence(size, 26);
-                let seq2 = generate_string_sequence(size + 10, 26);
-                b.iter(|| {
-                    black_box(longest_common_subsequence(
-                        black_box(&seq1),
-                        black_box(&seq2)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("similar", size), size, |b, &size| {
+            let seq1 = generate_string_sequence(size, 26);
+            let seq2 = generate_string_sequence(size + 10, 26);
+            b.iter(|| {
+                black_box(longest_common_subsequence(
+                    black_box(&seq1),
+                    black_box(&seq2),
+                ))
+            });
+        });
 
-        group.bench_with_input(
-            BenchmarkId::new("different", size),
-            size,
-            |b, &size| {
-                let seq1 = generate_string_sequence(size, 4);
-                let seq2 = generate_string_sequence(size, 4);
-                b.iter(|| {
-                    black_box(longest_common_subsequence(
-                        black_box(&seq1),
-                        black_box(&seq2)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("different", size), size, |b, &size| {
+            let seq1 = generate_string_sequence(size, 4);
+            let seq2 = generate_string_sequence(size, 4);
+            b.iter(|| {
+                black_box(longest_common_subsequence(
+                    black_box(&seq1),
+                    black_box(&seq2),
+                ))
+            });
+        });
     }
 
     group.finish();
@@ -213,13 +162,8 @@ fn bench_edit_distance_various_sizes(c: &mut Criterion) {
             |b, &size| {
                 let seq1 = generate_string_sequence(size, 4);
                 let seq2 = generate_string_sequence(size + 5, 4);
-                b.iter(|| {
-                    black_box(edit_distance(
-                        black_box(&seq1),
-                        black_box(&seq2)
-                    ))
-                });
-            }
+                b.iter(|| black_box(edit_distance(black_box(&seq1), black_box(&seq2))));
+            },
         );
 
         group.bench_with_input(
@@ -228,13 +172,8 @@ fn bench_edit_distance_various_sizes(c: &mut Criterion) {
             |b, &size| {
                 let seq1 = generate_string_sequence(size, 26);
                 let seq2 = generate_string_sequence(size + 5, 26);
-                b.iter(|| {
-                    black_box(edit_distance(
-                        black_box(&seq1),
-                        black_box(&seq2)
-                    ))
-                });
-            }
+                b.iter(|| black_box(edit_distance(black_box(&seq1), black_box(&seq2))));
+            },
         );
     }
 
@@ -252,12 +191,7 @@ fn bench_edit_distance_operations(c: &mut Criterion) {
         for i in (0..20).rev() {
             modified.insert(i * 5, 'X');
         }
-        b.iter(|| {
-            black_box(edit_distance(
-                black_box(&base),
-                black_box(&modified)
-            ))
-        });
+        b.iter(|| black_box(edit_distance(black_box(&base), black_box(&modified))));
     });
 
     // Deletion heavy
@@ -268,12 +202,7 @@ fn bench_edit_distance_operations(c: &mut Criterion) {
                 modified.remove(modified.len() / 2);
             }
         }
-        b.iter(|| {
-            black_box(edit_distance(
-                black_box(&base),
-                black_box(&modified)
-            ))
-        });
+        b.iter(|| black_box(edit_distance(black_box(&base), black_box(&modified))));
     });
 
     // Substitution heavy
@@ -284,12 +213,7 @@ fn bench_edit_distance_operations(c: &mut Criterion) {
                 modified[i] = 'Z';
             }
         }
-        b.iter(|| {
-            black_box(edit_distance(
-                black_box(&base),
-                black_box(&modified)
-            ))
-        });
+        b.iter(|| black_box(edit_distance(black_box(&base), black_box(&modified))));
     });
 
     group.finish();
@@ -311,12 +235,7 @@ fn bench_cache_scenarios(c: &mut Criterion) {
         // Warm up cache
         cache.compare_dtw(&seq1, &seq2);
 
-        b.iter(|| {
-            black_box(cache.compare_dtw(
-                black_box(&seq1),
-                black_box(&seq2)
-            ))
-        });
+        b.iter(|| black_box(cache.compare_dtw(black_box(&seq1), black_box(&seq2))));
     });
 
     // Cache miss scenario
@@ -330,28 +249,20 @@ fn bench_cache_scenarios(c: &mut Criterion) {
         b.iter(|| {
             idx = (idx + 1) % sequences.len();
             let idx2 = (idx + 1) % sequences.len();
-            black_box(cache.compare_dtw(
-                black_box(&sequences[idx]),
-                black_box(&sequences[idx2])
-            ))
+            black_box(cache.compare_dtw(black_box(&sequences[idx]), black_box(&sequences[idx2])))
         });
     });
 
     // Cache eviction scenario
     group.bench_function("cache_eviction", |b| {
         let mut cache = CachedCompare::new(50);
-        let sequences: Vec<_> = (0..100)
-            .map(|i| generate_sequence(100, "sine"))
-            .collect();
+        let sequences: Vec<_> = (0..100).map(|i| generate_sequence(100, "sine")).collect();
 
         let mut idx = 0;
         b.iter(|| {
             idx = (idx + 1) % sequences.len();
             let idx2 = (idx + 1) % sequences.len();
-            black_box(cache.compare_dtw(
-                black_box(&sequences[idx]),
-                black_box(&sequences[idx2])
-            ))
+            black_box(cache.compare_dtw(black_box(&sequences[idx]), black_box(&sequences[idx2])))
         });
     });
 

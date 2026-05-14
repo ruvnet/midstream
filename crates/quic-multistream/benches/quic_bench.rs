@@ -16,7 +16,7 @@
 //! - Concurrent streams: 100+ simultaneous
 //! - Priority handling: <1ms overhead
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_quic::{QuicConnection, StreamPriority};
 use quinn::{Endpoint, ServerConfig};
 use std::net::SocketAddr;
@@ -111,24 +111,20 @@ fn bench_stream_throughput(c: &mut Criterion) {
     for size in [1024, 65536, 1_048_576, 10_485_760].iter() {
         group.throughput(Throughput::Bytes(*size as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("single_stream", size),
-            size,
-            |b, &size| {
-                b.to_async(&rt).iter(|| async {
-                    let connection = QuicConnection::connect(&addr.to_string()).await.unwrap();
-                    let mut stream = connection.open_bi_stream().await.unwrap();
+        group.bench_with_input(BenchmarkId::new("single_stream", size), size, |b, &size| {
+            b.to_async(&rt).iter(|| async {
+                let connection = QuicConnection::connect(&addr.to_string()).await.unwrap();
+                let mut stream = connection.open_bi_stream().await.unwrap();
 
-                    let data = generate_data(size);
-                    let mut recv_buf = vec![0u8; size];
+                let data = generate_data(size);
+                let mut recv_buf = vec![0u8; size];
 
-                    stream.send(&data).await.unwrap();
-                    stream.recv(&mut recv_buf).await.unwrap();
+                stream.send(&data).await.unwrap();
+                stream.recv(&mut recv_buf).await.unwrap();
 
-                    black_box(recv_buf)
-                });
-            }
-        );
+                black_box(recv_buf)
+            });
+        });
     }
 
     group.finish();
@@ -209,7 +205,7 @@ fn bench_concurrent_streams(c: &mut Criterion) {
                     let results = futures::future::join_all(tasks).await;
                     black_box(results)
                 });
-            }
+            },
         );
     }
 
@@ -394,7 +390,7 @@ fn bench_stream_priorities(c: &mut Criterion) {
 
                     black_box(recv_buf)
                 });
-            }
+            },
         );
     }
 
@@ -410,7 +406,10 @@ fn bench_stream_priorities(c: &mut Criterion) {
                 let data = data.clone();
 
                 let task = async move {
-                    let mut stream = connection.open_bi_stream_with_priority(priority).await.unwrap();
+                    let mut stream = connection
+                        .open_bi_stream_with_priority(priority)
+                        .await
+                        .unwrap();
                     let mut recv_buf = vec![0u8; 4096];
                     stream.send(&data).await.unwrap();
                     stream.recv(&mut recv_buf).await.unwrap();
@@ -533,22 +532,18 @@ fn bench_unidirectional_streams(c: &mut Criterion) {
     for size in [1024, 65536, 1_048_576].iter() {
         group.throughput(Throughput::Bytes(*size as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("uni_stream", size),
-            size,
-            |b, &size| {
-                b.to_async(&rt).iter(|| async {
-                    let connection = QuicConnection::connect(&addr.to_string()).await.unwrap();
-                    let mut stream = connection.open_uni_stream().await.unwrap();
-                    let data = generate_data(size);
+        group.bench_with_input(BenchmarkId::new("uni_stream", size), size, |b, &size| {
+            b.to_async(&rt).iter(|| async {
+                let connection = QuicConnection::connect(&addr.to_string()).await.unwrap();
+                let mut stream = connection.open_uni_stream().await.unwrap();
+                let data = generate_data(size);
 
-                    stream.send(&data).await.unwrap();
-                    stream.finish().await.unwrap();
+                stream.send(&data).await.unwrap();
+                stream.finish().await.unwrap();
 
-                    black_box(())
-                });
-            }
-        );
+                black_box(())
+            });
+        });
     }
 
     group.finish();

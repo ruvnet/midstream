@@ -48,7 +48,10 @@ pub struct PhasePoint {
 
 impl PhasePoint {
     pub fn new(coordinates: Vec<f64>, timestamp: u64) -> Self {
-        Self { coordinates, timestamp }
+        Self {
+            coordinates,
+            timestamp,
+        }
     }
 
     pub fn dimension(&self) -> usize {
@@ -107,9 +110,10 @@ impl AttractorInfo {
     }
 
     pub fn max_lyapunov_exponent(&self) -> Option<f64> {
-        self.lyapunov_exponents.iter().copied().max_by(|a, b| {
-            a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
-        })
+        self.lyapunov_exponents
+            .iter()
+            .copied()
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
     }
 }
 
@@ -153,7 +157,9 @@ impl AttractorAnalyzer {
     /// Analyze the current trajectory
     pub fn analyze(&self) -> Result<AttractorInfo, AttractorError> {
         if self.trajectory.len() < self.min_points_for_analysis {
-            return Err(AttractorError::InsufficientData(self.min_points_for_analysis));
+            return Err(AttractorError::InsufficientData(
+                self.min_points_for_analysis,
+            ));
         }
 
         // Calculate Lyapunov exponents
@@ -198,7 +204,7 @@ impl AttractorAnalyzer {
             let mut count = 0;
 
             for i in 1..points.len() {
-                let diff = points[i].coordinates[dim] - points[i-1].coordinates[dim];
+                let diff = points[i].coordinates[dim] - points[i - 1].coordinates[dim];
                 if diff.abs() > 1e-10 {
                     sum_log_divergence += diff.abs().ln();
                     count += 1;
@@ -215,7 +221,8 @@ impl AttractorAnalyzer {
 
     /// Classify attractor based on Lyapunov exponents
     fn classify_attractor(&self, lyapunov_exponents: &[f64]) -> AttractorType {
-        let max_exponent = lyapunov_exponents.iter()
+        let max_exponent = lyapunov_exponents
+            .iter()
             .copied()
             .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
             .unwrap_or(0.0);
@@ -245,13 +252,14 @@ impl AttractorAnalyzer {
         let n = points.len();
 
         // Check for repeating patterns
-        for lag in 5..n/4 {
+        for lag in 5..n / 4 {
             let mut correlation = 0.0;
             let mut count = 0;
 
-            for i in 0..n-lag {
+            for i in 0..n - lag {
                 for dim in 0..self.embedding_dimension {
-                    let diff = (points[i].coordinates[dim] - points[i+lag].coordinates[dim]).abs();
+                    let diff =
+                        (points[i].coordinates[dim] - points[i + lag].coordinates[dim]).abs();
                     correlation += diff;
                     count += 1;
                 }
@@ -284,13 +292,13 @@ impl AttractorAnalyzer {
         for i in 1..points.len() {
             let mut distance = 0.0;
             for dim in 0..self.embedding_dimension {
-                let diff = points[i].coordinates[dim] - points[i-1].coordinates[dim];
+                let diff = points[i].coordinates[dim] - points[i - 1].coordinates[dim];
                 distance += diff * diff;
             }
             let segment_length = distance.sqrt();
             trajectory_length += segment_length;
 
-            let time_diff = (points[i].timestamp - points[i-1].timestamp) as f64;
+            let time_diff = (points[i].timestamp - points[i - 1].timestamp) as f64;
             if time_diff > 0.0 {
                 velocity_sum += segment_length / time_diff;
             }
@@ -367,10 +375,7 @@ mod tests {
 
         // Add some points
         for i in 0..150 {
-            let point = PhasePoint::new(
-                vec![i as f64, (i * 2) as f64],
-                i as u64 * 1000,
-            );
+            let point = PhasePoint::new(vec![i as f64, (i * 2) as f64], i as u64 * 1000);
             analyzer.add_point(point).unwrap();
         }
 
@@ -408,10 +413,7 @@ mod tests {
         let mut analyzer = AttractorAnalyzer::new(2, 1000);
 
         for i in 0..50 {
-            let point = PhasePoint::new(
-                vec![i as f64, i as f64],
-                i as u64 * 100,
-            );
+            let point = PhasePoint::new(vec![i as f64, i as f64], i as u64 * 100);
             analyzer.add_point(point).unwrap();
         }
 

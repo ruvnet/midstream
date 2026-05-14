@@ -1,11 +1,11 @@
-use midstream::{Midstream, HyprSettings, HyprServiceImpl, StreamProcessor, LLMClient};
 use bytes::Bytes;
+use dotenvy::dotenv;
+use eventsource_stream::Eventsource;
 use futures::stream::{BoxStream, StreamExt};
+use midstream::{HyprServiceImpl, HyprSettings, LLMClient, Midstream, StreamProcessor};
 use reqwest::Client;
 use serde_json::{json, Value};
 use std::time::Duration;
-use eventsource_stream::Eventsource;
-use dotenvy::dotenv;
 
 struct OpenRouterClient {
     client: Client,
@@ -26,15 +26,15 @@ impl LLMClient for OpenRouterClient {
         let prompt = "Tell me a short story about a robot learning to paint. Make it emotional and stream it word by word.".to_string();
         let client = self.client.clone();
         let api_key = self.api_key.clone();
-        
+
         Box::pin(async_stream::stream! {
             let url = "https://openrouter.ai/api/v1/chat/completions";
             let referer = std::env::var("OPENROUTER_REFERER").unwrap_or_else(|_| "http://localhost:3000".to_string());
             let model = std::env::var("OPENROUTER_MODEL").unwrap_or_else(|_| "anthropic/claude-2".to_string());
-            
+
             println!("Sending request to OpenRouter API...");
             println!("Model: {}", model);
-            
+
             let payload = json!({
                 "model": model,
                 "messages": [
@@ -56,7 +56,7 @@ impl LLMClient for OpenRouterClient {
                 .expect("Failed to send request");
 
             println!("Response status: {}", response.status());
-            
+
             let mut stream = response
                 .bytes_stream()
                 .eventsource()
@@ -107,37 +107,34 @@ impl LLMClient for OpenRouterClient {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables
     dotenv().ok();
-    
+
     // Get API key from environment
-    let api_key = std::env::var("OPENROUTER_API_KEY")
-        .expect("OPENROUTER_API_KEY must be set in .env file");
+    let api_key =
+        std::env::var("OPENROUTER_API_KEY").expect("OPENROUTER_API_KEY must be set in .env file");
 
     // Initialize settings
     let settings = HyprSettings::new()?;
-    
+
     // Create hyprstream service
     let hypr_service = HyprServiceImpl::new(&settings).await?;
-    
+
     // Create OpenRouter client
     let llm_client = OpenRouterClient::new(api_key);
-    
+
     // Initialize Midstream
-    let midstream = Midstream::new(
-        Box::new(llm_client),
-        Box::new(hypr_service),
-    );
-    
+    let midstream = Midstream::new(Box::new(llm_client), Box::new(hypr_service));
+
     println!("\nStreaming story from Claude-2...\n");
 
     // Process stream
     let messages = midstream.process_stream().await?;
-    
+
     println!("\nFinal story:");
     for msg in &messages {
         print!("{}", msg.content_str());
     }
     println!("\n");
-    
+
     // Get metrics
     let metrics = midstream.get_metrics().await;
     println!("\nMetrics collected:");
@@ -146,10 +143,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  Labels: {:?}", metric.labels);
         println!();
     }
-    
+
     // Get average sentiment for last 5 minutes
-    let avg = midstream.get_average_sentiment(Duration::from_secs(300)).await?;
+    let avg = midstream
+        .get_average_sentiment(Duration::from_secs(300))
+        .await?;
     println!("\nAverage tokens per message: {:.2}", avg);
-    
+
     Ok(())
 }

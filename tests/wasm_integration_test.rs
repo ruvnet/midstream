@@ -9,15 +9,17 @@
 
 #![cfg(target_arch = "wasm32")]
 
-use wasm_bindgen_test::*;
 use std::collections::HashMap;
+use wasm_bindgen_test::*;
 
 // WASM-specific imports
-use midstreamer_temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
-use midstreamer_scheduler::{RealtimeScheduler, SchedulingPolicy, Priority};
 use midstreamer_attractor::{AttractorAnalyzer, PhasePoint};
-use midstreamer_neural_solver::{TemporalNeuralSolver, TemporalFormula, TemporalState, VerificationStrictness};
-use midstreamer_strange_loop::{StrangeLoop, MetaLevel};
+use midstreamer_neural_solver::{
+    TemporalFormula, TemporalNeuralSolver, TemporalState, VerificationStrictness,
+};
+use midstreamer_scheduler::{Priority, RealtimeScheduler, SchedulingPolicy};
+use midstreamer_strange_loop::{MetaLevel, StrangeLoop};
+use midstreamer_temporal_compare::{ComparisonAlgorithm, Sequence, TemporalComparator};
 
 wasm_bindgen_test_configure!(run_in_browser);
 
@@ -60,12 +62,14 @@ async fn test_wasm_scheduler() {
 
     // Schedule multiple tasks
     for i in 0..10 {
-        scheduler.schedule(
-            create_action(&format!("wasm_task_{}", i), "WASM task"),
-            Priority::Medium,
-            std::time::Duration::from_secs(1),
-            std::time::Duration::from_millis(10),
-        ).await;
+        scheduler
+            .schedule(
+                create_action(&format!("wasm_task_{}", i), "WASM task"),
+                Priority::Medium,
+                std::time::Duration::from_secs(1),
+                std::time::Duration::from_millis(10),
+            )
+            .await;
     }
 
     let stats = scheduler.get_stats().await;
@@ -85,10 +89,7 @@ fn test_wasm_attractor_analysis() {
     // Add points
     for i in 0..150 {
         let point = PhasePoint::new(
-            vec![
-                (i as f64 * 0.1).sin(),
-                (i as f64 * 0.1).cos(),
-            ],
+            vec![(i as f64 * 0.1).sin(), (i as f64 * 0.1).cos()],
             i as u64,
         );
         analyzer.add_point(point).unwrap();
@@ -204,9 +205,9 @@ fn test_wasm_performance() {
 async fn test_wasm_concurrent_ops() {
     console_log!("=== WASM Concurrent Operations Test ===");
 
-    use wasm_bindgen_futures::spawn_local;
-    use std::sync::Arc;
     use std::sync::atomic::{AtomicU32, Ordering};
+    use std::sync::Arc;
+    use wasm_bindgen_futures::spawn_local;
 
     let counter = Arc::new(AtomicU32::new(0));
 
@@ -232,7 +233,9 @@ async fn test_wasm_concurrent_ops() {
     }
 
     // Wait a bit for tasks to complete
-    wasm_timer::Delay::new(std::time::Duration::from_millis(100)).await.ok();
+    wasm_timer::Delay::new(std::time::Duration::from_millis(100))
+        .await
+        .ok();
 
     let count = counter.load(Ordering::SeqCst);
     console_log!("Completed {} concurrent operations", count);
@@ -272,19 +275,25 @@ async fn test_wasm_integration_workflow() {
     // Step 1: Pattern detection
     let mut comparator = TemporalComparator::<String>::new(50, 500);
     comparator.add_sequence(Sequence {
-        data: vec!["init".to_string(), "process".to_string(), "complete".to_string()],
+        data: vec![
+            "init".to_string(),
+            "process".to_string(),
+            "complete".to_string(),
+        ],
         timestamp: 1000,
         id: "workflow".to_string(),
     });
 
     // Step 2: Schedule based on pattern
     let scheduler = RealtimeScheduler::new(SchedulingPolicy::EarliestDeadlineFirst);
-    scheduler.schedule(
-        create_action("wasm_workflow", "Workflow task"),
-        Priority::High,
-        std::time::Duration::from_secs(1),
-        std::time::Duration::from_millis(50),
-    ).await;
+    scheduler
+        .schedule(
+            create_action("wasm_workflow", "Workflow task"),
+            Priority::High,
+            std::time::Duration::from_secs(1),
+            std::time::Duration::from_millis(50),
+        )
+        .await;
 
     // Step 3: Verify behavior
     let mut solver = TemporalNeuralSolver::default();

@@ -41,10 +41,7 @@ fn priority(idx: u8) -> Priority {
 
 /// Generator: a vector of `(priority_idx, deadline_micros, payload)`.
 fn task_specs() -> impl Strategy<Value = Vec<(u8, u64, u32)>> {
-    proptest::collection::vec(
-        (0u8..=4, 1u64..=1_000_000, any::<u32>()),
-        0..=32,
-    )
+    proptest::collection::vec((0u8..=4, 1u64..=1_000_000, any::<u32>()), 0..=32)
 }
 
 fn fresh_scheduler(max_queue_size: usize) -> RealtimeScheduler<u32> {

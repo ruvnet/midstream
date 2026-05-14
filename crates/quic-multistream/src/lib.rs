@@ -55,7 +55,6 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use thiserror::Error;
 
-
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
 
@@ -131,8 +130,7 @@ impl From<wasm_bindgen::JsValue> for QuicError {
 }
 
 /// Stream priority for quality-of-service control
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum StreamPriority {
     /// Critical priority (highest)
     Critical = 0,
@@ -144,7 +142,6 @@ pub enum StreamPriority {
     /// Low priority
     Low = 3,
 }
-
 
 impl fmt::Display for StreamPriority {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

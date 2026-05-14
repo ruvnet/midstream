@@ -11,11 +11,13 @@
 use std::time::Duration;
 
 // Import from published crates
-use midstreamer_temporal_compare::{TemporalComparator, Sequence, ComparisonAlgorithm};
-use midstreamer_scheduler::{RealtimeScheduler, SchedulerConfig, Priority, Deadline};
-use midstreamer_attractor::{AttractorAnalyzer, PhasePoint, AttractorType};
-use midstreamer_neural_solver::{TemporalNeuralSolver, TemporalFormula, TemporalState, VerificationStrictness};
-use midstreamer_strange_loop::{StrangeLoop, MetaLevel, StrangeLoopConfig};
+use midstreamer_attractor::{AttractorAnalyzer, AttractorType, PhasePoint};
+use midstreamer_neural_solver::{
+    TemporalFormula, TemporalNeuralSolver, TemporalState, VerificationStrictness,
+};
+use midstreamer_scheduler::{Deadline, Priority, RealtimeScheduler, SchedulerConfig};
+use midstreamer_strange_loop::{MetaLevel, StrangeLoop, StrangeLoopConfig};
+use midstreamer_temporal_compare::{ComparisonAlgorithm, Sequence, TemporalComparator};
 
 /// Test 1: Scheduler + Temporal Compare Integration
 ///
@@ -42,7 +44,9 @@ fn test_scheduler_temporal_integration() {
     seq2.push("complete".to_string(), 200);
 
     // Compare sequences to detect patterns
-    let result = comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW).unwrap();
+    let result = comparator
+        .compare(&seq1, &seq2, ComparisonAlgorithm::DTW)
+        .unwrap();
     println!("  Pattern similarity (DTW): {:.4}", result.distance);
     assert!(result.distance < 1.0, "Should detect identical patterns");
 
@@ -53,13 +57,18 @@ fn test_scheduler_temporal_integration() {
         Priority::Medium
     };
 
-    let task_id = scheduler.schedule(
-        "pattern_based_task".to_string(),
-        Deadline::from_millis(100),
-        priority,
-    ).unwrap();
+    let task_id = scheduler
+        .schedule(
+            "pattern_based_task".to_string(),
+            Deadline::from_millis(100),
+            priority,
+        )
+        .unwrap();
 
-    println!("  ✓ Task {} scheduled with {:?} priority", task_id, priority);
+    println!(
+        "  ✓ Task {} scheduled with {:?} priority",
+        task_id, priority
+    );
     assert_eq!(scheduler.queue_size(), 1);
 
     // Verify task retrieval
@@ -108,11 +117,9 @@ fn test_scheduler_attractor_integration() {
             Priority::Low
         };
 
-        scheduler.schedule(
-            i as f64,
-            Deadline::from_millis((i + 10) as u64),
-            priority,
-        ).unwrap();
+        scheduler
+            .schedule(i as f64, Deadline::from_millis((i + 10) as u64), priority)
+            .unwrap();
     }
 
     // Analyze attractor to understand system stability
@@ -120,7 +127,10 @@ fn test_scheduler_attractor_integration() {
     println!("  Attractor type: {:?}", attractor_info.attractor_type);
     println!("  Stable: {}", attractor_info.is_stable);
     println!("  Confidence: {:.2}", attractor_info.confidence);
-    println!("  Max Lyapunov: {:.4}", attractor_info.max_lyapunov_exponent().unwrap_or(0.0));
+    println!(
+        "  Max Lyapunov: {:.4}",
+        attractor_info.max_lyapunov_exponent().unwrap_or(0.0)
+    );
 
     // Verify behavior analysis
     assert_eq!(attractor_info.dimension, 3);
@@ -132,8 +142,10 @@ fn test_scheduler_attractor_integration() {
 
     // Get scheduler stats
     let stats = scheduler.stats();
-    println!("  ✓ Scheduler stats: {} total tasks, {} in queue",
-             stats.total_tasks, stats.queue_size);
+    println!(
+        "  ✓ Scheduler stats: {} total tasks, {} in queue",
+        stats.total_tasks, stats.queue_size
+    );
     assert_eq!(stats.total_tasks, 150);
 
     println!("=== Test 2 PASSED ===\n");
@@ -157,10 +169,7 @@ fn test_attractor_solver_integration() {
         let t = i as f64 * 0.1;
 
         // Create periodic trajectory
-        let point = PhasePoint::new(
-            vec![t.sin(), t.cos()],
-            i as u64 * 10,
-        );
+        let point = PhasePoint::new(vec![t.sin(), t.cos()], i as u64 * 10);
         analyzer.add_point(point).unwrap();
 
         // Record temporal state
@@ -186,8 +195,14 @@ fn test_attractor_solver_integration() {
     println!("  ✓ Bounded property: {}", bounded_result.satisfied);
     println!("  ✓ Oscillating property: {}", oscillating_result.satisfied);
 
-    assert!(bounded_result.satisfied, "Limit cycle should remain bounded");
-    assert!(oscillating_result.satisfied, "System should always oscillate");
+    assert!(
+        bounded_result.satisfied,
+        "Limit cycle should remain bounded"
+    );
+    assert!(
+        oscillating_result.satisfied,
+        "System should always oscillate"
+    );
 
     // Verify eventually periodic
     let periodic_formula = TemporalFormula::finally(TemporalFormula::atom("periodic"));
@@ -225,7 +240,9 @@ fn test_temporal_solver_integration() {
     seq2.push("safe".to_string(), 300);
 
     // Compare sequences
-    let distance = comparator.compare(&seq1, &seq2, ComparisonAlgorithm::EditDistance).unwrap();
+    let distance = comparator
+        .compare(&seq1, &seq2, ComparisonAlgorithm::EditDistance)
+        .unwrap();
     println!("  Edit distance: {:.4}", distance.distance);
     assert_eq!(distance.distance, 1.0, "Should differ by one element");
 
@@ -278,23 +295,24 @@ fn test_full_system_strange_loop() {
         "verify".to_string(),
     ];
 
-    strange_loop.learn_at_level(MetaLevel::base(), &workflow_steps).unwrap();
+    strange_loop
+        .learn_at_level(MetaLevel::base(), &workflow_steps)
+        .unwrap();
 
     // Schedule tasks for each workflow step
     for (i, step) in workflow_steps.iter().enumerate() {
-        scheduler.schedule(
-            step.clone(),
-            Deadline::from_millis((i as u64 + 1) * 100),
-            Priority::High,
-        ).unwrap();
+        scheduler
+            .schedule(
+                step.clone(),
+                Deadline::from_millis((i as u64 + 1) * 100),
+                Priority::High,
+            )
+            .unwrap();
     }
 
     // Analyze dynamics
     for i in 0..150 {
-        let point = PhasePoint::new(
-            vec![i as f64, (i as f64).sin(), (i as f64).cos()],
-            i as u64,
-        );
+        let point = PhasePoint::new(vec![i as f64, (i as f64).sin(), (i as f64).cos()], i as u64);
         analyzer.add_point(point).unwrap();
     }
 
@@ -316,7 +334,9 @@ fn test_full_system_strange_loop() {
         format!("attractor:{:?}", attractor_info.attractor_type),
         format!("stable:{}", attractor_info.is_stable),
     ];
-    strange_loop.learn_at_level(MetaLevel(1), &meta_patterns).unwrap();
+    strange_loop
+        .learn_at_level(MetaLevel(1), &meta_patterns)
+        .unwrap();
 
     // Level 2: Analyze behavioral dynamics
     println!("  Level 2: Behavioral dynamics analysis...");
@@ -436,11 +456,9 @@ fn test_performance_scalability() {
     let scheduler: RealtimeScheduler<u64> = RealtimeScheduler::default();
 
     for i in 0..1000 {
-        scheduler.schedule(
-            i,
-            Deadline::from_millis(100),
-            Priority::Medium,
-        ).unwrap();
+        scheduler
+            .schedule(i, Deadline::from_millis(100), Priority::Medium)
+            .unwrap();
     }
 
     let duration = start.elapsed();
@@ -460,10 +478,14 @@ fn test_performance_scalability() {
     }
 
     // First comparison - cache miss
-    let _result1 = comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW).unwrap();
+    let _result1 = comparator
+        .compare(&seq1, &seq2, ComparisonAlgorithm::DTW)
+        .unwrap();
 
     // Second comparison - cache hit
-    let _result2 = comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW).unwrap();
+    let _result2 = comparator
+        .compare(&seq1, &seq2, ComparisonAlgorithm::DTW)
+        .unwrap();
 
     let duration = start.elapsed();
     println!("  ✓ Compared 100-element sequences (2x) in {:?}", duration);
@@ -478,10 +500,7 @@ fn test_performance_scalability() {
     let mut analyzer = AttractorAnalyzer::new(3, 10000);
 
     for i in 0..1000 {
-        let point = PhasePoint::new(
-            vec![(i as f64).sin(), (i as f64).cos(), i as f64 * 0.01],
-            i,
-        );
+        let point = PhasePoint::new(vec![(i as f64).sin(), (i as f64).cos(), i as f64 * 0.01], i);
         analyzer.add_point(point).unwrap();
     }
 
@@ -549,7 +568,9 @@ fn test_state_management() {
     let mut analyzer = AttractorAnalyzer::new(2, 1000);
 
     for i in 0..50 {
-        analyzer.add_point(PhasePoint::new(vec![i as f64, i as f64], i)).unwrap();
+        analyzer
+            .add_point(PhasePoint::new(vec![i as f64, i as f64], i))
+            .unwrap();
     }
 
     assert_eq!(analyzer.trajectory_length(), 50);
@@ -574,7 +595,9 @@ fn test_state_management() {
     // Test 3: Strange loop reset
     let mut strange_loop = StrangeLoop::default();
 
-    strange_loop.learn_at_level(MetaLevel::base(), &vec!["a".to_string()]).unwrap();
+    strange_loop
+        .learn_at_level(MetaLevel::base(), &vec!["a".to_string()])
+        .unwrap();
     let before = strange_loop.get_summary();
     assert!(before.total_knowledge > 0);
 
@@ -587,11 +610,13 @@ fn test_state_management() {
     let scheduler: RealtimeScheduler<String> = RealtimeScheduler::default();
 
     for i in 0..10 {
-        scheduler.schedule(
-            format!("task_{}", i),
-            Deadline::from_millis(100),
-            Priority::Medium,
-        ).unwrap();
+        scheduler
+            .schedule(
+                format!("task_{}", i),
+                Deadline::from_millis(100),
+                Priority::Medium,
+            )
+            .unwrap();
     }
 
     assert_eq!(scheduler.queue_size(), 10);
@@ -607,7 +632,9 @@ fn test_state_management() {
     seq1.push(1, 0);
     seq2.push(1, 0);
 
-    comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW).unwrap();
+    comparator
+        .compare(&seq1, &seq2, ComparisonAlgorithm::DTW)
+        .unwrap();
     let stats_before = comparator.cache_stats();
     assert!(stats_before.size > 0 || stats_before.misses > 0);
 
@@ -633,27 +660,36 @@ fn test_deadline_priority_handling() {
     scheduler.start();
 
     // Schedule tasks with different priorities
-    let low_id = scheduler.schedule(
-        "low_priority".to_string(),
-        Deadline::from_millis(100),
-        Priority::Low,
-    ).unwrap();
+    let low_id = scheduler
+        .schedule(
+            "low_priority".to_string(),
+            Deadline::from_millis(100),
+            Priority::Low,
+        )
+        .unwrap();
 
-    let high_id = scheduler.schedule(
-        "high_priority".to_string(),
-        Deadline::from_millis(100),
-        Priority::High,
-    ).unwrap();
+    let high_id = scheduler
+        .schedule(
+            "high_priority".to_string(),
+            Deadline::from_millis(100),
+            Priority::High,
+        )
+        .unwrap();
 
-    let critical_id = scheduler.schedule(
-        "critical_priority".to_string(),
-        Deadline::from_millis(100),
-        Priority::Critical,
-    ).unwrap();
+    let critical_id = scheduler
+        .schedule(
+            "critical_priority".to_string(),
+            Deadline::from_millis(100),
+            Priority::Critical,
+        )
+        .unwrap();
 
     // Verify priority ordering
     let task1 = scheduler.next_task().unwrap();
-    assert_eq!(task1.id, critical_id, "Critical priority should execute first");
+    assert_eq!(
+        task1.id, critical_id,
+        "Critical priority should execute first"
+    );
     assert_eq!(task1.priority, Priority::Critical);
 
     let task2 = scheduler.next_task().unwrap();
@@ -668,11 +704,9 @@ fn test_deadline_priority_handling() {
     std::thread::sleep(Duration::from_millis(10));
     let past_deadline = Deadline::from_micros(1);
 
-    scheduler.schedule(
-        "late_task".to_string(),
-        past_deadline,
-        Priority::High,
-    ).unwrap();
+    scheduler
+        .schedule("late_task".to_string(), past_deadline, Priority::High)
+        .unwrap();
 
     let late_task = scheduler.next_task().unwrap();
     scheduler.execute_task(late_task, |_payload| {

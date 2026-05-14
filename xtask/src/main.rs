@@ -70,7 +70,8 @@ fn main() -> Result<()> {
     // shell-outs are stable regardless of where the user invoked
     // `cargo xtask` from. CARGO_MANIFEST_DIR points to xtask/, so
     // step one above.
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR set by cargo");
+    let manifest_dir =
+        std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR set by cargo");
     sh.change_dir(format!("{manifest_dir}/.."));
 
     match args.cmd {
@@ -145,11 +146,7 @@ fn run_publish_check(sh: &Shell) -> Result<()> {
 
     for crate_name in crates {
         println!("--> cargo publish --dry-run -p {crate_name} --allow-dirty");
-        cmd!(
-            sh,
-            "cargo publish --dry-run -p {crate_name} --allow-dirty"
-        )
-        .run()?;
+        cmd!(sh, "cargo publish --dry-run -p {crate_name} --allow-dirty").run()?;
     }
 
     println!("\npublish-check ok ({} crates)", crates.len());

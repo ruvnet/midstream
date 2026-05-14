@@ -4,8 +4,7 @@
 /// 1. find_similar() - Find similar patterns in time series
 /// 2. detect_pattern() - Detect if a pattern exists
 /// 3. Advanced APIs for recurring and fuzzy pattern detection
-
-use midstreamer_temporal_compare::{TemporalComparator, Pattern};
+use midstreamer_temporal_compare::{Pattern, TemporalComparator};
 
 fn main() {
     println!("=== Temporal-Compare Pattern Detection Demo ===\n");
@@ -78,11 +77,15 @@ fn main() {
     println!("Haystack: {:?}", haystack);
     println!("Needle: {:?}", needle);
 
-    let matches = comparator_int.find_similar_generic(&haystack, &needle, 0.1).unwrap();
+    let matches = comparator_int
+        .find_similar_generic(&haystack, &needle, 0.1)
+        .unwrap();
     println!("Found {} matches:", matches.len());
     for m in &matches {
-        println!("  - Index {}: similarity = {:.4}, distance = {:.4}",
-                 m.start_index, m.similarity, m.distance);
+        println!(
+            "  - Index {}: similarity = {:.4}, distance = {:.4}",
+            m.start_index, m.similarity, m.distance
+        );
     }
     println!();
 
@@ -95,7 +98,9 @@ fn main() {
 
     println!("Sequence: {:?}", sequence);
 
-    let patterns = comparator_char.detect_recurring_patterns(&sequence, 2, 3).unwrap();
+    let patterns = comparator_char
+        .detect_recurring_patterns(&sequence, 2, 3)
+        .unwrap();
     println!("Found {} recurring patterns:", patterns.len());
     for (i, pattern) in patterns.iter().enumerate() {
         println!("  Pattern {}: {:?}", i + 1, pattern.sequence);
@@ -114,11 +119,16 @@ fn main() {
 
     println!("Sequence: {:?}", sequence);
 
-    let fuzzy_patterns = comparator_fuzzy.detect_fuzzy_patterns(&sequence, 3, 3, 0.7).unwrap();
+    let fuzzy_patterns = comparator_fuzzy
+        .detect_fuzzy_patterns(&sequence, 3, 3, 0.7)
+        .unwrap();
     println!("Found {} fuzzy pattern groups:", fuzzy_patterns.len());
     for (i, pattern) in fuzzy_patterns.iter().enumerate() {
         println!("  Pattern Group {}: {:?}", i + 1, pattern.sequence);
-        println!("    Frequency: {} (includes variations)", pattern.frequency());
+        println!(
+            "    Frequency: {} (includes variations)",
+            pattern.frequency()
+        );
         println!("    Confidence: {:.4}", pattern.confidence);
     }
     println!();
@@ -134,8 +144,13 @@ fn main() {
     for i in 1..=5 {
         let _ = comparator.find_similar(&series1, &pattern1, 0.5);
         let stats = comparator.cache_stats();
-        println!("  Iteration {}: hits = {}, misses = {}, hit rate = {:.2}%",
-                 i, stats.hits, stats.misses, stats.hit_rate() * 100.0);
+        println!(
+            "  Iteration {}: hits = {}, misses = {}, hit rate = {:.2}%",
+            i,
+            stats.hits,
+            stats.misses,
+            stats.hit_rate() * 100.0
+        );
     }
     println!();
 

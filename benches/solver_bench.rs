@@ -13,13 +13,10 @@
 //! - Verification: <100ms
 //! - Parsing: <5ms
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_neural_solver::{
-    TemporalSolver, LTLFormula, Formula, State, Trace,
-    parser::parse_ltl,
-    encoder::encode_formula,
-    verifier::verify_trace,
-    neural::NeuralVerifier,
+    encoder::encode_formula, neural::NeuralVerifier, parser::parse_ltl, verifier::verify_trace,
+    Formula, LTLFormula, State, TemporalSolver, Trace,
 };
 
 // ============================================================================
@@ -28,65 +25,53 @@ use midstreamer_neural_solver::{
 
 fn create_simple_formula() -> LTLFormula {
     // G (a -> F b)  (Globally: if a then eventually b)
-    LTLFormula::Globally(Box::new(
-        LTLFormula::Implies(
-            Box::new(LTLFormula::Atom("a".to_string())),
-            Box::new(LTLFormula::Finally(Box::new(
-                LTLFormula::Atom("b".to_string())
-            )))
-        )
-    ))
+    LTLFormula::Globally(Box::new(LTLFormula::Implies(
+        Box::new(LTLFormula::Atom("a".to_string())),
+        Box::new(LTLFormula::Finally(Box::new(LTLFormula::Atom(
+            "b".to_string(),
+        )))),
+    )))
 }
 
 fn create_complex_formula() -> LTLFormula {
     // G ((a & b) -> X (c U d))
-    LTLFormula::Globally(Box::new(
-        LTLFormula::Implies(
-            Box::new(LTLFormula::And(
-                Box::new(LTLFormula::Atom("a".to_string())),
-                Box::new(LTLFormula::Atom("b".to_string()))
-            )),
-            Box::new(LTLFormula::Next(Box::new(
-                LTLFormula::Until(
-                    Box::new(LTLFormula::Atom("c".to_string())),
-                    Box::new(LTLFormula::Atom("d".to_string()))
-                )
-            )))
-        )
-    ))
+    LTLFormula::Globally(Box::new(LTLFormula::Implies(
+        Box::new(LTLFormula::And(
+            Box::new(LTLFormula::Atom("a".to_string())),
+            Box::new(LTLFormula::Atom("b".to_string())),
+        )),
+        Box::new(LTLFormula::Next(Box::new(LTLFormula::Until(
+            Box::new(LTLFormula::Atom("c".to_string())),
+            Box::new(LTLFormula::Atom("d".to_string())),
+        )))),
+    )))
 }
 
 fn create_nested_formula(depth: usize) -> LTLFormula {
     if depth == 0 {
         LTLFormula::Atom("p".to_string())
     } else {
-        LTLFormula::Globally(Box::new(
-            LTLFormula::Finally(Box::new(
-                create_nested_formula(depth - 1)
-            ))
-        ))
+        LTLFormula::Globally(Box::new(LTLFormula::Finally(Box::new(
+            create_nested_formula(depth - 1),
+        ))))
     }
 }
 
 fn create_safety_property() -> LTLFormula {
     // G (request -> F grant)
-    LTLFormula::Globally(Box::new(
-        LTLFormula::Implies(
-            Box::new(LTLFormula::Atom("request".to_string())),
-            Box::new(LTLFormula::Finally(Box::new(
-                LTLFormula::Atom("grant".to_string())
-            )))
-        )
-    ))
+    LTLFormula::Globally(Box::new(LTLFormula::Implies(
+        Box::new(LTLFormula::Atom("request".to_string())),
+        Box::new(LTLFormula::Finally(Box::new(LTLFormula::Atom(
+            "grant".to_string(),
+        )))),
+    )))
 }
 
 fn create_liveness_property() -> LTLFormula {
     // G F ready
-    LTLFormula::Globally(Box::new(
-        LTLFormula::Finally(Box::new(
-            LTLFormula::Atom("ready".to_string())
-        ))
-    ))
+    LTLFormula::Globally(Box::new(LTLFormula::Finally(Box::new(LTLFormula::Atom(
+        "ready".to_string(),
+    )))))
 }
 
 // ============================================================================
@@ -145,47 +130,33 @@ fn bench_formula_encoding(c: &mut Criterion) {
     // Simple formulas
     group.bench_function("simple", |b| {
         let formula = create_simple_formula();
-        b.iter(|| {
-            black_box(encode_formula(black_box(&formula)))
-        });
+        b.iter(|| black_box(encode_formula(black_box(&formula))));
     });
 
     // Complex formulas
     group.bench_function("complex", |b| {
         let formula = create_complex_formula();
-        b.iter(|| {
-            black_box(encode_formula(black_box(&formula)))
-        });
+        b.iter(|| black_box(encode_formula(black_box(&formula))));
     });
 
     // Safety properties
     group.bench_function("safety", |b| {
         let formula = create_safety_property();
-        b.iter(|| {
-            black_box(encode_formula(black_box(&formula)))
-        });
+        b.iter(|| black_box(encode_formula(black_box(&formula))));
     });
 
     // Liveness properties
     group.bench_function("liveness", |b| {
         let formula = create_liveness_property();
-        b.iter(|| {
-            black_box(encode_formula(black_box(&formula)))
-        });
+        b.iter(|| black_box(encode_formula(black_box(&formula))));
     });
 
     // Nested formulas
     for depth in [1, 3, 5, 10].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("nested", depth),
-            depth,
-            |b, &d| {
-                let formula = create_nested_formula(d);
-                b.iter(|| {
-                    black_box(encode_formula(black_box(&formula)))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("nested", depth), depth, |b, &d| {
+            let formula = create_nested_formula(d);
+            b.iter(|| black_box(encode_formula(black_box(&formula))));
+        });
     }
 
     group.finish();
@@ -210,9 +181,7 @@ fn bench_formula_parsing(c: &mut Criterion) {
 
     for (name, formula_str) in test_cases {
         group.bench_function(name, |b| {
-            b.iter(|| {
-                black_box(parse_ltl(black_box(formula_str)))
-            });
+            b.iter(|| black_box(parse_ltl(black_box(formula_str))));
         });
     }
 
@@ -235,13 +204,8 @@ fn bench_trace_verification(c: &mut Criterion) {
             trace_len,
             |b, &len| {
                 let trace = generate_simple_trace(len);
-                b.iter(|| {
-                    black_box(verify_trace(
-                        black_box(&simple_formula),
-                        black_box(&trace)
-                    ))
-                });
-            }
+                b.iter(|| black_box(verify_trace(black_box(&simple_formula), black_box(&trace))));
+            },
         );
     }
 
@@ -253,13 +217,8 @@ fn bench_trace_verification(c: &mut Criterion) {
             trace_len,
             |b, &len| {
                 let trace = generate_complex_trace(len);
-                b.iter(|| {
-                    black_box(verify_trace(
-                        black_box(&complex_formula),
-                        black_box(&trace)
-                    ))
-                });
-            }
+                b.iter(|| black_box(verify_trace(black_box(&complex_formula), black_box(&trace))));
+            },
         );
     }
 
@@ -274,12 +233,7 @@ fn bench_verification_outcomes(c: &mut Criterion) {
     // Satisfying trace
     group.bench_function("satisfying", |b| {
         let trace = generate_satisfying_trace(100);
-        b.iter(|| {
-            black_box(verify_trace(
-                black_box(&formula),
-                black_box(&trace)
-            ))
-        });
+        b.iter(|| black_box(verify_trace(black_box(&formula), black_box(&trace))));
     });
 
     // Violating trace (early termination)
@@ -297,12 +251,7 @@ fn bench_verification_outcomes(c: &mut Criterion) {
             trace.add_state(state);
         }
 
-        b.iter(|| {
-            black_box(verify_trace(
-                black_box(&formula),
-                black_box(&trace)
-            ))
-        });
+        b.iter(|| black_box(verify_trace(black_box(&formula), black_box(&trace))));
     });
 
     group.finish();
@@ -333,9 +282,7 @@ fn bench_state_operations(c: &mut Criterion) {
         state.set("b", false);
         state.set("c", true);
 
-        b.iter(|| {
-            black_box(state.get("a") && !state.get("b") && state.get("c"))
-        });
+        b.iter(|| black_box(state.get("a") && !state.get("b") && state.get("c")));
     });
 
     // State comparison
@@ -348,9 +295,7 @@ fn bench_state_operations(c: &mut Criterion) {
         state2.set("a", true);
         state2.set("b", false);
 
-        b.iter(|| {
-            black_box(state1 == state2)
-        });
+        b.iter(|| black_box(state1 == state2));
     });
 
     // Trace operations
@@ -368,7 +313,7 @@ fn bench_state_operations(c: &mut Criterion) {
                     }
                     black_box(trace)
                 });
-            }
+            },
         );
     }
 
@@ -388,12 +333,7 @@ fn bench_neural_verification(c: &mut Criterion) {
         let trace = generate_simple_trace(100);
         let verifier = NeuralVerifier::new();
 
-        b.iter(|| {
-            black_box(verifier.encode_for_neural(
-                black_box(&formula),
-                black_box(&trace)
-            ))
-        });
+        b.iter(|| black_box(verifier.encode_for_neural(black_box(&formula), black_box(&trace))));
     });
 
     // Inference time
@@ -403,12 +343,7 @@ fn bench_neural_verification(c: &mut Criterion) {
         let mut verifier = NeuralVerifier::new();
         verifier.train(&formula, &trace);
 
-        b.iter(|| {
-            black_box(verifier.verify(
-                black_box(&formula),
-                black_box(&trace)
-            ))
-        });
+        b.iter(|| black_box(verifier.verify(black_box(&formula), black_box(&trace))));
     });
 
     // Training overhead
@@ -418,10 +353,7 @@ fn bench_neural_verification(c: &mut Criterion) {
 
         b.iter(|| {
             let mut verifier = NeuralVerifier::new();
-            black_box(verifier.train(
-                black_box(&formula),
-                black_box(&trace)
-            ))
+            black_box(verifier.train(black_box(&formula), black_box(&trace)))
         });
     });
 
@@ -439,43 +371,29 @@ fn bench_temporal_operators(c: &mut Criterion) {
 
     // Next operator
     group.bench_function("next", |b| {
-        let formula = LTLFormula::Next(Box::new(
-            LTLFormula::Atom("a".to_string())
-        ));
-        b.iter(|| {
-            black_box(verify_trace(black_box(&formula), black_box(&trace)))
-        });
+        let formula = LTLFormula::Next(Box::new(LTLFormula::Atom("a".to_string())));
+        b.iter(|| black_box(verify_trace(black_box(&formula), black_box(&trace))));
     });
 
     // Globally operator
     group.bench_function("globally", |b| {
-        let formula = LTLFormula::Globally(Box::new(
-            LTLFormula::Atom("a".to_string())
-        ));
-        b.iter(|| {
-            black_box(verify_trace(black_box(&formula), black_box(&trace)))
-        });
+        let formula = LTLFormula::Globally(Box::new(LTLFormula::Atom("a".to_string())));
+        b.iter(|| black_box(verify_trace(black_box(&formula), black_box(&trace))));
     });
 
     // Finally operator
     group.bench_function("finally", |b| {
-        let formula = LTLFormula::Finally(Box::new(
-            LTLFormula::Atom("d".to_string())
-        ));
-        b.iter(|| {
-            black_box(verify_trace(black_box(&formula), black_box(&trace)))
-        });
+        let formula = LTLFormula::Finally(Box::new(LTLFormula::Atom("d".to_string())));
+        b.iter(|| black_box(verify_trace(black_box(&formula), black_box(&trace))));
     });
 
     // Until operator
     group.bench_function("until", |b| {
         let formula = LTLFormula::Until(
             Box::new(LTLFormula::Atom("a".to_string())),
-            Box::new(LTLFormula::Atom("d".to_string()))
+            Box::new(LTLFormula::Atom("d".to_string())),
         );
-        b.iter(|| {
-            black_box(verify_trace(black_box(&formula), black_box(&trace)))
-        });
+        b.iter(|| black_box(verify_trace(black_box(&formula), black_box(&trace))));
     });
 
     group.finish();

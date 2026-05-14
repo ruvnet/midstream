@@ -22,16 +22,13 @@
 //!   * Constant trajectory (same point repeated) is never classified as
 //!     chaotic — a degenerate trajectory cannot be a strange attractor.
 
-use midstreamer_attractor::{
-    AttractorAnalyzer, AttractorType, PhasePoint,
-};
+use midstreamer_attractor::{AttractorAnalyzer, AttractorType, PhasePoint};
 use proptest::prelude::*;
 
 /// Bounded f64 generator: excludes NaN, Inf, subnormals, and values
 /// large enough to overflow Lyapunov accumulators.
 fn bounded_coord() -> impl Strategy<Value = f64> {
-    (-10.0_f64..10.0)
-        .prop_filter("finite", |v| v.is_finite() && !v.is_subnormal())
+    (-10.0_f64..10.0).prop_filter("finite", |v| v.is_finite() && !v.is_subnormal())
 }
 
 /// Generator for a phase-space trajectory: 50..=200 points of

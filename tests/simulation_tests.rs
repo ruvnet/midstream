@@ -1,8 +1,8 @@
 //! Comprehensive simulation tests for various real-world scenarios
 
 use midstream::{
-    LeanAgenticSystem, LeanAgenticConfig, AgentContext,
-    KnowledgeGraph, Entity, EntityType, Relation,
+    AgentContext, Entity, EntityType, KnowledgeGraph, LeanAgenticConfig, LeanAgenticSystem,
+    Relation,
 };
 use std::time::Instant;
 
@@ -53,7 +53,10 @@ async fn test_knowledge_accumulation_simulation() {
     ];
 
     for msg in &learning_sequence {
-        let result = system.process_stream_chunk(msg, context.clone()).await.unwrap();
+        let result = system
+            .process_stream_chunk(msg, context.clone())
+            .await
+            .unwrap();
         context.add_message(msg.to_string());
         context.set_preference("detail_level".to_string(), 0.9);
     }
@@ -97,10 +100,17 @@ async fn test_high_frequency_streaming_simulation() {
     println!("  Total chunks: {}", num_chunks);
     println!("  Duration: {:?}", duration);
     println!("  Throughput: {:.2} chunks/sec", chunks_per_sec);
-    println!("  Avg latency: {:.2} ms/chunk", duration.as_millis() as f64 / num_chunks as f64);
+    println!(
+        "  Avg latency: {:.2} ms/chunk",
+        duration.as_millis() as f64 / num_chunks as f64
+    );
 
     // Verify minimum throughput
-    assert!(chunks_per_sec > 50.0, "Throughput too low: {:.2} chunks/sec", chunks_per_sec);
+    assert!(
+        chunks_per_sec > 50.0,
+        "Throughput too low: {:.2} chunks/sec",
+        chunks_per_sec
+    );
 }
 
 #[tokio::test]
@@ -117,14 +127,12 @@ async fn test_concurrent_sessions_simulation() {
         let sys = &system;
         let handle = tokio::spawn(async move {
             let context = AgentContext::new(format!("session_{}", i));
-            let messages = vec![
-                "Hello",
-                "What's the weather?",
-                "Thank you",
-            ];
+            let messages = vec!["Hello", "What's the weather?", "Thank you"];
 
             for msg in messages {
-                sys.process_stream_chunk(msg, context.clone()).await.unwrap();
+                sys.process_stream_chunk(msg, context.clone())
+                    .await
+                    .unwrap();
             }
         });
         handles.push(handle);
@@ -139,7 +147,10 @@ async fn test_concurrent_sessions_simulation() {
     println!("\nConcurrent sessions results:");
     println!("  Sessions: {}", num_sessions);
     println!("  Duration: {:?}", duration);
-    println!("  Avg per session: {:.2} ms", duration.as_millis() as f64 / num_sessions as f64);
+    println!(
+        "  Avg per session: {:.2} ms",
+        duration.as_millis() as f64 / num_sessions as f64
+    );
 
     let stats = system.get_stats().await;
     println!("  Total actions: {}", stats.total_actions);
@@ -160,7 +171,10 @@ async fn test_learning_convergence_simulation() {
     let mut rewards = vec![];
 
     for iteration in 0..100 {
-        let result = system.process_stream_chunk(pattern, context.clone()).await.unwrap();
+        let result = system
+            .process_stream_chunk(pattern, context.clone())
+            .await
+            .unwrap();
         rewards.push(result.reward);
 
         if iteration % 10 == 0 {
@@ -180,7 +194,10 @@ async fn test_learning_convergence_simulation() {
     println!("  Improvement: {:.3}", late_avg - early_avg);
 
     // Rewards should stabilize or improve
-    assert!(late_avg >= early_avg * 0.8, "Learning degraded significantly");
+    assert!(
+        late_avg >= early_avg * 0.8,
+        "Learning degraded significantly"
+    );
 }
 
 #[tokio::test]
@@ -233,7 +250,10 @@ async fn test_knowledge_graph_scaling() {
     println!("\nKnowledge graph scaling results:");
     println!("  Entities inserted: {}", num_entities);
     println!("  Insert time: {:?}", insert_duration);
-    println!("  Insert rate: {:.2} entities/sec", num_entities as f64 / insert_duration.as_secs_f64());
+    println!(
+        "  Insert rate: {:.2} entities/sec",
+        num_entities as f64 / insert_duration.as_secs_f64()
+    );
     println!("  Relations added: 1000");
     println!("  Relation time: {:?}", relation_duration);
     println!("  Query time: {:?}", query_duration);
@@ -257,7 +277,10 @@ async fn test_adaptive_behavior_simulation() {
     println!("\nPhase 1: Weather queries");
     for i in 0..10 {
         let msg = format!("What's the weather in city {}?", i);
-        let result = system.process_stream_chunk(&msg, context.clone()).await.unwrap();
+        let result = system
+            .process_stream_chunk(&msg, context.clone())
+            .await
+            .unwrap();
         context.add_message(msg);
         if i == 0 || i == 9 {
             println!("  Iteration {}: reward = {:.3}", i, result.reward);
@@ -268,7 +291,10 @@ async fn test_adaptive_behavior_simulation() {
     println!("\nPhase 2: Learning queries");
     for i in 0..10 {
         let msg = format!("Remember that I like {}", i);
-        let result = system.process_stream_chunk(&msg, context.clone()).await.unwrap();
+        let result = system
+            .process_stream_chunk(&msg, context.clone())
+            .await
+            .unwrap();
         context.add_message(msg);
         if i == 0 || i == 9 {
             println!("  Iteration {}: reward = {:.3}", i, result.reward);
@@ -305,6 +331,8 @@ async fn test_memory_efficiency() {
     let stats = system.get_stats().await;
     println!("  Sessions processed: 100");
     println!("  Total entities: {}", stats.total_entities);
-    println!("  Estimated memory per session: ~{} KB",
-             (stats.total_entities * size_of::<Entity>()) / 100 / 1024);
+    println!(
+        "  Estimated memory per session: ~{} KB",
+        (stats.total_entities * size_of::<Entity>()) / 100 / 1024
+    );
 }

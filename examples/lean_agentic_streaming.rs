@@ -9,12 +9,12 @@
 //!
 //! Run with: cargo run --example lean_agentic_streaming
 
-use midstream::{
-    LeanAgenticSystem, LeanAgenticConfig, AgentContext,
-    Midstream, HyprSettings, HyprServiceImpl, StreamProcessor, LLMClient,
-};
 use bytes::Bytes;
-use futures::stream::{BoxStream, iter};
+use futures::stream::{iter, BoxStream};
+use midstream::{
+    AgentContext, HyprServiceImpl, HyprSettings, LLMClient, LeanAgenticConfig, LeanAgenticSystem,
+    Midstream, StreamProcessor,
+};
 use tokio;
 
 /// Example LLM client that simulates streaming responses
@@ -66,10 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hypr_service = HyprServiceImpl::new(&settings).await?;
     let llm_client = SimulatedLLMClient::new();
 
-    let midstream = Midstream::new(
-        Box::new(llm_client),
-        Box::new(hypr_service),
-    );
+    let midstream = Midstream::new(Box::new(llm_client), Box::new(hypr_service));
     println!("✓ MidStream ready\n");
 
     // 3. Process stream with lean agentic learning
@@ -88,14 +85,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  Message #{}: {}", i + 1, chunk);
 
         // Process with lean agentic system
-        let result = lean_system.process_stream_chunk(
-            &chunk,
-            context.clone(),
-        ).await?;
+        let result = lean_system
+            .process_stream_chunk(&chunk, context.clone())
+            .await?;
 
         println!("    → Action: {}", result.action.description);
         println!("    → Reward: {:.2}", result.reward);
-        println!("    → Verified: {}", if result.verified { "✓" } else { "✗" });
+        println!(
+            "    → Verified: {}",
+            if result.verified { "✓" } else { "✗" }
+        );
 
         // Update context
         context.add_message(chunk.into_owned());
@@ -139,7 +138,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n  3. Online Learning:");
     let learner = lean_system.learner.read().await;
     let learning_stats = learner.get_stats();
-    println!("     - Model parameters: {}", learning_stats.model_parameters);
+    println!(
+        "     - Model parameters: {}",
+        learning_stats.model_parameters
+    );
     println!("     - Experience buffer: {}", learning_stats.buffer_size);
     drop(learner);
 

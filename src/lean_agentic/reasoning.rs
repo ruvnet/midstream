@@ -1,11 +1,11 @@
 //! Formal reasoning engine inspired by Lean theorem proving
 
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use async_trait::async_trait;
 
-use super::types::Context;
 use super::agent::Action;
+use super::types::Context;
 
 /// Formal reasoning engine for verifying agent actions
 pub struct FormalReasoner {
@@ -65,11 +65,7 @@ impl FormalReasoner {
     }
 
     /// Verify an action is safe and correct
-    pub async fn verify_action(
-        &self,
-        action: &Action,
-        context: &Context,
-    ) -> Result<Proof, String> {
+    pub async fn verify_action(&self, action: &Action, context: &Context) -> Result<Proof, String> {
         let proof_key = format!("{:?}_{}", action, context.session_id);
 
         // Check cache first
@@ -109,9 +105,7 @@ impl FormalReasoner {
         });
 
         // Compute overall validity
-        proof.confidence = proof.steps.iter()
-            .map(|s| s.confidence)
-            .product::<f64>();
+        proof.confidence = proof.steps.iter().map(|s| s.confidence).product::<f64>();
 
         proof.valid = proof.confidence > 0.5;
 
@@ -120,7 +114,9 @@ impl FormalReasoner {
 
     async fn verify_safety(&self, action: &Action) -> f64 {
         // Check against safety axioms
-        let safety_axiom = self.theorem_base.iter()
+        let safety_axiom = self
+            .theorem_base
+            .iter()
             .find(|t| t.tags.contains(&"safety".to_string()));
 
         if let Some(_axiom) = safety_axiom {
@@ -266,10 +262,9 @@ mod tests {
     async fn test_formal_reasoner() {
         let mut reasoner = FormalReasoner::new();
 
-        let theorem = reasoner.prove_theorem(
-            "Q".to_string(),
-            vec!["P".to_string(), "P -> Q".to_string()],
-        ).await;
+        let theorem = reasoner
+            .prove_theorem("Q".to_string(), vec!["P".to_string(), "P -> Q".to_string()])
+            .await;
 
         assert!(theorem.is_ok());
     }

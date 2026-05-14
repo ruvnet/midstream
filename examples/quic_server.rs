@@ -23,13 +23,13 @@
 //! curl --http3 https://localhost:4433 --insecure
 //! ```
 
-use midstream_quic::{QuicMultiStream, QuicConfig, StreamPriority};
-use std::sync::Arc;
+use midstream_quic::{QuicConfig, QuicMultiStream, StreamPriority};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::signal;
 use tokio::time::{Duration, Instant};
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 /// Server configuration constants
 const SERVER_PORT: u16 = 4433;
@@ -100,13 +100,17 @@ async fn handle_stream(
         match recv.read(&mut buffer).await? {
             Some(bytes_read) => {
                 total_bytes += bytes_read as u64;
-                stats.bytes_received.fetch_add(bytes_read as u64, Ordering::Relaxed);
+                stats
+                    .bytes_received
+                    .fetch_add(bytes_read as u64, Ordering::Relaxed);
 
                 debug!("Stream {} received {} bytes", stream_id, bytes_read);
 
                 // Echo back the data
                 stream.write_all(&buffer[..bytes_read]).await?;
-                stats.bytes_sent.fetch_add(bytes_read as u64, Ordering::Relaxed);
+                stats
+                    .bytes_sent
+                    .fetch_add(bytes_read as u64, Ordering::Relaxed);
 
                 // Check for special commands
                 if let Ok(msg) = std::str::from_utf8(&buffer[..bytes_read]) {

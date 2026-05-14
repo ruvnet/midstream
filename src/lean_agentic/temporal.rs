@@ -8,8 +8,8 @@
 
 use lru::LruCache;
 use serde::{Deserialize, Serialize};
-use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::num::NonZeroUsize;
 
 /// Comparison algorithm selection
@@ -76,12 +76,7 @@ impl<T: Clone + PartialEq + Hash> TemporalComparator<T> {
     }
 
     /// Compare two sequences using specified algorithm
-    pub fn compare(
-        &mut self,
-        seq1: &[T],
-        seq2: &[T],
-        algorithm: ComparisonAlgorithm,
-    ) -> f64 {
+    pub fn compare(&mut self, seq1: &[T], seq2: &[T], algorithm: ComparisonAlgorithm) -> f64 {
         // Check cache first
         let cache_key = SequencePair {
             id1: format!("{:?}", seq1),
@@ -242,14 +237,12 @@ impl<T: Clone + PartialEq + Hash> TemporalComparator<T> {
         }
 
         // Sort by similarity (best first)
-        results.sort_by(|a, b| {
-            match algorithm {
-                ComparisonAlgorithm::DTW | ComparisonAlgorithm::EditDistance => {
-                    a.1.partial_cmp(&b.1).unwrap()
-                }
-                ComparisonAlgorithm::LCS | ComparisonAlgorithm::Correlation => {
-                    b.1.partial_cmp(&a.1).unwrap()
-                }
+        results.sort_by(|a, b| match algorithm {
+            ComparisonAlgorithm::DTW | ComparisonAlgorithm::EditDistance => {
+                a.1.partial_cmp(&b.1).unwrap()
+            }
+            ComparisonAlgorithm::LCS | ComparisonAlgorithm::Correlation => {
+                b.1.partial_cmp(&a.1).unwrap()
             }
         });
 
@@ -278,10 +271,22 @@ impl<T: Clone + PartialEq + Hash> TemporalComparator<T> {
         CacheStats {
             cache_size: self.cache.len(),
             total_comparisons: self.algorithm_cache.values().sum(),
-            dtw_count: *self.algorithm_cache.get(&ComparisonAlgorithm::DTW).unwrap_or(&0),
-            lcs_count: *self.algorithm_cache.get(&ComparisonAlgorithm::LCS).unwrap_or(&0),
-            edit_distance_count: *self.algorithm_cache.get(&ComparisonAlgorithm::EditDistance).unwrap_or(&0),
-            correlation_count: *self.algorithm_cache.get(&ComparisonAlgorithm::Correlation).unwrap_or(&0),
+            dtw_count: *self
+                .algorithm_cache
+                .get(&ComparisonAlgorithm::DTW)
+                .unwrap_or(&0),
+            lcs_count: *self
+                .algorithm_cache
+                .get(&ComparisonAlgorithm::LCS)
+                .unwrap_or(&0),
+            edit_distance_count: *self
+                .algorithm_cache
+                .get(&ComparisonAlgorithm::EditDistance)
+                .unwrap_or(&0),
+            correlation_count: *self
+                .algorithm_cache
+                .get(&ComparisonAlgorithm::Correlation)
+                .unwrap_or(&0),
         }
     }
 
