@@ -27,14 +27,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "agentdb": "^3.0.0-alpha.14",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
-    "lean-agentic": "^0.3.2",
     "prom-client": "^15.1.0",
     "winston": "^3.11.0",
     "zod": "^3.22.4"

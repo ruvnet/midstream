@@ -268,6 +268,24 @@ export class AIMDSGateway {
     this.app.use(express.json({ limit: '1mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+    // Map body-parser JSON errors to 400. Express 5 (and 4) surface
+    // these as `SyntaxError`s with `type === 'entity.parse.failed'`
+    // — without an early-stage handler they fall to the global 500
+    // handler. Tests expect `400 Bad Request` for an unparseable
+    // body, which is the right answer for a public-facing API.
+    this.app.use(
+      (err: Error & { type?: string; status?: number }, _req: Request, res: Response, next: NextFunction) => {
+        if (err && err.type === 'entity.parse.failed') {
+          res.status(400).json({
+            error: 'Bad request: malformed JSON body',
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+          });
+          return;
+        }
+        next(err);
+      },
+    );
+
     // Request timeout
     this.app.use((req: Request, res: Response, next: NextFunction) => {
       req.setTimeout(this.config.timeouts.request);
