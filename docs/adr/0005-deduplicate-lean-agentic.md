@@ -1,6 +1,6 @@
 # 0005 — Remove `src/lean_agentic/` duplication of workspace crates
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #14)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** workspace, refactor, dedup

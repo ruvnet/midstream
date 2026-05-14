@@ -1,6 +1,6 @@
 # 0036 — Licence reconciliation: dual `MIT OR Apache-2.0` everywhere
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #9 — dual MIT OR Apache-2.0)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** licence, legal, supply-chain

@@ -1,6 +1,6 @@
 # 0034 — Workspace-wide lint policy via `[workspace.lints]`
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #15 phase 1, #49 phase 2)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** lints, quality, policy

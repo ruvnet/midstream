@@ -1,6 +1,6 @@
 # 0002 — Stop vendoring `hyprstream`, depend on it externally
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #13)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** dependencies, supply-chain, build

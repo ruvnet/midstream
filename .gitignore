@@ -194,6 +194,10 @@ hive-mind-prompt-*.txt
 *.sqlite-journal
 *.sqlite-wal
 
+# Local agent (ruflo) state — never check in
+*.rvf
+*.rvf.lock
+
 # ===============================================
 # Logs & Temporary Files
 # ===============================================

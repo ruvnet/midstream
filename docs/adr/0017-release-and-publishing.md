@@ -1,6 +1,6 @@
 # 0017 — Release model: `cargo-release` + `git-cliff`, drop hand-written publish scripts
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented in #51)
 - **Date:** 2026-05-13
 - **Deciders:** @ruv
 - **Tags:** release, ci, publishing
