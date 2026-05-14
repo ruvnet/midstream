@@ -52,11 +52,7 @@ pub struct Trajectory {
 
 impl Trajectory {
     /// Create a new trajectory with time-delay embedding
-    pub fn from_timeseries(
-        data: &[f64],
-        embedding_dim: usize,
-        time_delay: usize,
-    ) -> Self {
+    pub fn from_timeseries(data: &[f64], embedding_dim: usize, time_delay: usize) -> Self {
         let mut points = Vec::new();
 
         // Time-delay embedding (Takens' theorem)
@@ -124,11 +120,8 @@ impl AttractorAnalyzer {
         }
 
         // Reconstruct phase space
-        let trajectory = Trajectory::from_timeseries(
-            data,
-            self.embedding_dimension,
-            self.time_delay,
-        );
+        let trajectory =
+            Trajectory::from_timeseries(data, self.embedding_dimension, self.time_delay);
 
         // Calculate Lyapunov exponent
         let lyapunov = self.calculate_lyapunov_exponent(&trajectory);
@@ -429,9 +422,7 @@ mod tests {
         let analyzer = AttractorAnalyzer::new(2, 1);
 
         // Sine wave => limit cycle
-        let data: Vec<f64> = (0..100)
-            .map(|i| (i as f64 * 0.1).sin())
-            .collect();
+        let data: Vec<f64> = (0..100).map(|i| (i as f64 * 0.1).sin()).collect();
 
         let info = analyzer.analyze(&data).unwrap();
 

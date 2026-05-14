@@ -2,8 +2,7 @@
 ///
 /// This test suite verifies that the find_similar() and detect_pattern() APIs
 /// work correctly with the published crate.
-
-use midstreamer_temporal_compare::{TemporalComparator, Pattern, SimilarityMatch};
+use midstreamer_temporal_compare::{Pattern, SimilarityMatch, TemporalComparator};
 
 #[test]
 fn test_find_similar_with_f64() {
@@ -26,7 +25,12 @@ fn test_find_similar_with_f64() {
 
     // Verify distances are within threshold
     for (idx, distance) in &matches {
-        assert!(*distance <= 1.0, "Distance {} at index {} exceeds threshold", distance, idx);
+        assert!(
+            *distance <= 1.0,
+            "Distance {} at index {} exceeds threshold",
+            distance,
+            idx
+        );
     }
 }
 
@@ -64,7 +68,9 @@ fn test_find_similar_generic_with_integers() {
     let needle = vec![3, 4, 5];
 
     // Use the generic API with normalized threshold
-    let matches = comparator.find_similar_generic(&haystack, &needle, 0.1).unwrap();
+    let matches = comparator
+        .find_similar_generic(&haystack, &needle, 0.1)
+        .unwrap();
 
     assert_eq!(matches.len(), 2, "Should find 2 exact matches");
     assert_eq!(matches[0].start_index, 2);
@@ -72,7 +78,10 @@ fn test_find_similar_generic_with_integers() {
 
     // Verify similarity scores
     for m in &matches {
-        assert!(m.similarity > 0.9, "Exact matches should have high similarity");
+        assert!(
+            m.similarity > 0.9,
+            "Exact matches should have high similarity"
+        );
     }
 }
 
@@ -84,13 +93,14 @@ fn test_detect_recurring_patterns() {
     let sequence = vec!['a', 'b', 'c', 'a', 'b', 'c', 'a', 'b', 'c'];
 
     // Detect patterns of length 3
-    let patterns = comparator.detect_recurring_patterns(&sequence, 3, 3).unwrap();
+    let patterns = comparator
+        .detect_recurring_patterns(&sequence, 3, 3)
+        .unwrap();
 
     assert!(!patterns.is_empty(), "Should detect recurring patterns");
 
     // Find the 'abc' pattern
-    let abc_pattern = patterns.iter()
-        .find(|p| p.sequence == vec!['a', 'b', 'c']);
+    let abc_pattern = patterns.iter().find(|p| p.sequence == vec!['a', 'b', 'c']);
 
     assert!(abc_pattern.is_some(), "Should find 'abc' pattern");
 
@@ -107,13 +117,18 @@ fn test_detect_fuzzy_patterns() {
     let sequence = vec![1, 2, 3, 1, 2, 4, 1, 2, 3];
 
     // Detect fuzzy patterns (should group [1,2,3] and [1,2,4] together)
-    let patterns = comparator.detect_fuzzy_patterns(&sequence, 3, 3, 0.7).unwrap();
+    let patterns = comparator
+        .detect_fuzzy_patterns(&sequence, 3, 3, 0.7)
+        .unwrap();
 
     assert!(!patterns.is_empty(), "Should detect fuzzy patterns");
 
     // Should find at least one pattern that occurs multiple times
     let has_multiple = patterns.iter().any(|p| p.frequency() >= 2);
-    assert!(has_multiple, "Should find patterns with multiple occurrences");
+    assert!(
+        has_multiple,
+        "Should find patterns with multiple occurrences"
+    );
 }
 
 #[test]
@@ -142,8 +157,10 @@ fn test_similarity_match_struct() {
 
     // Lower distance should give higher similarity
     let match2 = SimilarityMatch::new(0, 0.1);
-    assert!(match2.similarity > match1.similarity,
-        "Lower distance should yield higher similarity");
+    assert!(
+        match2.similarity > match1.similarity,
+        "Lower distance should yield higher similarity"
+    );
 }
 
 #[test]
@@ -168,7 +185,10 @@ fn test_edge_case_pattern_longer_than_series() {
     let pattern = vec![1.0, 2.0, 3.0, 4.0, 5.0];
 
     let matches = comparator.find_similar(&series, &pattern, 1.0);
-    assert!(matches.is_empty(), "Pattern longer than series should return no matches");
+    assert!(
+        matches.is_empty(),
+        "Pattern longer than series should return no matches"
+    );
 }
 
 #[test]
@@ -181,11 +201,17 @@ fn test_approximate_matching_with_threshold() {
 
     // Strict threshold - should not match
     let strict_matches = comparator.find_similar(&series, &pattern, 0.1);
-    assert!(strict_matches.is_empty(), "Strict threshold should reject approximate match");
+    assert!(
+        strict_matches.is_empty(),
+        "Strict threshold should reject approximate match"
+    );
 
     // Loose threshold - should match
     let loose_matches = comparator.find_similar(&series, &pattern, 1.5);
-    assert!(!loose_matches.is_empty(), "Loose threshold should accept approximate match");
+    assert!(
+        !loose_matches.is_empty(),
+        "Loose threshold should accept approximate match"
+    );
 }
 
 #[test]
@@ -202,12 +228,17 @@ fn test_results_sorted_by_quality() {
 
     // Verify results are sorted by distance (best first)
     for i in 0..matches.len().saturating_sub(1) {
-        assert!(matches[i].1 <= matches[i + 1].1,
-            "Results should be sorted by distance (ascending)");
+        assert!(
+            matches[i].1 <= matches[i + 1].1,
+            "Results should be sorted by distance (ascending)"
+        );
     }
 
     // First match should be the exact one
-    assert!(matches[0].1 < 0.1, "Best match should have very low distance");
+    assert!(
+        matches[0].1 < 0.1,
+        "Best match should have very low distance"
+    );
 }
 
 #[test]
@@ -221,10 +252,14 @@ fn test_caching_behavior() {
     comparator.clear_cache();
 
     // First call - should be cache miss
-    let _ = comparator.find_similar_generic(&haystack, &needle, 0.1).unwrap();
+    let _ = comparator
+        .find_similar_generic(&haystack, &needle, 0.1)
+        .unwrap();
 
     // Second call - should be cache hit
-    let _ = comparator.find_similar_generic(&haystack, &needle, 0.1).unwrap();
+    let _ = comparator
+        .find_similar_generic(&haystack, &needle, 0.1)
+        .unwrap();
 
     let stats = comparator.cache_stats();
     assert!(stats.hits > 0, "Should have cache hits");
@@ -237,31 +272,37 @@ fn test_comprehensive_workflow() {
 
     // Create a rich sequence
     let sequence = vec![
-        1, 2, 3, 4,    // Pattern A
-        1, 2, 3, 4,    // Pattern A repeat
-        5, 6, 7,       // Pattern B
-        5, 6, 7,       // Pattern B repeat
-        1, 2, 3, 4,    // Pattern A again
+        1, 2, 3, 4, // Pattern A
+        1, 2, 3, 4, // Pattern A repeat
+        5, 6, 7, // Pattern B
+        5, 6, 7, // Pattern B repeat
+        1, 2, 3, 4, // Pattern A again
     ];
 
     // Test 1: Exact pattern detection
-    let exact_patterns = comparator.detect_recurring_patterns(&sequence, 3, 4).unwrap();
+    let exact_patterns = comparator
+        .detect_recurring_patterns(&sequence, 3, 4)
+        .unwrap();
     assert!(!exact_patterns.is_empty(), "Should detect exact patterns");
 
     // Test 2: Fuzzy pattern detection
-    let fuzzy_patterns = comparator.detect_fuzzy_patterns(&sequence, 3, 4, 0.8).unwrap();
+    let fuzzy_patterns = comparator
+        .detect_fuzzy_patterns(&sequence, 3, 4, 0.8)
+        .unwrap();
     assert!(!fuzzy_patterns.is_empty(), "Should detect fuzzy patterns");
 
     // Test 3: Similarity search
     let needle = vec![1, 2, 3, 4];
-    let matches = comparator.find_similar_generic(&sequence, &needle, 0.1).unwrap();
+    let matches = comparator
+        .find_similar_generic(&sequence, &needle, 0.1)
+        .unwrap();
     assert_eq!(matches.len(), 3, "Should find 3 occurrences of pattern");
 
     // Test 4: Simple detection
     let found = comparator.detect_pattern(
         &sequence.iter().map(|&x| x as f64).collect::<Vec<_>>(),
         &needle.iter().map(|&x| x as f64).collect::<Vec<_>>(),
-        1.0
+        1.0,
     );
     assert!(found, "Pattern should be detected");
 

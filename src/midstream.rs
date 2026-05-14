@@ -1,11 +1,11 @@
-use std::borrow::Cow;
-use std::sync::Arc;
-use std::time::Duration;
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures::stream::BoxStream;
+use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Mutex;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricRecord {
@@ -63,7 +63,10 @@ impl LLMMessage {
 pub trait StreamProcessor {
     async fn process_stream(&self) -> Result<Vec<LLMMessage>, Box<dyn std::error::Error>>;
     async fn get_metrics(&self) -> Vec<MetricRecord>;
-    async fn get_average_sentiment(&self, window: Duration) -> Result<f64, Box<dyn std::error::Error>>;
+    async fn get_average_sentiment(
+        &self,
+        window: Duration,
+    ) -> Result<f64, Box<dyn std::error::Error>>;
 }
 
 /// Source of LLM token chunks.
@@ -81,7 +84,11 @@ pub trait LLMClient: Send + Sync {
 #[async_trait]
 pub trait HyprService: Send + Sync {
     async fn ingest_metric(&self, metric: MetricRecord) -> Result<(), Box<dyn std::error::Error>>;
-    async fn query_aggregate(&self, window: TimeWindow, func: AggregateFunction) -> Result<f64, Box<dyn std::error::Error>>;
+    async fn query_aggregate(
+        &self,
+        window: TimeWindow,
+        func: AggregateFunction,
+    ) -> Result<f64, Box<dyn std::error::Error>>;
 }
 
 pub trait ToolIntegration: Send + Sync {
@@ -97,10 +104,7 @@ pub struct Midstream {
 }
 
 impl Midstream {
-    pub fn new(
-        llm_client: Box<dyn LLMClient>,
-        hypr_service: Box<dyn HyprService>,
-    ) -> Self {
+    pub fn new(llm_client: Box<dyn LLMClient>, hypr_service: Box<dyn HyprService>) -> Self {
         Self {
             llm_client,
             hypr_service,
@@ -137,7 +141,10 @@ impl Midstream {
         content.to_uppercase().starts_with("URGENT")
     }
 
-    async fn process_message(&self, content: Bytes) -> Result<LLMMessage, Box<dyn std::error::Error>> {
+    async fn process_message(
+        &self,
+        content: Bytes,
+    ) -> Result<LLMMessage, Box<dyn std::error::Error>> {
         // Validate content
         if content.is_empty() {
             return Err("Empty message content".into());
@@ -204,7 +211,7 @@ impl Midstream {
 impl StreamProcessor for Midstream {
     async fn process_stream(&self) -> Result<Vec<LLMMessage>, Box<dyn std::error::Error>> {
         use futures::StreamExt;
-        
+
         let mut messages = Vec::new();
         let mut stream = self.llm_client.stream();
 
@@ -220,11 +227,16 @@ impl StreamProcessor for Midstream {
         self.metrics.lock().await.clone()
     }
 
-    async fn get_average_sentiment(&self, window: Duration) -> Result<f64, Box<dyn std::error::Error>> {
+    async fn get_average_sentiment(
+        &self,
+        window: Duration,
+    ) -> Result<f64, Box<dyn std::error::Error>> {
         let minutes = window.as_secs() / 60;
-        self.hypr_service.query_aggregate(
-            TimeWindow::Minutes(minutes as u32),
-            AggregateFunction::Average,
-        ).await
+        self.hypr_service
+            .query_aggregate(
+                TimeWindow::Minutes(minutes as u32),
+                AggregateFunction::Average,
+            )
+            .await
     }
 }

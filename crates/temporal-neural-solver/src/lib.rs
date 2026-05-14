@@ -271,7 +271,11 @@ impl TemporalNeuralSolver {
     }
 
     /// Check if formula holds at given position in trace
-    fn check_formula(&self, formula: &TemporalFormula, position: usize) -> Result<bool, TemporalError> {
+    fn check_formula(
+        &self,
+        formula: &TemporalFormula,
+        position: usize,
+    ) -> Result<bool, TemporalError> {
         match formula {
             TemporalFormula::True => Ok(true),
             TemporalFormula::False => Ok(false),
@@ -286,9 +290,7 @@ impl TemporalNeuralSolver {
 
             TemporalFormula::Unary { op, formula } => {
                 match op {
-                    TemporalOperator::Not => {
-                        Ok(!self.check_formula(formula, position)?)
-                    }
+                    TemporalOperator::Not => Ok(!self.check_formula(formula, position)?),
                     TemporalOperator::Next => {
                         if position + 1 < self.trace.len() {
                             self.check_formula(formula, position + 1)
@@ -314,21 +316,21 @@ impl TemporalNeuralSolver {
                         }
                         Ok(false)
                     }
-                    _ => Err(TemporalError::ParseError(format!("Invalid unary operator: {:?}", op))),
+                    _ => Err(TemporalError::ParseError(format!(
+                        "Invalid unary operator: {:?}",
+                        op
+                    ))),
                 }
             }
 
             TemporalFormula::Binary { op, left, right } => {
                 match op {
-                    TemporalOperator::And => {
-                        Ok(self.check_formula(left, position)? && self.check_formula(right, position)?)
-                    }
-                    TemporalOperator::Or => {
-                        Ok(self.check_formula(left, position)? || self.check_formula(right, position)?)
-                    }
-                    TemporalOperator::Implies => {
-                        Ok(!self.check_formula(left, position)? || self.check_formula(right, position)?)
-                    }
+                    TemporalOperator::And => Ok(self.check_formula(left, position)?
+                        && self.check_formula(right, position)?),
+                    TemporalOperator::Or => Ok(self.check_formula(left, position)?
+                        || self.check_formula(right, position)?),
+                    TemporalOperator::Implies => Ok(!self.check_formula(left, position)?
+                        || self.check_formula(right, position)?),
                     TemporalOperator::Until => {
                         // φ U ψ: φ holds until ψ becomes true
                         for i in position..self.trace.len() {
@@ -344,7 +346,10 @@ impl TemporalNeuralSolver {
                         }
                         Ok(false)
                     }
-                    _ => Err(TemporalError::ParseError(format!("Invalid binary operator: {:?}", op))),
+                    _ => Err(TemporalError::ParseError(format!(
+                        "Invalid binary operator: {:?}",
+                        op
+                    ))),
                 }
             }
         }
@@ -364,7 +369,10 @@ impl TemporalNeuralSolver {
     }
 
     /// Synthesize a controller to satisfy a formula
-    pub fn synthesize_controller(&self, _formula: &TemporalFormula) -> Result<Vec<String>, TemporalError> {
+    pub fn synthesize_controller(
+        &self,
+        _formula: &TemporalFormula,
+    ) -> Result<Vec<String>, TemporalError> {
         // Simplified controller synthesis
         // In production, this would use more sophisticated techniques
         Ok(vec!["action1".to_string(), "action2".to_string()])

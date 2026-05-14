@@ -7,8 +7,8 @@
 //! - Cached predictions
 //! - Batch processing
 
-use super::types::*;
 use super::agent::Action;
+use super::types::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -66,7 +66,9 @@ impl BufferPool {
     }
 
     pub fn acquire(&mut self) -> Vec<u8> {
-        self.buffers.pop().unwrap_or_else(|| Vec::with_capacity(self.buffer_size))
+        self.buffers
+            .pop()
+            .unwrap_or_else(|| Vec::with_capacity(self.buffer_size))
     }
 
     pub fn release(&mut self, mut buffer: Vec<u8>) {
@@ -199,7 +201,10 @@ impl<T> BatchProcessor<T> {
         self.batch.push(item);
 
         if self.batch.len() >= self.batch_size {
-            Some(std::mem::replace(&mut self.batch, Vec::with_capacity(self.batch_size)))
+            Some(std::mem::replace(
+                &mut self.batch,
+                Vec::with_capacity(self.batch_size),
+            ))
         } else {
             None
         }
@@ -296,7 +301,9 @@ impl<'a> MessageParser<'a> {
         }
 
         let start = self.position;
-        while self.position < self.data.len() && !self.data.as_bytes()[self.position].is_ascii_whitespace() {
+        while self.position < self.data.len()
+            && !self.data.as_bytes()[self.position].is_ascii_whitespace()
+        {
             self.position += 1;
         }
 
@@ -304,7 +311,9 @@ impl<'a> MessageParser<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        while self.position < self.data.len() && self.data.as_bytes()[self.position].is_ascii_whitespace() {
+        while self.position < self.data.len()
+            && self.data.as_bytes()[self.position].is_ascii_whitespace()
+        {
             self.position += 1;
         }
     }

@@ -1,7 +1,7 @@
-use midstream::{Midstream, HyprSettings, HyprServiceImpl, StreamProcessor, LLMClient};
 use bytes::Bytes;
-use futures::stream::BoxStream;
 use futures::stream::iter;
+use futures::stream::BoxStream;
+use midstream::{HyprServiceImpl, HyprSettings, LLMClient, Midstream, StreamProcessor};
 use std::time::Duration;
 
 // Example LLM client implementation
@@ -21,19 +21,16 @@ impl LLMClient for ExampleLLMClient {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize settings
     let settings = HyprSettings::new()?;
-    
+
     // Create hyprstream service
     let hypr_service = HyprServiceImpl::new(&settings).await?;
-    
+
     // Create LLM client
     let llm_client = ExampleLLMClient;
-    
+
     // Initialize Midstream
-    let midstream = Midstream::new(
-        Box::new(llm_client),
-        Box::new(hypr_service),
-    );
-    
+    let midstream = Midstream::new(Box::new(llm_client), Box::new(hypr_service));
+
     // Process stream
     let messages = midstream.process_stream().await?;
     println!("\nProcessed messages:");
@@ -45,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         println!();
     }
-    
+
     // Get metrics
     let metrics = midstream.get_metrics().await;
     println!("\nCollected metrics:");
@@ -55,10 +52,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  Labels: {:?}", metric.labels);
         println!();
     }
-    
+
     // Get average sentiment for last 5 minutes
-    let avg = midstream.get_average_sentiment(Duration::from_secs(300)).await?;
+    let avg = midstream
+        .get_average_sentiment(Duration::from_secs(300))
+        .await?;
     println!("\nAverage sentiment: {}", avg);
-    
+
     Ok(())
 }

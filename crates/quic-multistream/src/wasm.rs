@@ -1,14 +1,14 @@
 //! WASM implementation using WebTransport
 
 use crate::{ConnectionStats, QuicError, StreamPriority};
-use js_sys::{Uint8Array, Promise};
-use std::sync::Arc;
+use js_sys::{Promise, Uint8Array};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
-    WebTransport, WebTransportBidirectionalStream, WebTransportSendStream,
-    WebTransportReceiveStream,
+    WebTransport, WebTransportBidirectionalStream, WebTransportReceiveStream,
+    WebTransportSendStream,
 };
 
 /// QUIC connection wrapper for WASM targets using WebTransport
@@ -36,8 +36,8 @@ impl QuicConnection {
     /// ```
     pub async fn connect(url: &str) -> Result<Self, QuicError> {
         // Create WebTransport
-        let transport = WebTransport::new(url)
-            .map_err(|e| QuicError::ConnectionFailed(format!("{:?}", e)))?;
+        let transport =
+            WebTransport::new(url).map_err(|e| QuicError::ConnectionFailed(format!("{:?}", e)))?;
 
         // Wait for connection to be ready
         let ready_promise = transport.ready();
@@ -141,7 +141,8 @@ impl QuicStream {
     /// Send data on the stream
     pub async fn send(&mut self, data: &[u8]) -> Result<usize, QuicError> {
         let writable = self.bi_stream.writable();
-        let writer = writable.get_writer()
+        let writer = writable
+            .get_writer()
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
         // Convert data to Uint8Array
@@ -149,7 +150,8 @@ impl QuicStream {
         uint8_array.copy_from(data);
 
         // Write to stream
-        let write_promise = writer.write_with_chunk(&uint8_array)
+        let write_promise = writer
+            .write_with_chunk(&uint8_array)
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
         JsFuture::from(write_promise)
@@ -159,14 +161,16 @@ impl QuicStream {
         // Release writer
         writer.release_lock();
 
-        self.bytes_sent.fetch_add(data.len() as u64, Ordering::Relaxed);
+        self.bytes_sent
+            .fetch_add(data.len() as u64, Ordering::Relaxed);
         Ok(data.len())
     }
 
     /// Receive data from the stream
     pub async fn recv(&mut self, buf: &mut [u8]) -> Result<usize, QuicError> {
         let readable = self.bi_stream.readable();
-        let reader = readable.get_reader()
+        let reader = readable
+            .get_reader()
             .map_err(|e| QuicError::RecvError(format!("{:?}", e)))?;
 
         // Read from stream
@@ -197,17 +201,20 @@ impl QuicStream {
 
         reader.release_lock();
 
-        self.bytes_received.fetch_add(to_copy as u64, Ordering::Relaxed);
+        self.bytes_received
+            .fetch_add(to_copy as u64, Ordering::Relaxed);
         Ok(to_copy)
     }
 
     /// Finish sending on this stream
     pub async fn finish(&mut self) -> Result<(), QuicError> {
         let writable = self.bi_stream.writable();
-        let writer = writable.get_writer()
+        let writer = writable
+            .get_writer()
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
-        let close_promise = writer.close()
+        let close_promise = writer
+            .close()
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
         JsFuture::from(close_promise)
@@ -245,7 +252,9 @@ impl QuicSendStream {
 
     /// Send data on the stream
     pub async fn send(&mut self, data: &[u8]) -> Result<usize, QuicError> {
-        let writer = self.send_stream.get_writer()
+        let writer = self
+            .send_stream
+            .get_writer()
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
         // Convert data to Uint8Array
@@ -253,7 +262,8 @@ impl QuicSendStream {
         uint8_array.copy_from(data);
 
         // Write to stream
-        let write_promise = writer.write_with_chunk(&uint8_array)
+        let write_promise = writer
+            .write_with_chunk(&uint8_array)
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
         JsFuture::from(write_promise)
@@ -262,16 +272,20 @@ impl QuicSendStream {
 
         writer.release_lock();
 
-        self.bytes_sent.fetch_add(data.len() as u64, Ordering::Relaxed);
+        self.bytes_sent
+            .fetch_add(data.len() as u64, Ordering::Relaxed);
         Ok(data.len())
     }
 
     /// Finish sending on this stream
     pub async fn finish(&mut self) -> Result<(), QuicError> {
-        let writer = self.send_stream.get_writer()
+        let writer = self
+            .send_stream
+            .get_writer()
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
-        let close_promise = writer.close()
+        let close_promise = writer
+            .close()
             .map_err(|e| QuicError::SendError(format!("{:?}", e)))?;
 
         JsFuture::from(close_promise)

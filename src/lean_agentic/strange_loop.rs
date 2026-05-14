@@ -269,14 +269,19 @@ impl MetaLearner {
                     levels: vec![level_sequence[i], level_sequence[i + 1]],
                     description: format!(
                         "Oscillation between {:?} and {:?}",
-                        level_sequence[i], level_sequence[i + 1]
+                        level_sequence[i],
+                        level_sequence[i + 1]
                     ),
                     strength: 0.5,
                     is_beneficial: true, // Assume beneficial unless proven otherwise
                 };
 
                 // Check if loop already exists
-                if !self.strange_loops.iter().any(|l| l.levels == strange_loop.levels) {
+                if !self
+                    .strange_loops
+                    .iter()
+                    .any(|l| l.levels == strange_loop.levels)
+                {
                     self.strange_loops.push(strange_loop);
                 }
             }
@@ -322,16 +327,12 @@ impl MetaLearner {
     pub fn self_modify(&mut self, rule: ModificationRule) -> Result<(), String> {
         // Check safety constraints
         for constraint in &mut self.safety_constraints {
-            if rule.action.contains("infinite")
-                && constraint.name == "no_infinite_loops"
-            {
+            if rule.action.contains("infinite") && constraint.name == "no_infinite_loops" {
                 constraint.is_violated = true;
                 return Err(format!("Safety constraint violated: {}", constraint.name));
             }
 
-            if rule.action.contains("core")
-                && constraint.name == "preserve_core_functionality"
-            {
+            if rule.action.contains("core") && constraint.name == "preserve_core_functionality" {
                 constraint.is_violated = true;
                 return Err(format!("Safety constraint violated: {}", constraint.name));
             }

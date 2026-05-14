@@ -9,15 +9,15 @@
 //! - Pattern matching and detection
 //! - Efficient caching
 
+use dashmap::DashMap;
+use lru::LruCache;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::Hash;
-use thiserror::Error;
-use dashmap::DashMap;
-use lru::LruCache;
-use std::sync::{Arc, Mutex};
 use std::num::NonZeroUsize;
+use std::sync::{Arc, Mutex};
+use thiserror::Error;
 
 /// Errors that can occur during temporal comparison
 #[derive(Debug, Error)]
@@ -53,7 +53,9 @@ pub struct Sequence<T> {
 
 impl<T> Sequence<T> {
     pub fn new() -> Self {
-        Self { elements: Vec::new() }
+        Self {
+            elements: Vec::new(),
+        }
     }
 
     pub fn push(&mut self, value: T, timestamp: u64) {
@@ -188,13 +190,13 @@ where
     pub fn new(cache_size: usize, max_sequence_length: usize) -> Self {
         Self {
             cache: Arc::new(Mutex::new(LruCache::new(
-                NonZeroUsize::new(cache_size).unwrap()
+                NonZeroUsize::new(cache_size).unwrap(),
             ))),
             pattern_cache: Arc::new(Mutex::new(LruCache::new(
-                NonZeroUsize::new(cache_size).unwrap()
+                NonZeroUsize::new(cache_size).unwrap(),
             ))),
             similarity_cache: Arc::new(Mutex::new(LruCache::new(
-                NonZeroUsize::new(cache_size).unwrap()
+                NonZeroUsize::new(cache_size).unwrap(),
             ))),
             cache_hits: Arc::new(DashMap::new()),
             cache_misses: Arc::new(DashMap::new()),
@@ -211,9 +213,7 @@ where
     ) -> Result<ComparisonResult, TemporalError> {
         // Check sequence length
         if seq1.len() > self.max_sequence_length || seq2.len() > self.max_sequence_length {
-            return Err(TemporalError::SequenceTooLong(
-                seq1.len().max(seq2.len())
-            ));
+            return Err(TemporalError::SequenceTooLong(seq1.len().max(seq2.len())));
         }
 
         // Generate cache key
@@ -246,7 +246,11 @@ where
     }
 
     /// Dynamic Time Warping implementation
-    fn dtw(&self, seq1: &Sequence<T>, seq2: &Sequence<T>) -> Result<ComparisonResult, TemporalError> {
+    fn dtw(
+        &self,
+        seq1: &Sequence<T>,
+        seq2: &Sequence<T>,
+    ) -> Result<ComparisonResult, TemporalError> {
         let n = seq1.len();
         let m = seq2.len();
 
@@ -265,13 +269,13 @@ where
         // Fill DTW matrix
         for i in 1..=n {
             for j in 1..=m {
-                let cost = if seq1.elements[i-1].value == seq2.elements[j-1].value {
+                let cost = if seq1.elements[i - 1].value == seq2.elements[j - 1].value {
                     0.0
                 } else {
                     1.0
                 };
 
-                dtw[i][j] = cost + dtw[i-1][j-1].min(dtw[i-1][j]).min(dtw[i][j-1]);
+                dtw[i][j] = cost + dtw[i - 1][j - 1].min(dtw[i - 1][j]).min(dtw[i][j - 1]);
             }
         }
 
@@ -282,12 +286,12 @@ where
         while i > 0 && j > 0 {
             alignment.push((i - 1, j - 1));
 
-            let min_val = dtw[i-1][j-1].min(dtw[i-1][j]).min(dtw[i][j-1]);
+            let min_val = dtw[i - 1][j - 1].min(dtw[i - 1][j]).min(dtw[i][j - 1]);
 
-            if dtw[i-1][j-1] == min_val {
+            if dtw[i - 1][j - 1] == min_val {
                 i -= 1;
                 j -= 1;
-            } else if dtw[i-1][j] == min_val {
+            } else if dtw[i - 1][j] == min_val {
                 i -= 1;
             } else {
                 j -= 1;
@@ -304,7 +308,11 @@ where
     }
 
     /// Longest Common Subsequence implementation
-    fn lcs(&self, seq1: &Sequence<T>, seq2: &Sequence<T>) -> Result<ComparisonResult, TemporalError> {
+    fn lcs(
+        &self,
+        seq1: &Sequence<T>,
+        seq2: &Sequence<T>,
+    ) -> Result<ComparisonResult, TemporalError> {
         let n = seq1.len();
         let m = seq2.len();
 
@@ -312,10 +320,10 @@ where
 
         for i in 1..=n {
             for j in 1..=m {
-                if seq1.elements[i-1].value == seq2.elements[j-1].value {
-                    dp[i][j] = dp[i-1][j-1] + 1;
+                if seq1.elements[i - 1].value == seq2.elements[j - 1].value {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
                 } else {
-                    dp[i][j] = dp[i-1][j].max(dp[i][j-1]);
+                    dp[i][j] = dp[i - 1][j].max(dp[i][j - 1]);
                 }
             }
         }
@@ -331,7 +339,11 @@ where
     }
 
     /// Edit Distance (Levenshtein) implementation
-    fn edit_distance(&self, seq1: &Sequence<T>, seq2: &Sequence<T>) -> Result<ComparisonResult, TemporalError> {
+    fn edit_distance(
+        &self,
+        seq1: &Sequence<T>,
+        seq2: &Sequence<T>,
+    ) -> Result<ComparisonResult, TemporalError> {
         let n = seq1.len();
         let m = seq2.len();
 
@@ -351,15 +363,15 @@ where
 
         for i in 1..=n {
             for j in 1..=m {
-                let cost = if seq1.elements[i-1].value == seq2.elements[j-1].value {
+                let cost = if seq1.elements[i - 1].value == seq2.elements[j - 1].value {
                     0
                 } else {
                     1
                 };
 
-                dp[i][j] = (dp[i-1][j] + 1)
-                    .min(dp[i][j-1] + 1)
-                    .min(dp[i-1][j-1] + cost);
+                dp[i][j] = (dp[i - 1][j] + 1)
+                    .min(dp[i][j - 1] + 1)
+                    .min(dp[i - 1][j - 1] + cost);
             }
         }
 
@@ -371,7 +383,11 @@ where
     }
 
     /// Euclidean distance (for numeric sequences)
-    fn euclidean(&self, seq1: &Sequence<T>, seq2: &Sequence<T>) -> Result<ComparisonResult, TemporalError> {
+    fn euclidean(
+        &self,
+        seq1: &Sequence<T>,
+        seq2: &Sequence<T>,
+    ) -> Result<ComparisonResult, TemporalError> {
         let n = seq1.len().min(seq2.len());
         let mut sum: f64 = 0.0;
 
@@ -390,7 +406,12 @@ where
     }
 
     /// Generate cache key for a comparison
-    fn cache_key(&self, seq1: &Sequence<T>, seq2: &Sequence<T>, algorithm: ComparisonAlgorithm) -> String {
+    fn cache_key(
+        &self,
+        seq1: &Sequence<T>,
+        seq2: &Sequence<T>,
+        algorithm: ComparisonAlgorithm,
+    ) -> String {
         format!(
             "{:?}:{:?}:{:?}",
             seq1.elements.len(),
@@ -400,13 +421,15 @@ where
     }
 
     fn record_cache_hit(&self, key: &str) {
-        self.cache_hits.entry(key.to_string())
+        self.cache_hits
+            .entry(key.to_string())
             .and_modify(|v| *v += 1)
             .or_insert(1);
     }
 
     fn record_cache_miss(&self, key: &str) {
-        self.cache_misses.entry(key.to_string())
+        self.cache_misses
+            .entry(key.to_string())
             .and_modify(|v| *v += 1)
             .or_insert(1);
     }
@@ -558,10 +581,7 @@ where
             for start_idx in 0..=(sequence.len() - pattern_len) {
                 let pattern_seq = sequence[start_idx..start_idx + pattern_len].to_vec();
 
-                pattern_map
-                    .entry(pattern_seq)
-                    .or_default()
-                    .push(start_idx);
+                pattern_map.entry(pattern_seq).or_default().push(start_idx);
             }
         }
 
@@ -576,8 +596,8 @@ where
                 let total_possible = (sequence.len() - seq.len() + 1) as f64;
 
                 // Confidence is weighted by frequency and pattern length
-                let confidence = ((frequency / total_possible) * (pattern_len / max_length as f64))
-                    .min(1.0);
+                let confidence =
+                    ((frequency / total_possible) * (pattern_len / max_length as f64)).min(1.0);
 
                 Pattern::new(seq, occurrences, confidence)
             })
@@ -585,13 +605,11 @@ where
 
         // Sort by frequency (most common first), then by confidence
         patterns.sort_by(|a, b| {
-            b.frequency()
-                .cmp(&a.frequency())
-                .then_with(|| {
-                    b.confidence
-                        .partial_cmp(&a.confidence)
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                })
+            b.frequency().cmp(&a.frequency()).then_with(|| {
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
         });
 
         // Store in cache
@@ -640,7 +658,9 @@ mod tests {
         seq2.push(2, 200);
         seq2.push(3, 300);
 
-        let result = comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW).unwrap();
+        let result = comparator
+            .compare(&seq1, &seq2, ComparisonAlgorithm::DTW)
+            .unwrap();
         assert_eq!(result.distance, 0.0);
     }
 
@@ -657,10 +677,14 @@ mod tests {
         seq2.push(2, 2);
 
         // First comparison - cache miss
-        comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW).unwrap();
+        comparator
+            .compare(&seq1, &seq2, ComparisonAlgorithm::DTW)
+            .unwrap();
 
         // Second comparison - cache hit
-        comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW).unwrap();
+        comparator
+            .compare(&seq1, &seq2, ComparisonAlgorithm::DTW)
+            .unwrap();
 
         let stats = comparator.cache_stats();
         assert_eq!(stats.hits, 1);
@@ -674,7 +698,9 @@ mod tests {
         let haystack = vec![1, 2, 3, 4, 5, 3, 4, 5];
         let needle = vec![3, 4, 5];
 
-        let matches = comparator.find_similar_generic(&haystack, &needle, 0.1).unwrap();
+        let matches = comparator
+            .find_similar_generic(&haystack, &needle, 0.1)
+            .unwrap();
 
         assert_eq!(matches.len(), 2);
         assert_eq!(matches[0].start_index, 2);
@@ -688,7 +714,9 @@ mod tests {
 
         let sequence = vec!['a', 'b', 'c', 'a', 'b', 'c', 'a', 'b', 'c'];
 
-        let patterns = comparator.detect_recurring_patterns(&sequence, 2, 4).unwrap();
+        let patterns = comparator
+            .detect_recurring_patterns(&sequence, 2, 4)
+            .unwrap();
 
         assert!(!patterns.is_empty());
         // Should find 'abc' pattern recurring

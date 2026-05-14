@@ -1,8 +1,8 @@
 use crate::config::HyprSettings;
-use crate::midstream::{HyprService, MetricRecord, TimeWindow, AggregateFunction};
+use crate::midstream::{AggregateFunction, HyprService, MetricRecord, TimeWindow};
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use async_trait::async_trait;
 
 type BoxError = Box<dyn std::error::Error>;
 
@@ -17,7 +17,11 @@ impl HyprServiceImpl {
         })
     }
 
-    async fn calculate_aggregate(&self, window: TimeWindow, func: AggregateFunction) -> Result<f64, BoxError> {
+    async fn calculate_aggregate(
+        &self,
+        window: TimeWindow,
+        func: AggregateFunction,
+    ) -> Result<f64, BoxError> {
         let metrics = self.metrics.lock().await;
         let now = chrono::Utc::now().timestamp() as u64;
         let window_secs = match window {
@@ -40,12 +44,8 @@ impl HyprServiceImpl {
                     Ok(sum / filtered.len() as f64)
                 }
             }
-            AggregateFunction::Sum => {
-                Ok(filtered.iter().map(|m| m.value).sum())
-            }
-            AggregateFunction::Count => {
-                Ok(filtered.len() as f64)
-            }
+            AggregateFunction::Sum => Ok(filtered.iter().map(|m| m.value).sum()),
+            AggregateFunction::Count => Ok(filtered.len() as f64),
         }
     }
 }
@@ -58,7 +58,11 @@ impl HyprService for HyprServiceImpl {
         Ok(())
     }
 
-    async fn query_aggregate(&self, window: TimeWindow, func: AggregateFunction) -> Result<f64, BoxError> {
+    async fn query_aggregate(
+        &self,
+        window: TimeWindow,
+        func: AggregateFunction,
+    ) -> Result<f64, BoxError> {
         self.calculate_aggregate(window, func).await
     }
 }
@@ -105,10 +109,9 @@ mod tests {
         service.ingest_metric(metric).await.unwrap();
 
         // Now query the aggregate
-        let result = service.query_aggregate(
-            TimeWindow::Minutes(5),
-            AggregateFunction::Average,
-        ).await;
+        let result = service
+            .query_aggregate(TimeWindow::Minutes(5), AggregateFunction::Average)
+            .await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 1.0);
     }

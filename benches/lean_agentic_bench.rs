@@ -2,16 +2,13 @@
 //!
 //! Run with: cargo bench
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstream::{
-    LeanAgenticSystem, LeanAgenticConfig, AgentContext,
-    FormalReasoner, AgenticLoop, KnowledgeGraph, StreamLearner,
-    Action, Entity, EntityType,
-    TemporalComparator, Sequence, ComparisonAlgorithm,
-    RealtimeScheduler, SchedulingPolicy, Priority,
-    AttractorAnalyzer, BehaviorAttractorAnalyzer, Trajectory,
-    TemporalNeuralSolver, TemporalFormula, TemporalTrace, TemporalState,
-    MetaLearner, MetaLevel,
+    Action, AgentContext, AgenticLoop, AttractorAnalyzer, BehaviorAttractorAnalyzer,
+    ComparisonAlgorithm, Entity, EntityType, FormalReasoner, KnowledgeGraph, LeanAgenticConfig,
+    LeanAgenticSystem, MetaLearner, MetaLevel, Priority, RealtimeScheduler, SchedulingPolicy,
+    Sequence, StreamLearner, TemporalComparator, TemporalFormula, TemporalNeuralSolver,
+    TemporalState, TemporalTrace, Trajectory,
 };
 use std::collections::HashMap;
 use tokio::runtime::Runtime;
@@ -47,10 +44,9 @@ fn benchmark_formal_reasoning(c: &mut Criterion) {
             rt.block_on(async {
                 let mut reasoner = FormalReasoner::new();
                 black_box(
-                    reasoner.prove_theorem(
-                        "Q".to_string(),
-                        vec!["P".to_string(), "P -> Q".to_string()],
-                    ).await
+                    reasoner
+                        .prove_theorem("Q".to_string(), vec!["P".to_string(), "P -> Q".to_string()])
+                        .await,
                 )
             })
         });
@@ -249,7 +245,10 @@ fn benchmark_end_to_end(c: &mut Criterion) {
                     for i in 0..size {
                         let chunk = format!("Message {} with some content", i);
                         black_box(
-                            system.process_stream_chunk(&chunk, context.clone()).await.unwrap()
+                            system
+                                .process_stream_chunk(&chunk, context.clone())
+                                .await
+                                .unwrap(),
                         );
                         context.add_message(chunk);
                     }
@@ -308,36 +307,24 @@ fn benchmark_temporal_comparison(c: &mut Criterion) {
 
     // Benchmark DTW with different sequence sizes
     for size in [10, 50, 100, 200].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("dtw", size),
-            size,
-            |b, &size| {
-                let mut comparator = TemporalComparator::<i32>::new();
-                let seq1: Vec<i32> = (0..size).collect();
-                let seq2: Vec<i32> = (0..size).map(|x| x + (x % 3)).collect();
+        group.bench_with_input(BenchmarkId::new("dtw", size), size, |b, &size| {
+            let mut comparator = TemporalComparator::<i32>::new();
+            let seq1: Vec<i32> = (0..size).collect();
+            let seq2: Vec<i32> = (0..size).map(|x| x + (x % 3)).collect();
 
-                b.iter(|| {
-                    black_box(comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW))
-                });
-            },
-        );
+            b.iter(|| black_box(comparator.compare(&seq1, &seq2, ComparisonAlgorithm::DTW)));
+        });
     }
 
     // Benchmark LCS
     for size in [10, 50, 100, 200].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("lcs", size),
-            size,
-            |b, &size| {
-                let mut comparator = TemporalComparator::<i32>::new();
-                let seq1: Vec<i32> = (0..size).collect();
-                let seq2: Vec<i32> = (0..size).map(|x| x + (x % 2)).collect();
+        group.bench_with_input(BenchmarkId::new("lcs", size), size, |b, &size| {
+            let mut comparator = TemporalComparator::<i32>::new();
+            let seq1: Vec<i32> = (0..size).collect();
+            let seq2: Vec<i32> = (0..size).map(|x| x + (x % 2)).collect();
 
-                b.iter(|| {
-                    black_box(comparator.compare(&seq1, &seq2, ComparisonAlgorithm::LCS))
-                });
-            },
-        );
+            b.iter(|| black_box(comparator.compare(&seq1, &seq2, ComparisonAlgorithm::LCS)));
+        });
     }
 
     // Benchmark edit distance
@@ -346,9 +333,7 @@ fn benchmark_temporal_comparison(c: &mut Criterion) {
         let seq1: Vec<char> = "kitten".chars().collect();
         let seq2: Vec<char> = "sitting".chars().collect();
 
-        b.iter(|| {
-            black_box(comparator.compare(&seq1, &seq2, ComparisonAlgorithm::EditDistance))
-        });
+        b.iter(|| black_box(comparator.compare(&seq1, &seq2, ComparisonAlgorithm::EditDistance)));
     });
 
     // Benchmark pattern detection
@@ -357,9 +342,7 @@ fn benchmark_temporal_comparison(c: &mut Criterion) {
         let sequence: Vec<i32> = (0..1000).map(|x| x % 10).collect();
         let pattern = vec![1, 2, 3];
 
-        b.iter(|| {
-            black_box(comparator.detect_pattern(&sequence, &pattern))
-        });
+        b.iter(|| black_box(comparator.detect_pattern(&sequence, &pattern)));
     });
 
     // Benchmark find similar with cache
@@ -377,9 +360,7 @@ fn benchmark_temporal_comparison(c: &mut Criterion) {
 
         let query: Vec<i32> = (0..50).collect();
 
-        b.iter(|| {
-            black_box(comparator.find_similar(&query, 0.7, ComparisonAlgorithm::LCS))
-        });
+        b.iter(|| black_box(comparator.find_similar(&query, 0.7, ComparisonAlgorithm::LCS)));
     });
 
     group.finish();
@@ -405,12 +386,14 @@ fn benchmark_scheduler(c: &mut Criterion) {
                 };
 
                 black_box(
-                    scheduler.schedule(
-                        action,
-                        Priority::Medium,
-                        std::time::Duration::from_secs(1),
-                        std::time::Duration::from_millis(10),
-                    ).await
+                    scheduler
+                        .schedule(
+                            action,
+                            Priority::Medium,
+                            std::time::Duration::from_secs(1),
+                            std::time::Duration::from_millis(10),
+                        )
+                        .await,
                 )
             })
         });
@@ -433,12 +416,14 @@ fn benchmark_scheduler(c: &mut Criterion) {
                         expected_reward: 0.8,
                     };
 
-                    scheduler.schedule(
-                        action,
-                        Priority::Medium,
-                        std::time::Duration::from_millis(100 + i * 10),
-                        std::time::Duration::from_millis(10),
-                    ).await;
+                    scheduler
+                        .schedule(
+                            action,
+                            Priority::Medium,
+                            std::time::Duration::from_millis(100 + i * 10),
+                            std::time::Duration::from_millis(10),
+                        )
+                        .await;
                 }
 
                 black_box(scheduler.next_task().await)
@@ -453,7 +438,12 @@ fn benchmark_scheduler(c: &mut Criterion) {
                 let scheduler = RealtimeScheduler::new(SchedulingPolicy::FixedPriority);
 
                 // Schedule tasks with different priorities
-                for priority in &[Priority::Low, Priority::Medium, Priority::High, Priority::Critical] {
+                for priority in &[
+                    Priority::Low,
+                    Priority::Medium,
+                    Priority::High,
+                    Priority::Critical,
+                ] {
                     let action = Action {
                         action_type: format!("task_{:?}", priority),
                         description: format!("Task {:?}", priority),
@@ -463,12 +453,14 @@ fn benchmark_scheduler(c: &mut Criterion) {
                         expected_reward: 0.8,
                     };
 
-                    scheduler.schedule(
-                        action,
-                        *priority,
-                        std::time::Duration::from_secs(1),
-                        std::time::Duration::from_millis(10),
-                    ).await;
+                    scheduler
+                        .schedule(
+                            action,
+                            *priority,
+                            std::time::Duration::from_secs(1),
+                            std::time::Duration::from_millis(10),
+                        )
+                        .await;
                 }
 
                 black_box(scheduler.next_task().await)
@@ -484,7 +476,8 @@ fn benchmark_scheduler(c: &mut Criterion) {
             |b, &num_tasks| {
                 b.iter(|| {
                     rt.block_on(async {
-                        let scheduler = RealtimeScheduler::new(SchedulingPolicy::EarliestDeadlineFirst);
+                        let scheduler =
+                            RealtimeScheduler::new(SchedulingPolicy::EarliestDeadlineFirst);
 
                         for i in 0..num_tasks {
                             let action = Action {
@@ -496,12 +489,14 @@ fn benchmark_scheduler(c: &mut Criterion) {
                                 expected_reward: 0.8,
                             };
 
-                            scheduler.schedule(
-                                action,
-                                Priority::Medium,
-                                std::time::Duration::from_millis(100),
-                                std::time::Duration::from_millis(10),
-                            ).await;
+                            scheduler
+                                .schedule(
+                                    action,
+                                    Priority::Medium,
+                                    std::time::Duration::from_millis(100),
+                                    std::time::Duration::from_millis(10),
+                                )
+                                .await;
                         }
 
                         // Retrieve all tasks
@@ -524,25 +519,19 @@ fn benchmark_attractor_analysis(c: &mut Criterion) {
 
     // Benchmark attractor detection with different data sizes
     for size in [100, 500, 1000].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("analyze", size),
-            size,
-            |b, &size| {
-                let analyzer = AttractorAnalyzer::new(3, 1);
+        group.bench_with_input(BenchmarkId::new("analyze", size), size, |b, &size| {
+            let analyzer = AttractorAnalyzer::new(3, 1);
 
-                // Generate test data (logistic map)
-                let mut data = Vec::with_capacity(size);
-                let mut x = 0.1;
-                for _ in 0..size {
-                    x = 3.7 * x * (1.0 - x);
-                    data.push(x);
-                }
+            // Generate test data (logistic map)
+            let mut data = Vec::with_capacity(size);
+            let mut x = 0.1;
+            for _ in 0..size {
+                x = 3.7 * x * (1.0 - x);
+                data.push(x);
+            }
 
-                b.iter(|| {
-                    black_box(analyzer.analyze(&data).unwrap())
-                });
-            },
-        );
+            b.iter(|| black_box(analyzer.analyze(&data).unwrap()));
+        });
     }
 
     // Benchmark behavior analysis
@@ -557,9 +546,7 @@ fn benchmark_attractor_analysis(c: &mut Criterion) {
             );
         }
 
-        b.iter(|| {
-            black_box(analyzer.get_behavior_summary())
-        });
+        b.iter(|| black_box(analyzer.get_behavior_summary()));
     });
 
     // Benchmark trajectory prediction
@@ -568,9 +555,7 @@ fn benchmark_attractor_analysis(c: &mut Criterion) {
         let data: Vec<f64> = (0..100).map(|i| (i as f64 * 0.1).sin()).collect();
         let trajectory = Trajectory::from_timeseries(&data, 3, 1);
 
-        b.iter(|| {
-            black_box(analyzer.predict_next(&trajectory))
-        });
+        b.iter(|| black_box(analyzer.predict_next(&trajectory)));
     });
 
     group.finish();
@@ -592,9 +577,7 @@ fn benchmark_temporal_neural(c: &mut Criterion) {
 
         let formula = TemporalFormula::atom("safe");
 
-        b.iter(|| {
-            black_box(solver.verify(&formula, &trace))
-        });
+        b.iter(|| black_box(solver.verify(&formula, &trace)));
     });
 
     // Benchmark eventually operator
@@ -610,9 +593,7 @@ fn benchmark_temporal_neural(c: &mut Criterion) {
 
         let formula = TemporalFormula::eventually(TemporalFormula::atom("goal"));
 
-        b.iter(|| {
-            black_box(solver.verify(&formula, &trace))
-        });
+        b.iter(|| black_box(solver.verify(&formula, &trace)));
     });
 
     // Benchmark globally operator
@@ -628,9 +609,7 @@ fn benchmark_temporal_neural(c: &mut Criterion) {
 
         let formula = TemporalFormula::globally(TemporalFormula::atom("invariant"));
 
-        b.iter(|| {
-            black_box(solver.verify(&formula, &trace))
-        });
+        b.iter(|| black_box(solver.verify(&formula, &trace)));
     });
 
     // Benchmark complex formulas
@@ -646,16 +625,12 @@ fn benchmark_temporal_neural(c: &mut Criterion) {
         }
 
         // G(request -> F response)
-        let formula = TemporalFormula::globally(
-            TemporalFormula::implies(
-                TemporalFormula::atom("request"),
-                TemporalFormula::eventually(TemporalFormula::atom("response"))
-            )
-        );
+        let formula = TemporalFormula::globally(TemporalFormula::implies(
+            TemporalFormula::atom("request"),
+            TemporalFormula::eventually(TemporalFormula::atom("response")),
+        ));
 
-        b.iter(|| {
-            black_box(solver.verify(&formula, &trace))
-        });
+        b.iter(|| black_box(solver.verify(&formula, &trace)));
     });
 
     // Benchmark MTL (bounded temporal)
@@ -675,9 +650,7 @@ fn benchmark_temporal_neural(c: &mut Criterion) {
             std::time::Duration::from_millis(600),
         );
 
-        b.iter(|| {
-            black_box(solver.verify(&formula, &trace))
-        });
+        b.iter(|| black_box(solver.verify(&formula, &trace)));
     });
 
     group.finish();
@@ -748,9 +721,7 @@ fn benchmark_meta_learning(c: &mut Criterion) {
     group.bench_function("safety_check", |b| {
         let learner = MetaLearner::new(100);
 
-        b.iter(|| {
-            black_box(learner.safety_check())
-        });
+        b.iter(|| black_box(learner.safety_check()));
     });
 
     // Benchmark meta-level transitions

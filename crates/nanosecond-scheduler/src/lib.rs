@@ -9,12 +9,12 @@
 //! - Lock-free queues for performance
 //! - CPU affinity support
 
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::collections::BinaryHeap;
 use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use parking_lot::RwLock;
 use thiserror::Error;
 
 /// Scheduler errors
@@ -152,8 +152,12 @@ impl<T> Ord for ScheduledTask<T> {
         // max-heap, the LATER deadline is "greater" by default, but
         // we want EARLIER deadlines first. So we *do* swap the
         // deadline comparison.
-        self.priority.cmp(&other.priority)
-            .then_with(|| other.deadline.absolute_time.cmp(&self.deadline.absolute_time))
+        self.priority.cmp(&other.priority).then_with(|| {
+            other
+                .deadline
+                .absolute_time
+                .cmp(&self.deadline.absolute_time)
+        })
     }
 }
 
@@ -353,11 +357,9 @@ mod tests {
     fn test_schedule_task() {
         let scheduler = RealtimeScheduler::default();
 
-        let task_id = scheduler.schedule(
-            42,
-            Deadline::from_millis(100),
-            Priority::High,
-        ).unwrap();
+        let task_id = scheduler
+            .schedule(42, Deadline::from_millis(100), Priority::High)
+            .unwrap();
 
         assert_eq!(task_id, 1);
         assert_eq!(scheduler.queue_size(), 1);
@@ -367,9 +369,15 @@ mod tests {
     fn test_priority_ordering() {
         let scheduler = RealtimeScheduler::default();
 
-        scheduler.schedule(1, Deadline::from_millis(100), Priority::Low).unwrap();
-        scheduler.schedule(2, Deadline::from_millis(100), Priority::High).unwrap();
-        scheduler.schedule(3, Deadline::from_millis(100), Priority::Critical).unwrap();
+        scheduler
+            .schedule(1, Deadline::from_millis(100), Priority::Low)
+            .unwrap();
+        scheduler
+            .schedule(2, Deadline::from_millis(100), Priority::High)
+            .unwrap();
+        scheduler
+            .schedule(3, Deadline::from_millis(100), Priority::Critical)
+            .unwrap();
 
         let task1 = scheduler.next_task().unwrap();
         assert_eq!(task1.payload, 3); // Critical priority
@@ -388,7 +396,9 @@ mod tests {
         let past_deadline = Deadline::from_micros(1); // Very short deadline
         std::thread::sleep(Duration::from_millis(10));
 
-        scheduler.schedule(42, past_deadline, Priority::High).unwrap();
+        scheduler
+            .schedule(42, past_deadline, Priority::High)
+            .unwrap();
 
         let task = scheduler.next_task().unwrap();
         assert!(task.deadline.is_passed());
@@ -398,7 +408,9 @@ mod tests {
     fn test_execute_task() {
         let scheduler = RealtimeScheduler::default();
 
-        scheduler.schedule(42, Deadline::from_millis(100), Priority::High).unwrap();
+        scheduler
+            .schedule(42, Deadline::from_millis(100), Priority::High)
+            .unwrap();
 
         let task = scheduler.next_task().unwrap();
         scheduler.execute_task(task, |payload| {
@@ -414,7 +426,9 @@ mod tests {
         let scheduler = RealtimeScheduler::default();
 
         for i in 0..10 {
-            scheduler.schedule(i, Deadline::from_millis(100), Priority::Medium).unwrap();
+            scheduler
+                .schedule(i, Deadline::from_millis(100), Priority::Medium)
+                .unwrap();
         }
 
         let stats = scheduler.stats();

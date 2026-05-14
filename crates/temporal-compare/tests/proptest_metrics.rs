@@ -30,9 +30,7 @@
 //! LCS / DTW algorithms compare values only via `==`, so the choice
 //! of integer-vs-float values does not change which code paths run.
 
-use midstreamer_temporal_compare::{
-    ComparisonAlgorithm, Sequence, TemporalComparator,
-};
+use midstreamer_temporal_compare::{ComparisonAlgorithm, Sequence, TemporalComparator};
 use proptest::prelude::*;
 
 /// Build a `Sequence<i32>` from a Vec by assigning evenly-spaced

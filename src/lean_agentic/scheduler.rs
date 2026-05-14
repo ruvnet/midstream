@@ -72,7 +72,9 @@ impl PartialOrd for ScheduledTask {
 impl Ord for ScheduledTask {
     fn cmp(&self, other: &Self) -> Ordering {
         // Reverse ordering for min-heap behavior (earliest deadline first)
-        other.deadline.cmp(&self.deadline)
+        other
+            .deadline
+            .cmp(&self.deadline)
             .then_with(|| self.priority.cmp(&other.priority))
             .then_with(|| self.id.cmp(&other.id))
     }
@@ -193,8 +195,8 @@ impl RealtimeScheduler {
         stats.total_executed += 1;
 
         let latency_ns = execution_time.as_nanos() as u64;
-        stats.average_latency_ns =
-            (stats.average_latency_ns * (stats.total_executed - 1) + latency_ns)
+        stats.average_latency_ns = (stats.average_latency_ns * (stats.total_executed - 1)
+            + latency_ns)
             / stats.total_executed;
         stats.max_latency_ns = stats.max_latency_ns.max(latency_ns);
         stats.min_latency_ns = stats.min_latency_ns.min(latency_ns);
@@ -223,11 +225,13 @@ impl RealtimeScheduler {
     }
 
     /// Check if a task would meet its deadline
-    pub async fn can_meet_deadline(&self, estimated_duration: Duration, deadline: Duration) -> bool {
+    pub async fn can_meet_deadline(
+        &self,
+        estimated_duration: Duration,
+        deadline: Duration,
+    ) -> bool {
         let queue = self.queue.read().await;
-        let total_pending: Duration = queue.iter()
-            .map(|t| t.estimated_duration)
-            .sum();
+        let total_pending: Duration = queue.iter().map(|t| t.estimated_duration).sum();
 
         total_pending + estimated_duration <= deadline
     }
@@ -317,12 +321,14 @@ mod tests {
         let scheduler = RealtimeScheduler::new(SchedulingPolicy::EarliestDeadlineFirst);
 
         let action = create_test_action("test", 0.8);
-        let task_id = scheduler.schedule(
-            action,
-            Priority::High,
-            Duration::from_secs(1),
-            Duration::from_millis(10),
-        ).await;
+        let task_id = scheduler
+            .schedule(
+                action,
+                Priority::High,
+                Duration::from_secs(1),
+                Duration::from_millis(10),
+            )
+            .await;
 
         assert_eq!(task_id, 0);
         assert_eq!(scheduler.queue_len().await, 1);
@@ -336,19 +342,23 @@ mod tests {
         let action1 = create_test_action("task1", 0.8);
         let action2 = create_test_action("task2", 0.8);
 
-        scheduler.schedule(
-            action1,
-            Priority::Medium,
-            Duration::from_secs(2),
-            Duration::from_millis(10),
-        ).await;
+        scheduler
+            .schedule(
+                action1,
+                Priority::Medium,
+                Duration::from_secs(2),
+                Duration::from_millis(10),
+            )
+            .await;
 
-        scheduler.schedule(
-            action2,
-            Priority::Medium,
-            Duration::from_secs(1), // Shorter deadline
-            Duration::from_millis(10),
-        ).await;
+        scheduler
+            .schedule(
+                action2,
+                Priority::Medium,
+                Duration::from_secs(1), // Shorter deadline
+                Duration::from_millis(10),
+            )
+            .await;
 
         let next = scheduler.next_task().await.unwrap();
         assert_eq!(next.action.name, "task2"); // Should get task with earlier deadline
@@ -361,19 +371,23 @@ mod tests {
         let action1 = create_test_action("low", 0.4);
         let action2 = create_test_action("high", 0.9);
 
-        scheduler.schedule(
-            action1,
-            Priority::Low,
-            Duration::from_secs(1),
-            Duration::from_millis(10),
-        ).await;
+        scheduler
+            .schedule(
+                action1,
+                Priority::Low,
+                Duration::from_secs(1),
+                Duration::from_millis(10),
+            )
+            .await;
 
-        scheduler.schedule(
-            action2,
-            Priority::Critical,
-            Duration::from_secs(1),
-            Duration::from_millis(10),
-        ).await;
+        scheduler
+            .schedule(
+                action2,
+                Priority::Critical,
+                Duration::from_secs(1),
+                Duration::from_millis(10),
+            )
+            .await;
 
         let next = scheduler.next_task().await.unwrap();
         assert_eq!(next.action.name, "high"); // Should get high priority task
@@ -384,14 +398,18 @@ mod tests {
         let scheduler = RealtimeScheduler::new(SchedulingPolicy::EarliestDeadlineFirst);
 
         let action = create_test_action("test", 0.8);
-        let task_id = scheduler.schedule(
-            action,
-            Priority::Medium,
-            Duration::from_secs(1),
-            Duration::from_millis(10),
-        ).await;
+        let task_id = scheduler
+            .schedule(
+                action,
+                Priority::Medium,
+                Duration::from_secs(1),
+                Duration::from_millis(10),
+            )
+            .await;
 
-        scheduler.mark_executed(task_id, Duration::from_micros(500)).await;
+        scheduler
+            .mark_executed(task_id, Duration::from_micros(500))
+            .await;
 
         let stats = scheduler.get_stats().await;
         assert_eq!(stats.total_scheduled, 1);
@@ -403,28 +421,28 @@ mod tests {
     async fn test_can_meet_deadline() {
         let scheduler = RealtimeScheduler::new(SchedulingPolicy::EarliestDeadlineFirst);
 
-        let can_meet = scheduler.can_meet_deadline(
-            Duration::from_millis(10),
-            Duration::from_secs(1),
-        ).await;
+        let can_meet = scheduler
+            .can_meet_deadline(Duration::from_millis(10), Duration::from_secs(1))
+            .await;
 
         assert!(can_meet);
 
         // Add many tasks
         for i in 0..100 {
             let action = create_test_action(&format!("task{}", i), 0.8);
-            scheduler.schedule(
-                action,
-                Priority::Medium,
-                Duration::from_secs(10),
-                Duration::from_millis(100),
-            ).await;
+            scheduler
+                .schedule(
+                    action,
+                    Priority::Medium,
+                    Duration::from_secs(10),
+                    Duration::from_millis(100),
+                )
+                .await;
         }
 
-        let can_meet = scheduler.can_meet_deadline(
-            Duration::from_millis(10),
-            Duration::from_millis(1),
-        ).await;
+        let can_meet = scheduler
+            .can_meet_deadline(Duration::from_millis(10), Duration::from_millis(1))
+            .await;
 
         assert!(!can_meet); // Should not be able to meet tight deadline
     }
@@ -444,21 +462,26 @@ mod tests {
                 _ => Priority::Medium,
             };
 
-            scheduler.schedule(
-                action,
-                priority,
-                Duration::from_secs(1),
-                Duration::from_millis(10),
-            ).await;
+            scheduler
+                .schedule(
+                    action,
+                    priority,
+                    Duration::from_secs(1),
+                    Duration::from_millis(10),
+                )
+                .await;
         }
 
         let counts = scheduler.tasks_by_priority().await;
         assert_eq!(counts.len(), 5);
 
         for (priority, count) in counts {
-            if priority == Priority::Critical || priority == Priority::High ||
-               priority == Priority::Medium || priority == Priority::Low ||
-               priority == Priority::Background {
+            if priority == Priority::Critical
+                || priority == Priority::High
+                || priority == Priority::Medium
+                || priority == Priority::Low
+                || priority == Priority::Background
+            {
                 assert_eq!(count, 1);
             }
         }

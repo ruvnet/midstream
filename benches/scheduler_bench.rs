@@ -13,14 +13,13 @@
 //! - Task execution: <1μs
 //! - Stats calculation: <10μs
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_scheduler::{
-    NanoScheduler, Task, TaskPriority, ScheduleResult,
-    stats::SchedulerStats,
+    stats::SchedulerStats, NanoScheduler, ScheduleResult, Task, TaskPriority,
 };
-use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::{Duration, Instant};
 
 // ============================================================================
 // Test Task Generators
@@ -114,7 +113,7 @@ fn bench_schedule_overhead(c: &mut Criterion) {
                         black_box(scheduler.schedule(black_box(task)));
                     }
                 });
-            }
+            },
         );
     }
 
@@ -222,7 +221,7 @@ fn bench_execution_throughput(c: &mut Criterion) {
                         scheduler.run_once();
                     }
                 });
-            }
+            },
         );
     }
 
@@ -326,9 +325,7 @@ fn bench_statistics_overhead(c: &mut Criterion) {
             scheduler.run_once();
         }
 
-        b.iter(|| {
-            black_box(scheduler.get_stats())
-        });
+        b.iter(|| black_box(scheduler.get_stats()));
     });
 
     // Stats calculation with varying history sizes
@@ -348,10 +345,8 @@ fn bench_statistics_overhead(c: &mut Criterion) {
                     scheduler.run_once();
                 }
 
-                b.iter(|| {
-                    black_box(scheduler.get_stats())
-                });
-            }
+                b.iter(|| black_box(scheduler.get_stats()));
+            },
         );
     }
 
@@ -378,10 +373,7 @@ fn bench_multithreaded_scheduling(c: &mut Criterion) {
                         let scheduler = Arc::clone(&scheduler);
                         let handle = thread::spawn(move || {
                             for i in 0..100 {
-                                let task = create_compute_task(
-                                    thread_id as u64 * 100 + i,
-                                    100
-                                );
+                                let task = create_compute_task(thread_id as u64 * 100 + i, 100);
                                 scheduler.lock().unwrap().schedule(task);
                             }
                         });
@@ -397,7 +389,7 @@ fn bench_multithreaded_scheduling(c: &mut Criterion) {
                         scheduler.run_once();
                     }
                 });
-            }
+            },
         );
     }
 

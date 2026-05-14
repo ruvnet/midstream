@@ -99,11 +99,7 @@ impl TemporalFormula {
     }
 
     /// Create bounded eventually (for MTL)
-    pub fn eventually_bounded(
-        formula: TemporalFormula,
-        lower: Duration,
-        upper: Duration,
-    ) -> Self {
+    pub fn eventually_bounded(formula: TemporalFormula, lower: Duration, upper: Duration) -> Self {
         TemporalFormula::BoundedTemporal {
             operator: TemporalOperator::Eventually,
             formula: Box::new(formula),
@@ -113,11 +109,7 @@ impl TemporalFormula {
     }
 
     /// Create bounded globally (for MTL)
-    pub fn globally_bounded(
-        formula: TemporalFormula,
-        lower: Duration,
-        upper: Duration,
-    ) -> Self {
+    pub fn globally_bounded(formula: TemporalFormula, lower: Duration, upper: Duration) -> Self {
         TemporalFormula::BoundedTemporal {
             operator: TemporalOperator::Globally,
             formula: Box::new(formula),
@@ -269,7 +261,11 @@ impl TemporalNeuralSolver {
                             if holds { "true" } else { "false" },
                             position
                         ),
-                        counterexample: if holds { None } else { Some(vec![name.clone()]) },
+                        counterexample: if holds {
+                            None
+                        } else {
+                            Some(vec![name.clone()])
+                        },
                     }
                 } else {
                     VerificationResult {
@@ -402,7 +398,10 @@ impl TemporalNeuralSolver {
                             return VerificationResult {
                                 holds: true,
                                 confidence: result.confidence,
-                                explanation: format!("Eventually at position {}: {}", i, result.explanation),
+                                explanation: format!(
+                                    "Eventually at position {}: {}",
+                                    i, result.explanation
+                                ),
                                 counterexample: None,
                             };
                         }

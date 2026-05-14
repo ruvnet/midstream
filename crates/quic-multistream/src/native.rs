@@ -3,8 +3,8 @@
 use crate::{ConnectionStats, QuicError, StreamPriority};
 use quinn::{ClientConfig, Endpoint, RecvStream, SendStream, VarInt};
 use std::net::{SocketAddr, ToSocketAddrs};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 /// QUIC connection wrapper for native targets
 pub struct QuicConnection {
@@ -130,7 +130,8 @@ impl QuicConnection {
 
     /// Close the connection
     pub fn close(&self, error_code: u64, reason: &[u8]) {
-        self.connection.close(VarInt::from_u64(error_code).unwrap(), reason);
+        self.connection
+            .close(VarInt::from_u64(error_code).unwrap(), reason);
     }
 
     /// Get the remote address
@@ -167,7 +168,8 @@ impl QuicStream {
     /// Send data on the stream
     pub async fn send(&mut self, data: &[u8]) -> Result<usize, QuicError> {
         self.send.write_all(data).await?;
-        self.bytes_sent.fetch_add(data.len() as u64, Ordering::Relaxed);
+        self.bytes_sent
+            .fetch_add(data.len() as u64, Ordering::Relaxed);
         Ok(data.len())
     }
 
@@ -180,7 +182,8 @@ impl QuicStream {
 
     /// Finish sending on this stream
     pub async fn finish(&mut self) -> Result<(), QuicError> {
-        self.send.finish()
+        self.send
+            .finish()
             .map_err(|e| QuicError::StreamError(format!("Failed to finish stream: {:?}", e)))?;
         Ok(())
     }
@@ -212,13 +215,15 @@ impl QuicSendStream {
     /// Send data on the stream
     pub async fn send(&mut self, data: &[u8]) -> Result<usize, QuicError> {
         self.send.write_all(data).await?;
-        self.bytes_sent.fetch_add(data.len() as u64, Ordering::Relaxed);
+        self.bytes_sent
+            .fetch_add(data.len() as u64, Ordering::Relaxed);
         Ok(data.len())
     }
 
     /// Finish sending on this stream
     pub async fn finish(&mut self) -> Result<(), QuicError> {
-        self.send.finish()
+        self.send
+            .finish()
             .map_err(|e| QuicError::StreamError(format!("Failed to finish stream: {:?}", e)))?;
         Ok(())
     }

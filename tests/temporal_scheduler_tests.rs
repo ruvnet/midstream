@@ -3,9 +3,8 @@
 //! Tests real-world scenarios combining temporal analysis and scheduling
 
 use midstream::{
-    TemporalComparator, Sequence, ComparisonAlgorithm,
-    RealtimeScheduler, SchedulingPolicy, Priority,
-    Action, AgentContext, AgenticLoop, LeanAgenticConfig,
+    Action, AgentContext, AgenticLoop, ComparisonAlgorithm, LeanAgenticConfig, Priority,
+    RealtimeScheduler, SchedulingPolicy, Sequence, TemporalComparator,
 };
 use std::collections::HashMap;
 use std::time::Duration;
@@ -129,12 +128,14 @@ async fn test_scheduler_with_deadlines() {
         expected_reward: 1.0,
     };
 
-    let critical_id = scheduler.schedule(
-        critical_action,
-        Priority::Critical,
-        Duration::from_millis(50), // Very tight deadline
-        Duration::from_millis(10),
-    ).await;
+    let critical_id = scheduler
+        .schedule(
+            critical_action,
+            Priority::Critical,
+            Duration::from_millis(50), // Very tight deadline
+            Duration::from_millis(10),
+        )
+        .await;
 
     // Schedule normal task with relaxed deadline
     let normal_action = Action {
@@ -146,12 +147,14 @@ async fn test_scheduler_with_deadlines() {
         expected_reward: 0.7,
     };
 
-    scheduler.schedule(
-        normal_action,
-        Priority::Medium,
-        Duration::from_secs(5), // Relaxed deadline
-        Duration::from_millis(100),
-    ).await;
+    scheduler
+        .schedule(
+            normal_action,
+            Priority::Medium,
+            Duration::from_secs(5), // Relaxed deadline
+            Duration::from_millis(100),
+        )
+        .await;
 
     // EDF should prioritize the critical task due to earlier deadline
     let next = scheduler.next_task().await.unwrap();
@@ -167,34 +170,38 @@ async fn test_scheduler_priority_override() {
     let scheduler = RealtimeScheduler::new(SchedulingPolicy::FixedPriority);
 
     // Schedule low priority task first
-    scheduler.schedule(
-        Action {
-            action_type: "background_task".to_string(),
-            description: "Background processing".to_string(),
-            parameters: HashMap::new(),
-            tool_calls: vec![],
-            expected_outcome: None,
-            expected_reward: 0.3,
-        },
-        Priority::Background,
-        Duration::from_secs(10),
-        Duration::from_millis(100),
-    ).await;
+    scheduler
+        .schedule(
+            Action {
+                action_type: "background_task".to_string(),
+                description: "Background processing".to_string(),
+                parameters: HashMap::new(),
+                tool_calls: vec![],
+                expected_outcome: None,
+                expected_reward: 0.3,
+            },
+            Priority::Background,
+            Duration::from_secs(10),
+            Duration::from_millis(100),
+        )
+        .await;
 
     // Schedule high priority task second
-    scheduler.schedule(
-        Action {
-            action_type: "urgent_task".to_string(),
-            description: "Urgent response needed".to_string(),
-            parameters: HashMap::new(),
-            tool_calls: vec![],
-            expected_outcome: None,
-            expected_reward: 0.9,
-        },
-        Priority::Critical,
-        Duration::from_secs(10),
-        Duration::from_millis(50),
-    ).await;
+    scheduler
+        .schedule(
+            Action {
+                action_type: "urgent_task".to_string(),
+                description: "Urgent response needed".to_string(),
+                parameters: HashMap::new(),
+                tool_calls: vec![],
+                expected_outcome: None,
+                expected_reward: 0.9,
+            },
+            Priority::Critical,
+            Duration::from_secs(10),
+            Duration::from_millis(50),
+        )
+        .await;
 
     // Should get high priority task first despite being scheduled later
     let next = scheduler.next_task().await.unwrap();
@@ -231,19 +238,21 @@ async fn test_combined_temporal_and_scheduling() {
         println!("Found similar successful pattern, scheduling with high priority");
 
         // Schedule next expected action with higher priority
-        scheduler.schedule(
-            Action {
-                action_type: "knowledge_lookup".to_string(),
-                description: "Predicted next action from pattern".to_string(),
-                parameters: HashMap::new(),
-                tool_calls: vec![],
-                expected_outcome: Some("success".to_string()),
-                expected_reward: 0.85,
-            },
-            Priority::High, // Higher priority based on pattern match
-            Duration::from_millis(100),
-            Duration::from_millis(20),
-        ).await;
+        scheduler
+            .schedule(
+                Action {
+                    action_type: "knowledge_lookup".to_string(),
+                    description: "Predicted next action from pattern".to_string(),
+                    parameters: HashMap::new(),
+                    tool_calls: vec![],
+                    expected_outcome: Some("success".to_string()),
+                    expected_reward: 0.85,
+                },
+                Priority::High, // Higher priority based on pattern match
+                Duration::from_millis(100),
+                Duration::from_millis(20),
+            )
+            .await;
     }
 
     let stats = scheduler.get_stats().await;
@@ -258,41 +267,46 @@ async fn test_scheduler_deadline_checking() {
     let scheduler = RealtimeScheduler::new(SchedulingPolicy::EarliestDeadlineFirst);
 
     // Empty queue - should be able to meet deadline
-    let can_meet = scheduler.can_meet_deadline(
-        Duration::from_millis(10),
-        Duration::from_secs(1),
-    ).await;
+    let can_meet = scheduler
+        .can_meet_deadline(Duration::from_millis(10), Duration::from_secs(1))
+        .await;
     assert!(can_meet);
 
     // Add many tasks
     for i in 0..50 {
-        scheduler.schedule(
-            Action {
-                action_type: format!("task_{}", i),
-                description: format!("Task {}", i),
-                parameters: HashMap::new(),
-                tool_calls: vec![],
-                expected_outcome: None,
-                expected_reward: 0.7,
-            },
-            Priority::Medium,
-            Duration::from_secs(10),
-            Duration::from_millis(50), // Each task takes 50ms
-        ).await;
+        scheduler
+            .schedule(
+                Action {
+                    action_type: format!("task_{}", i),
+                    description: format!("Task {}", i),
+                    parameters: HashMap::new(),
+                    tool_calls: vec![],
+                    expected_outcome: None,
+                    expected_reward: 0.7,
+                },
+                Priority::Medium,
+                Duration::from_secs(10),
+                Duration::from_millis(50), // Each task takes 50ms
+            )
+            .await;
     }
 
     // Now with 50 tasks * 50ms = 2500ms pending work
-    let can_meet_tight = scheduler.can_meet_deadline(
-        Duration::from_millis(10),
-        Duration::from_millis(100), // Want to finish in 100ms
-    ).await;
+    let can_meet_tight = scheduler
+        .can_meet_deadline(
+            Duration::from_millis(10),
+            Duration::from_millis(100), // Want to finish in 100ms
+        )
+        .await;
 
     assert!(!can_meet_tight); // Should not be able to meet tight deadline
 
-    let can_meet_loose = scheduler.can_meet_deadline(
-        Duration::from_millis(10),
-        Duration::from_secs(10), // Generous deadline
-    ).await;
+    let can_meet_loose = scheduler
+        .can_meet_deadline(
+            Duration::from_millis(10),
+            Duration::from_secs(10), // Generous deadline
+        )
+        .await;
 
     assert!(can_meet_loose); // Should be able to meet loose deadline
 
@@ -328,7 +342,10 @@ async fn test_temporal_caching() {
     assert_eq!(stats2.lcs_count, 1);
     assert_eq!(stats2.total_comparisons, 2); // DTW + LCS
 
-    println!("Caching working correctly: {} total comparisons", stats2.total_comparisons);
+    println!(
+        "Caching working correctly: {} total comparisons",
+        stats2.total_comparisons
+    );
 }
 
 #[tokio::test]
@@ -338,13 +355,19 @@ async fn test_pattern_detection_in_stream() {
 
     // Simulated stream of user intents
     let intent_stream = vec![
-        "weather", "location", "weather", "news", "sports",
-        "weather", "location", "weather", "calendar", "weather",
-        "location", "weather",
-    ].into_iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        "weather", "location", "weather", "news", "sports", "weather", "location", "weather",
+        "calendar", "weather", "location", "weather",
+    ]
+    .into_iter()
+    .map(|s| s.to_string())
+    .collect::<Vec<_>>();
 
     // Pattern we're looking for
-    let pattern = vec!["weather".to_string(), "location".to_string(), "weather".to_string()];
+    let pattern = vec![
+        "weather".to_string(),
+        "location".to_string(),
+        "weather".to_string(),
+    ];
 
     let positions = comparator.detect_pattern(&intent_stream, &pattern);
 
@@ -355,7 +378,10 @@ async fn test_pattern_detection_in_stream() {
     assert!(positions.contains(&0));
     assert!(positions.contains(&9));
 
-    println!("Successfully detected {} pattern occurrences in stream", positions.len());
+    println!(
+        "Successfully detected {} pattern occurrences in stream",
+        positions.len()
+    );
 }
 
 #[tokio::test]
@@ -365,22 +391,26 @@ async fn test_scheduler_stats_tracking() {
 
     // Schedule and execute several tasks
     for i in 0..10 {
-        let task_id = scheduler.schedule(
-            Action {
-                action_type: format!("task_{}", i),
-                description: format!("Task {}", i),
-                parameters: HashMap::new(),
-                tool_calls: vec![],
-                expected_outcome: None,
-                expected_reward: 0.7,
-            },
-            Priority::Medium,
-            Duration::from_secs(1),
-            Duration::from_millis(10),
-        ).await;
+        let task_id = scheduler
+            .schedule(
+                Action {
+                    action_type: format!("task_{}", i),
+                    description: format!("Task {}", i),
+                    parameters: HashMap::new(),
+                    tool_calls: vec![],
+                    expected_outcome: None,
+                    expected_reward: 0.7,
+                },
+                Priority::Medium,
+                Duration::from_secs(1),
+                Duration::from_millis(10),
+            )
+            .await;
 
         // Mark as executed with varying durations
-        scheduler.mark_executed(task_id, Duration::from_micros(100 * (i + 1))).await;
+        scheduler
+            .mark_executed(task_id, Duration::from_micros(100 * (i + 1)))
+            .await;
     }
 
     let stats = scheduler.get_stats().await;
@@ -422,34 +452,38 @@ async fn test_real_world_conversation_flow() {
         // We found a similar successful pattern, schedule next actions accordingly
 
         // Schedule the predicted next action (from pattern)
-        scheduler.schedule(
-            Action {
-                action_type: "action".to_string(),
-                description: "Execute predicted action from pattern".to_string(),
-                parameters: HashMap::new(),
-                tool_calls: vec![],
-                expected_outcome: Some("confirmation".to_string()),
-                expected_reward: 0.8,
-            },
-            Priority::High,
-            Duration::from_millis(200),
-            Duration::from_millis(50),
-        ).await;
+        scheduler
+            .schedule(
+                Action {
+                    action_type: "action".to_string(),
+                    description: "Execute predicted action from pattern".to_string(),
+                    parameters: HashMap::new(),
+                    tool_calls: vec![],
+                    expected_outcome: Some("confirmation".to_string()),
+                    expected_reward: 0.8,
+                },
+                Priority::High,
+                Duration::from_millis(200),
+                Duration::from_millis(50),
+            )
+            .await;
 
         // Schedule confirmation as follow-up
-        scheduler.schedule(
-            Action {
-                action_type: "confirmation".to_string(),
-                description: "Confirm action completion".to_string(),
-                parameters: HashMap::new(),
-                tool_calls: vec![],
-                expected_outcome: Some("success".to_string()),
-                expected_reward: 0.9,
-            },
-            Priority::Medium,
-            Duration::from_millis(500),
-            Duration::from_millis(30),
-        ).await;
+        scheduler
+            .schedule(
+                Action {
+                    action_type: "confirmation".to_string(),
+                    description: "Confirm action completion".to_string(),
+                    parameters: HashMap::new(),
+                    tool_calls: vec![],
+                    expected_outcome: Some("success".to_string()),
+                    expected_reward: 0.9,
+                },
+                Priority::Medium,
+                Duration::from_millis(500),
+                Duration::from_millis(30),
+            )
+            .await;
 
         println!("Scheduled actions based on historical success pattern");
     }
@@ -458,7 +492,9 @@ async fn test_real_world_conversation_flow() {
     let mut executed_count = 0;
     while let Some(task) = scheduler.next_task().await {
         println!("Executing: {}", task.action.action_type);
-        scheduler.mark_executed(task.id, Duration::from_millis(10)).await;
+        scheduler
+            .mark_executed(task.id, Duration::from_millis(10))
+            .await;
         executed_count += 1;
     }
 

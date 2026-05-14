@@ -14,10 +14,9 @@
 //! - Iteration speed: >1000 iterations/second
 //! - Safety overhead: <5% performance impact
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_strange_loop::{
-    StrangeLoop, StrangeLoopConfig, MetaLevel, MetaKnowledge,
-    SafetyConstraint, ModificationRule,
+    MetaKnowledge, MetaLevel, ModificationRule, SafetyConstraint, StrangeLoop, StrangeLoopConfig,
 };
 
 // ============================================================================
@@ -28,9 +27,7 @@ fn generate_pattern_data(size: usize, complexity: &str) -> Vec<String> {
     match complexity {
         "simple" => {
             // Highly repetitive patterns
-            (0..size)
-                .map(|i| format!("pattern{}", i % 10))
-                .collect()
+            (0..size).map(|i| format!("pattern{}", i % 10)).collect()
         }
         "medium" => {
             // Moderate repetition with variations
@@ -109,21 +106,16 @@ fn bench_pattern_extraction_simple(c: &mut Criterion) {
     for size in [100, 500, 1000, 2000, 5000].iter() {
         group.throughput(Throughput::Elements(*size as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("simple_patterns", size),
-            size,
-            |b, &n| {
-                let data = generate_pattern_data(n, "simple");
-                let mut strange_loop = StrangeLoop::default();
+        group.bench_with_input(BenchmarkId::new("simple_patterns", size), size, |b, &n| {
+            let data = generate_pattern_data(n, "simple");
+            let mut strange_loop = StrangeLoop::default();
 
-                b.iter(|| {
-                    black_box(strange_loop.learn_at_level(
-                        black_box(MetaLevel::base()),
-                        black_box(&data)
-                    ))
-                });
-            }
-        );
+            b.iter(|| {
+                black_box(
+                    strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)),
+                )
+            });
+        });
     }
 
     group.finish();
@@ -143,12 +135,11 @@ fn bench_pattern_extraction_complexity(c: &mut Criterion) {
                 let mut strange_loop = StrangeLoop::default();
 
                 b.iter(|| {
-                    black_box(strange_loop.learn_at_level(
-                        black_box(MetaLevel::base()),
-                        black_box(&data)
-                    ))
+                    black_box(
+                        strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)),
+                    )
                 });
-            }
+            },
         );
     }
 
@@ -164,10 +155,7 @@ fn bench_pattern_extraction_edge_cases(c: &mut Criterion) {
         let mut strange_loop = StrangeLoop::default();
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -177,10 +165,7 @@ fn bench_pattern_extraction_edge_cases(c: &mut Criterion) {
         let mut strange_loop = StrangeLoop::default();
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -192,10 +177,7 @@ fn bench_pattern_extraction_edge_cases(c: &mut Criterion) {
         let mut strange_loop = StrangeLoop::default();
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -210,24 +192,19 @@ fn bench_recursive_depth_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("recursive_depth");
 
     for depth in [1, 3, 5, 10, 15].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("depth", depth),
-            depth,
-            |b, &d| {
-                let mut config = StrangeLoopConfig::default();
-                config.max_meta_depth = d;
-                let mut strange_loop = StrangeLoop::new(config);
-                let data = generate_pattern_data(100, "simple");
+        group.bench_with_input(BenchmarkId::new("depth", depth), depth, |b, &d| {
+            let mut config = StrangeLoopConfig::default();
+            config.max_meta_depth = d;
+            let mut strange_loop = StrangeLoop::new(config);
+            let data = generate_pattern_data(100, "simple");
 
-                b.iter(|| {
-                    strange_loop.reset();
-                    black_box(strange_loop.learn_at_level(
-                        black_box(MetaLevel::base()),
-                        black_box(&data)
-                    ))
-                });
-            }
-        );
+            b.iter(|| {
+                strange_loop.reset();
+                black_box(
+                    strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)),
+                )
+            });
+        });
     }
 
     group.finish();
@@ -245,10 +222,7 @@ fn bench_recursive_depth_stress(c: &mut Criterion) {
 
         b.iter(|| {
             strange_loop.reset();
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -261,10 +235,7 @@ fn bench_recursive_depth_stress(c: &mut Criterion) {
 
         b.iter(|| {
             strange_loop.reset();
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -277,10 +248,7 @@ fn bench_recursive_depth_stress(c: &mut Criterion) {
 
         b.iter(|| {
             strange_loop.reset();
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -300,10 +268,7 @@ fn bench_meta_learning_iterations(c: &mut Criterion) {
         let mut strange_loop = StrangeLoop::default();
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -320,13 +285,14 @@ fn bench_meta_learning_iterations(c: &mut Criterion) {
                 b.iter(|| {
                     let mut strange_loop = StrangeLoop::default();
                     for _ in 0..n {
-                        black_box(strange_loop.learn_at_level(
-                            black_box(MetaLevel::base()),
-                            black_box(&data)
-                        )).ok();
+                        black_box(
+                            strange_loop
+                                .learn_at_level(black_box(MetaLevel::base()), black_box(&data)),
+                        )
+                        .ok();
                     }
                 });
-            }
+            },
         );
     }
 
@@ -343,10 +309,9 @@ fn bench_iteration_throughput(c: &mut Criterion) {
         let mut count = 0u64;
 
         b.iter(|| {
-            strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ).ok();
+            strange_loop
+                .learn_at_level(black_box(MetaLevel::base()), black_box(&data))
+                .ok();
             count += 1;
             black_box(count)
         });
@@ -360,10 +325,10 @@ fn bench_iteration_throughput(c: &mut Criterion) {
             // Simulate parallel learning at different levels
             let mut strange_loop = StrangeLoop::default();
             for level in 0..3 {
-                black_box(strange_loop.learn_at_level(
-                    black_box(MetaLevel(level)),
-                    black_box(&data)
-                )).ok();
+                black_box(
+                    strange_loop.learn_at_level(black_box(MetaLevel(level)), black_box(&data)),
+                )
+                .ok();
             }
         });
     });
@@ -386,10 +351,7 @@ fn bench_safety_check_overhead(c: &mut Criterion) {
         let data = generate_pattern_data(100, "medium");
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -401,10 +363,7 @@ fn bench_safety_check_overhead(c: &mut Criterion) {
         let data = generate_pattern_data(100, "medium");
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -418,10 +377,8 @@ fn bench_safety_check_overhead(c: &mut Criterion) {
             config_safe.safety_check_enabled = true;
             let mut safe_loop = StrangeLoop::new(config_safe);
 
-            let safe_result = black_box(safe_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ));
+            let safe_result =
+                black_box(safe_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)));
 
             black_box(safe_result)
         });
@@ -439,10 +396,7 @@ fn bench_safety_constraint_validation(c: &mut Criterion) {
         let data = generate_pattern_data(100, "simple");
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -452,21 +406,16 @@ fn bench_safety_constraint_validation(c: &mut Criterion) {
 
         // Add multiple safety constraints
         for i in 0..10 {
-            strange_loop.add_safety_constraint(
-                SafetyConstraint::new(
-                    format!("constraint_{}", i),
-                    format!("G(safe_{})", i)
-                )
-            );
+            strange_loop.add_safety_constraint(SafetyConstraint::new(
+                format!("constraint_{}", i),
+                format!("G(safe_{})", i),
+            ));
         }
 
         let data = generate_pattern_data(100, "simple");
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -484,9 +433,7 @@ fn bench_rollback_reset(c: &mut Criterion) {
     group.bench_function("reset_empty", |b| {
         let mut strange_loop = StrangeLoop::default();
 
-        b.iter(|| {
-            black_box(strange_loop.reset())
-        });
+        b.iter(|| black_box(strange_loop.reset()));
     });
 
     // Reset after learning
@@ -558,11 +505,7 @@ fn bench_validation_overhead(c: &mut Criterion) {
         let data = generate_pattern_data(1000, "medium");
         strange_loop.learn_at_level(MetaLevel::base(), &data).ok();
 
-        b.iter(|| {
-            black_box(strange_loop.get_knowledge_at_level(
-                black_box(MetaLevel::base())
-            ))
-        });
+        b.iter(|| black_box(strange_loop.get_knowledge_at_level(black_box(MetaLevel::base()))));
     });
 
     // Get all knowledge validation
@@ -575,9 +518,7 @@ fn bench_validation_overhead(c: &mut Criterion) {
             strange_loop.learn_at_level(MetaLevel(level), &data).ok();
         }
 
-        b.iter(|| {
-            black_box(strange_loop.get_all_knowledge())
-        });
+        b.iter(|| black_box(strange_loop.get_all_knowledge()));
     });
 
     // Summary generation
@@ -586,9 +527,7 @@ fn bench_validation_overhead(c: &mut Criterion) {
         let data = generate_pattern_data(1000, "complex");
         strange_loop.learn_at_level(MetaLevel::base(), &data).ok();
 
-        b.iter(|| {
-            black_box(strange_loop.get_summary())
-        });
+        b.iter(|| black_box(strange_loop.get_summary()));
     });
 
     group.finish();
@@ -611,10 +550,8 @@ fn bench_complete_meta_learning_pipeline(c: &mut Criterion) {
             let mut strange_loop = StrangeLoop::new(config);
 
             // Learn at base level (triggers recursive learning)
-            let result = strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            );
+            let result =
+                strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data));
 
             // Get summary
             let summary = strange_loop.get_summary();
@@ -634,10 +571,9 @@ fn bench_complete_meta_learning_pipeline(c: &mut Criterion) {
 
             // Learn at multiple levels explicitly
             for level in 0..3 {
-                strange_loop.learn_at_level(
-                    black_box(MetaLevel(level)),
-                    black_box(&data)
-                ).ok();
+                strange_loop
+                    .learn_at_level(black_box(MetaLevel(level)), black_box(&data))
+                    .ok();
             }
 
             black_box(strange_loop.get_summary())
@@ -660,10 +596,7 @@ fn bench_memory_efficiency(c: &mut Criterion) {
         let mut strange_loop = StrangeLoop::default();
 
         b.iter(|| {
-            black_box(strange_loop.learn_at_level(
-                black_box(MetaLevel::base()),
-                black_box(&data)
-            ))
+            black_box(strange_loop.learn_at_level(black_box(MetaLevel::base()), black_box(&data)))
         });
     });
 
@@ -675,10 +608,9 @@ fn bench_memory_efficiency(c: &mut Criterion) {
             let mut strange_loop = StrangeLoop::default();
 
             for _ in 0..10 {
-                strange_loop.learn_at_level(
-                    black_box(MetaLevel::base()),
-                    black_box(&data)
-                ).ok();
+                strange_loop
+                    .learn_at_level(black_box(MetaLevel::base()), black_box(&data))
+                    .ok();
             }
 
             black_box(strange_loop.get_summary())

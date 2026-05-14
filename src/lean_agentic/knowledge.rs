@@ -1,8 +1,8 @@
 //! Knowledge graph and theorem store for dynamic knowledge representation
 
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use async_trait::async_trait;
 
 use super::reasoning::Theorem;
 
@@ -44,7 +44,12 @@ impl KnowledgeGraph {
 
         for (i, word) in words.iter().enumerate() {
             // Capitalize words might be entities
-            if word.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+            if word
+                .chars()
+                .next()
+                .map(|c| c.is_uppercase())
+                .unwrap_or(false)
+            {
                 entities.push(Entity {
                     id: format!("entity_{}", i),
                     name: word.to_string(),
@@ -102,7 +107,8 @@ impl KnowledgeGraph {
 
     /// Query entities by type
     pub fn query_entities(&self, entity_type: EntityType) -> Vec<&Entity> {
-        self.entities.values()
+        self.entities
+            .values()
             .filter(|e| e.entity_type == entity_type)
             .collect()
     }
@@ -149,25 +155,21 @@ impl KnowledgeGraph {
 
     /// Get facts valid at a specific time
     pub fn get_facts_at_time(&self, timestamp: i64) -> Vec<&TemporalFact> {
-        self.temporal_facts.iter()
+        self.temporal_facts
+            .iter()
             .filter(|f| {
-                f.valid_from <= timestamp &&
-                f.valid_until.map(|t| timestamp <= t).unwrap_or(true)
+                f.valid_from <= timestamp && f.valid_until.map(|t| timestamp <= t).unwrap_or(true)
             })
             .collect()
     }
 
     /// Compute semantic similarity between entities
     pub fn compute_similarity(&self, entity1: &str, entity2: &str) -> f64 {
-        if let (Some(emb1), Some(emb2)) = (
-            self.embeddings.get(entity1),
-            self.embeddings.get(entity2)
-        ) {
+        if let (Some(emb1), Some(emb2)) =
+            (self.embeddings.get(entity1), self.embeddings.get(entity2))
+        {
             // Cosine similarity
-            let dot_product: f64 = emb1.iter()
-                .zip(emb2.iter())
-                .map(|(a, b)| a * b)
-                .sum();
+            let dot_product: f64 = emb1.iter().zip(emb2.iter()).map(|(a, b)| a * b).sum();
 
             let norm1: f64 = emb1.iter().map(|x| x * x).sum::<f64>().sqrt();
             let norm2: f64 = emb2.iter().map(|x| x * x).sum::<f64>().sqrt();

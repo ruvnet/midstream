@@ -13,13 +13,11 @@
 //! - Lyapunov: <500ms
 //! - Detection: <100ms
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_attractor::{
-    AttractorStudio, PhaseSpace, Trajectory, AttractorType,
-    lyapunov::calculate_lyapunov_exponent,
-    embedding::reconstruct_phase_space,
-    detection::detect_attractor_type,
-    dimension::estimate_correlation_dimension,
+    detection::detect_attractor_type, dimension::estimate_correlation_dimension,
+    embedding::reconstruct_phase_space, lyapunov::calculate_lyapunov_exponent, AttractorStudio,
+    AttractorType, PhaseSpace, Trajectory,
 };
 
 // ============================================================================
@@ -100,12 +98,12 @@ fn generate_time_series(n: usize, pattern: &str) -> Vec<f64> {
             let lorenz = generate_lorenz_attractor(n);
             lorenz.iter().map(|(x, _, _)| *x).collect()
         }
-        "random" => (0..n).map(|i| {
-            ((i as f64 * 7919.0).sin() * 10000.0) % 100.0
-        }).collect(),
-        "periodic" => (0..n).map(|i| {
-            (i as f64 * 0.1).sin() + 0.5 * (i as f64 * 0.3).sin()
-        }).collect(),
+        "random" => (0..n)
+            .map(|i| ((i as f64 * 7919.0).sin() * 10000.0) % 100.0)
+            .collect(),
+        "periodic" => (0..n)
+            .map(|i| (i as f64 * 0.1).sin() + 0.5 * (i as f64 * 0.3).sin())
+            .collect(),
         _ => vec![0.0; n],
     }
 }
@@ -121,52 +119,40 @@ fn bench_phase_space_embedding(c: &mut Criterion) {
         group.throughput(Throughput::Elements(*size as u64));
 
         // Dimension 2
-        group.bench_with_input(
-            BenchmarkId::new("dim2", size),
-            size,
-            |b, &n| {
-                let data = generate_time_series(n, "chaotic");
-                b.iter(|| {
-                    black_box(reconstruct_phase_space(
-                        black_box(&data),
-                        black_box(2),
-                        black_box(1)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("dim2", size), size, |b, &n| {
+            let data = generate_time_series(n, "chaotic");
+            b.iter(|| {
+                black_box(reconstruct_phase_space(
+                    black_box(&data),
+                    black_box(2),
+                    black_box(1),
+                ))
+            });
+        });
 
         // Dimension 3
-        group.bench_with_input(
-            BenchmarkId::new("dim3", size),
-            size,
-            |b, &n| {
-                let data = generate_time_series(n, "chaotic");
-                b.iter(|| {
-                    black_box(reconstruct_phase_space(
-                        black_box(&data),
-                        black_box(3),
-                        black_box(1)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("dim3", size), size, |b, &n| {
+            let data = generate_time_series(n, "chaotic");
+            b.iter(|| {
+                black_box(reconstruct_phase_space(
+                    black_box(&data),
+                    black_box(3),
+                    black_box(1),
+                ))
+            });
+        });
 
         // Dimension 5
-        group.bench_with_input(
-            BenchmarkId::new("dim5", size),
-            size,
-            |b, &n| {
-                let data = generate_time_series(n, "chaotic");
-                b.iter(|| {
-                    black_box(reconstruct_phase_space(
-                        black_box(&data),
-                        black_box(5),
-                        black_box(1)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("dim5", size), size, |b, &n| {
+            let data = generate_time_series(n, "chaotic");
+            b.iter(|| {
+                black_box(reconstruct_phase_space(
+                    black_box(&data),
+                    black_box(5),
+                    black_box(1),
+                ))
+            });
+        });
     }
 
     group.finish();
@@ -178,19 +164,15 @@ fn bench_embedding_delays(c: &mut Criterion) {
     let data = generate_time_series(1000, "chaotic");
 
     for delay in [1, 5, 10, 20, 50].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("delay", delay),
-            delay,
-            |b, &d| {
-                b.iter(|| {
-                    black_box(reconstruct_phase_space(
-                        black_box(&data),
-                        black_box(3),
-                        black_box(d)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("delay", delay), delay, |b, &d| {
+            b.iter(|| {
+                black_box(reconstruct_phase_space(
+                    black_box(&data),
+                    black_box(3),
+                    black_box(d),
+                ))
+            });
+        });
     }
 
     group.finish();
@@ -212,7 +194,7 @@ fn bench_lyapunov_calculation(c: &mut Criterion) {
             black_box(calculate_lyapunov_exponent(
                 black_box(&trajectory),
                 black_box(3),
-                black_box(10)
+                black_box(10),
             ))
         });
     });
@@ -225,7 +207,7 @@ fn bench_lyapunov_calculation(c: &mut Criterion) {
             black_box(calculate_lyapunov_exponent(
                 black_box(&trajectory),
                 black_box(3),
-                black_box(10)
+                black_box(10),
             ))
         });
     });
@@ -237,27 +219,23 @@ fn bench_lyapunov_calculation(c: &mut Criterion) {
             black_box(calculate_lyapunov_exponent(
                 black_box(&trajectory),
                 black_box(3),
-                black_box(10)
+                black_box(10),
             ))
         });
     });
 
     // Varying data sizes
     for size in [500, 1000, 2000, 5000].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("size", size),
-            size,
-            |b, &n| {
-                let trajectory = generate_time_series(n, "chaotic");
-                b.iter(|| {
-                    black_box(calculate_lyapunov_exponent(
-                        black_box(&trajectory),
-                        black_box(3),
-                        black_box(10)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("size", size), size, |b, &n| {
+            let trajectory = generate_time_series(n, "chaotic");
+            b.iter(|| {
+                black_box(calculate_lyapunov_exponent(
+                    black_box(&trajectory),
+                    black_box(3),
+                    black_box(10),
+                ))
+            });
+        });
     }
 
     group.finish();
@@ -274,31 +252,21 @@ fn bench_attractor_detection(c: &mut Criterion) {
     group.bench_function("lorenz_detection", |b| {
         let points = generate_lorenz_attractor(1000);
 
-        b.iter(|| {
-            black_box(detect_attractor_type(black_box(&points)))
-        });
+        b.iter(|| black_box(detect_attractor_type(black_box(&points))));
     });
 
     group.bench_function("rossler_detection", |b| {
         let points = generate_rossler_attractor(1000);
 
-        b.iter(|| {
-            black_box(detect_attractor_type(black_box(&points)))
-        });
+        b.iter(|| black_box(detect_attractor_type(black_box(&points))));
     });
 
     // Different data sizes
     for size in [100, 500, 1000, 2000].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("size", size),
-            size,
-            |b, &n| {
-                let points = generate_lorenz_attractor(n);
-                b.iter(|| {
-                    black_box(detect_attractor_type(black_box(&points)))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("size", size), size, |b, &n| {
+            let points = generate_lorenz_attractor(n);
+            b.iter(|| black_box(detect_attractor_type(black_box(&points))));
+        });
     }
 
     group.finish();
@@ -326,9 +294,7 @@ fn bench_trajectory_analysis(c: &mut Criterion) {
         let points = generate_lorenz_attractor(1000);
         let trajectory = Trajectory::from_points(points);
 
-        b.iter(|| {
-            black_box(trajectory.calculate_distances())
-        });
+        b.iter(|| black_box(trajectory.calculate_distances()));
     });
 
     // Nearest neighbors
@@ -336,9 +302,7 @@ fn bench_trajectory_analysis(c: &mut Criterion) {
         let points = generate_lorenz_attractor(1000);
         let trajectory = Trajectory::from_points(points);
 
-        b.iter(|| {
-            black_box(trajectory.find_nearest_neighbors(black_box(10)))
-        });
+        b.iter(|| black_box(trajectory.find_nearest_neighbors(black_box(10))));
     });
 
     group.finish();
@@ -358,41 +322,34 @@ fn bench_dimension_estimation(c: &mut Criterion) {
         b.iter(|| {
             black_box(estimate_correlation_dimension(
                 black_box(&points),
-                black_box(20)
+                black_box(20),
             ))
         });
     });
 
     group.bench_function("correlation_dim_henon", |b| {
         let points = generate_henon_map(1000);
-        let points_3d: Vec<(f64, f64, f64)> = points
-            .iter()
-            .map(|(x, y)| (*x, *y, 0.0))
-            .collect();
+        let points_3d: Vec<(f64, f64, f64)> = points.iter().map(|(x, y)| (*x, *y, 0.0)).collect();
 
         b.iter(|| {
             black_box(estimate_correlation_dimension(
                 black_box(&points_3d),
-                black_box(20)
+                black_box(20),
             ))
         });
     });
 
     // Varying sample sizes
     for size in [500, 1000, 2000].iter() {
-        group.bench_with_input(
-            BenchmarkId::new("size", size),
-            size,
-            |b, &n| {
-                let points = generate_lorenz_attractor(n);
-                b.iter(|| {
-                    black_box(estimate_correlation_dimension(
-                        black_box(&points),
-                        black_box(20)
-                    ))
-                });
-            }
-        );
+        group.bench_with_input(BenchmarkId::new("size", size), size, |b, &n| {
+            let points = generate_lorenz_attractor(n);
+            b.iter(|| {
+                black_box(estimate_correlation_dimension(
+                    black_box(&points),
+                    black_box(20),
+                ))
+            });
+        });
     }
 
     group.finish();
@@ -454,10 +411,8 @@ fn bench_complete_analysis(c: &mut Criterion) {
             let phase_space = reconstruct_phase_space(&data, 3, 10);
 
             // Convert to 3D points for analysis
-            let points: Vec<(f64, f64, f64)> = phase_space
-                .iter()
-                .map(|p| (p[0], p[1], p[2]))
-                .collect();
+            let points: Vec<(f64, f64, f64)> =
+                phase_space.iter().map(|p| (p[0], p[1], p[2])).collect();
 
             // Attractor detection
             let attractor_type = detect_attractor_type(&points);

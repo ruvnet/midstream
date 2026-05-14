@@ -28,9 +28,7 @@
 //!     * `learn_at_level` and `analyze_behavior` never panic on any
 //!       well-formed input.
 
-use midstreamer_strange_loop::{
-    MetaLevel, StrangeLoop, StrangeLoopConfig, StrangeLoopError,
-};
+use midstreamer_strange_loop::{MetaLevel, StrangeLoop, StrangeLoopConfig, StrangeLoopError};
 use proptest::prelude::*;
 
 fn fresh_loop(max_meta_depth: usize) -> StrangeLoop {
