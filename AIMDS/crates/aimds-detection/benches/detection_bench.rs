@@ -30,15 +30,19 @@ fn workloads() -> Vec<(&'static str, &'static str)> {
 }
 
 fn bench_sanitize(c: &mut Criterion) {
-    let rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
     let mut group = c.benchmark_group("sanitize");
 
     for (label, input) in workloads() {
         group.throughput(Throughput::Bytes(input.len() as u64));
         group.bench_with_input(BenchmarkId::from_parameter(label), input, |b, input| {
             let sanitizer = Sanitizer::new();
-            b.to_async(&rt)
-                .iter(|| async { sanitizer.sanitize(black_box(input)).await.unwrap() });
+            b.iter(|| {
+                rt.block_on(async { sanitizer.sanitize(black_box(input)).await.unwrap() })
+            });
         });
     }
     group.finish();
@@ -58,15 +62,19 @@ fn bench_pii_detect(c: &mut Criterion) {
 }
 
 fn bench_pattern_match(c: &mut Criterion) {
-    let rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
     let mut group = c.benchmark_group("pattern_match");
 
     for (label, input) in workloads() {
         group.throughput(Throughput::Bytes(input.len() as u64));
         group.bench_with_input(BenchmarkId::from_parameter(label), input, |b, input| {
             let matcher = PatternMatcher::new().unwrap();
-            b.to_async(&rt)
-                .iter(|| async { matcher.match_patterns(black_box(input)).await.unwrap() });
+            b.iter(|| {
+                rt.block_on(async { matcher.match_patterns(black_box(input)).await.unwrap() })
+            });
         });
     }
     group.finish();
