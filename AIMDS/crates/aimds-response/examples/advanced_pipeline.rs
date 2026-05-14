@@ -1,7 +1,7 @@
 //! Advanced mitigation pipeline example
 
 use aimds_response::{
-    AdaptiveMitigator, AuditLogger, FeedbackSignal, MetaLearningEngine, ResponseSystem,
+    AuditLogger, FeedbackSignal, MetaLearningEngine, ResponseSystem,
     RollbackManager,
 };
 use std::time::Duration;
@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let system = ResponseSystem::new().await?;
     let mut meta_learner = MetaLearningEngine::new();
     let audit_logger = AuditLogger::new();
-    let rollback_mgr = RollbackManager::new();
+    let _rollback_mgr = RollbackManager::new();
 
     // Simulate multiple threat scenarios
     let threats = create_threat_scenarios();

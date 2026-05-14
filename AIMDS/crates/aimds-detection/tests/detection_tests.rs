@@ -18,7 +18,7 @@ async fn test_full_detection_pipeline() {
     use aimds_detection::Sanitizer;
     let sanitizer = Sanitizer::new();
     let pii_matches = sanitizer.detect_pii("Contact: user@example.com");
-    assert!(pii_matches.len() > 0);
+    assert!(!pii_matches.is_empty());
 }
 
 #[tokio::test]
@@ -31,7 +31,7 @@ async fn test_prompt_injection_detection() {
 
     // Should detect threat due to prompt injection pattern
     assert!(result.confidence > 0.0);
-    assert!(result.matched_patterns.len() > 0);
+    assert!(!result.matched_patterns.is_empty());
 }
 
 #[tokio::test]

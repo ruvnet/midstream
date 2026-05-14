@@ -1,4 +1,11 @@
 //! Common test utilities
+//!
+//! These helpers are available to every file in `tests/`. Not every
+//! one is referenced from `integration_tests.rs` today, so we suppress
+//! the per-item dead-code warnings module-wide rather than annotating
+//! each function and struct individually — they exist as a reusable
+//! kit for future test files.
+#![allow(dead_code)]
 
 use std::sync::Once;
 

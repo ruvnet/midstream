@@ -16,12 +16,14 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/your-org/aimds"
 
 [workspace.dependencies]
-# Midstream platform (validated benchmarks - production-ready)
-midstreamer-temporal-compare = { version = "0.1", path = "../crates/temporal-compare" }
-midstreamer-scheduler = { version = "0.1", path = "../crates/nanosecond-scheduler" }
-midstreamer-attractor = { version = "0.1", path = "../crates/temporal-attractor-studio" }
-midstreamer-neural-solver = { version = "0.1", path = "../crates/temporal-neural-solver" }
-midstreamer-strange-loop = { version = "0.1", path = "../crates/strange-loop" }
+# Midstream platform — pinned to the 0.2.x line that's published on
+# crates.io and matches the parent workspace's current version. Bumped
+# from 0.1 in the same change that retired src/lean_agentic/ duplicates.
+midstreamer-temporal-compare = { version = "0.2", path = "../crates/temporal-compare" }
+midstreamer-scheduler = { version = "0.2", path = "../crates/nanosecond-scheduler" }
+midstreamer-attractor = { version = "0.2", path = "../crates/temporal-attractor-studio" }
+midstreamer-neural-solver = { version = "0.2", path = "../crates/temporal-neural-solver" }
+midstreamer-strange-loop = { version = "0.2", path = "../crates/strange-loop" }
 
 # AIMDS internal crates
 aimds-core = { version = "0.1.0", path = "crates/aimds-core" }
