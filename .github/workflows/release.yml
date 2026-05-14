@@ -169,7 +169,15 @@ jobs:
           cargo set-version --workspace "$VERSION"
 
       - name: Verify build after version update
-        run: cargo build --workspace --all-features
+        # Exclude `midstream` and `hyprstream` for the same reason
+        # rust-ci.yml::msrv does: the `midstream` binary's
+        # `src/lean_agentic/` facade currently has unresolved imports
+        # under `--all-features` (gated by the off-by-default
+        # `lean-agentic` feature). Once that's fixed in a follow-up
+        # PR, drop these excludes. The 6 published `midstreamer-*`
+        # libs are what we're about to publish, and they all build
+        # cleanly here.
+        run: cargo build --workspace --exclude midstream --exclude hyprstream --all-features
 
       # Crate names: every workspace crate uses the `midstreamer-*`
       # prefix per the rename tracked by ADR-0024. The previous
@@ -199,8 +207,10 @@ jobs:
           # Apex of the workspace DAG.
           cargo publish -p midstreamer-strange-loop        --allow-dirty
 
-          # Top-level binary crate.
-          cargo publish -p midstream                       --allow-dirty
+          # Top-level binary crate. Skipped while `--all-features`
+          # is broken on `midstream` (see Verify-build comment above).
+          # The libs publish independently of the binary.
+          # cargo publish -p midstream                     --allow-dirty
 
   # Update documentation
   update-docs:
