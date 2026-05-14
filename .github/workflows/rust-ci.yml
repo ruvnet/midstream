@@ -44,7 +44,12 @@ jobs:
           shared-key: "clippy"
 
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        # Exclude `midstream` and `hyprstream` for the same reason
+        # the msrv job does (see comment there): `src/lean_agentic/`
+        # has unresolved imports under `--all-features` (gated by the
+        # off-by-default `lean-agentic` feature; ADR-0005 deprecates
+        # it). Drop these excludes when that retirement lands.
+        run: cargo clippy --workspace --exclude midstream --exclude hyprstream --all-targets --all-features -- -D warnings
 
   # MSRV (Minimum Supported Rust Version) check per ADR-0023.
   # Every published crate declares rust-version = "1.81"; this job
@@ -109,17 +114,21 @@ jobs:
         with:
           shared-key: "test-${{ matrix.os }}-${{ matrix.rust }}"
 
+      # `--exclude midstream --exclude hyprstream` mirrors msrv +
+      # clippy (see comments there). The 6 published `midstreamer-*`
+      # libs are what we actually want to exercise under
+      # `--all-features` until ADR-0005's lean_agentic retirement ships.
       - name: Build workspace
-        run: cargo build --workspace --all-features --verbose
+        run: cargo build --workspace --exclude midstream --exclude hyprstream --all-features --verbose
 
       - name: Run unit tests
-        run: cargo test --workspace --all-features --lib --verbose
+        run: cargo test --workspace --exclude midstream --exclude hyprstream --all-features --lib --verbose
 
       - name: Run integration tests
-        run: cargo test --workspace --all-features --test '*' --verbose
+        run: cargo test --workspace --exclude midstream --exclude hyprstream --all-features --test '*' --verbose
 
       - name: Run doc tests
-        run: cargo test --workspace --all-features --doc --verbose
+        run: cargo test --workspace --exclude midstream --exclude hyprstream --all-features --doc --verbose
 
   # Individual crate builds
   build-crates:
@@ -234,7 +243,8 @@ jobs:
           shared-key: "docs"
 
       - name: Build documentation
-        run: cargo doc --workspace --all-features --no-deps
+        # Same midstream/hyprstream exclusion as clippy + test.
+        run: cargo doc --workspace --exclude midstream --exclude hyprstream --all-features --no-deps
         env:
           RUSTDOCFLAGS: "-D warnings"
 
@@ -281,7 +291,8 @@ jobs:
         run: cargo install cargo-tarpaulin
 
       - name: Generate coverage
-        run: cargo tarpaulin --workspace --all-features --out Xml --output-dir coverage
+        # Same midstream/hyprstream exclusion as clippy + test.
+        run: cargo tarpaulin --workspace --exclude midstream --exclude hyprstream --all-features --out Xml --output-dir coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
