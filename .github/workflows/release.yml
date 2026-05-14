@@ -15,6 +15,17 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
+# Required for softprops/action-gh-release to POST to the GitHub
+# Releases API. Without `contents: write` the action 403s with
+# "Resource not accessible by integration" and the entire downstream
+# pipeline (build-release, publish-crates, update-docs) is skipped.
+# Repro: v0.2.1 tag push 2026-05-13 — release was created but
+# nothing published. Adding workflow-level permissions here so every
+# job inherits the minimum it needs; jobs that don't touch the API
+# (build-release, publish-crates) cost nothing extra.
+permissions:
+  contents: write
+
 jobs:
   # Create GitHub release
   create-release:
