@@ -1,6 +1,6 @@
 [package]
 name = "midstreamer-scheduler"
-version = "0.1.2"
+version = "0.2.1"
 edition = "2021"
 rust-version = "1.81"
 description = "Ultra-low-latency real-time task scheduler"
