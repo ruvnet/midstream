@@ -124,7 +124,14 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build release binary
-        run: cargo build --release --target ${{ matrix.target }} --all-features
+        # No `--all-features` here: the midstream binary's
+        # `src/lean_agentic/` facade has 27 unresolved-import errors
+        # when its off-by-default `lean-agentic` feature is enabled
+        # (ADR-0005 deprecates the module; rust-ci.yml's clippy/test/
+        # docs/coverage jobs already exclude midstream for the same
+        # reason). Ship the default-feature binary; opt-in features
+        # can be re-enabled when the facade is retired.
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package binary (Unix)
         if: matrix.os != 'windows-latest'
