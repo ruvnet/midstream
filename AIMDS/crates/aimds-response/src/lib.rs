@@ -13,19 +13,14 @@
 //! # Example
 //!
 //! ```rust,no_run
-//! use aimds_response::{ResponseSystem, MitigationStrategy};
-//! use aimds_core::ThreatIncident;
+//! use aimds_response::ResponseSystem;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let response_system = ResponseSystem::new().await?;
-//!
-//!     // Apply adaptive mitigation
-//!     let result = response_system.mitigate(&threat).await?;
-//!
-//!     // Learn from outcome
-//!     response_system.learn_from_result(&result).await?;
-//!
+//!     // Build or receive a `ThreatIncident` (see aimds-detection).
+//!     // let result = response_system.mitigate(&threat).await?;
+//!     // response_system.learn_from_result(&result).await?;
 //!     Ok(())
 //! }
 //! ```

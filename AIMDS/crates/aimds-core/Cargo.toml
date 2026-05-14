@@ -20,7 +20,11 @@ uuid.workspace = true
 
 # Additional dependencies
 derive_more = "0.99"
-validator = { version = "0.18", features = ["derive"] }
+# validator 0.18 pulled in vulnerable idna 0.5.0 (RUSTSEC-2024-0421)
+# and the unmaintained proc-macro-error. 0.20 transitively upgrades
+# both. Keep this bumped to ≥0.20 — `cargo deny check advisories`
+# verifies on every PR.
+validator = { version = "0.20", features = ["derive"] }
 
 [dev-dependencies]
 proptest.workspace = true

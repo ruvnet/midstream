@@ -8,26 +8,33 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.81"
-authors = ["AIMDS Team"]
+authors = ["rUv <ruv@ruv.net>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/your-org/aimds"
+repository = "https://github.com/ruvnet/midstream"
+homepage = "https://github.com/ruvnet/midstream"
+documentation = "https://docs.rs/aimds-core"
+readme = "README.md"
+keywords = ["security", "ai", "defense", "manipulation", "prompt-injection"]
+categories = ["asynchronous", "data-structures"]
 
 [workspace.dependencies]
-# Midstream platform (validated benchmarks - production-ready)
-midstreamer-temporal-compare = { version = "0.1", path = "../crates/temporal-compare" }
-midstreamer-scheduler = { version = "0.1", path = "../crates/nanosecond-scheduler" }
-midstreamer-attractor = { version = "0.1", path = "../crates/temporal-attractor-studio" }
-midstreamer-neural-solver = { version = "0.1", path = "../crates/temporal-neural-solver" }
-midstreamer-strange-loop = { version = "0.1", path = "../crates/strange-loop" }
+# Midstream platform — pinned to the 0.2.x line that's published on
+# crates.io and matches the parent workspace's current version. Bumped
+# from 0.1 in the same change that retired src/lean_agentic/ duplicates.
+midstreamer-temporal-compare = { version = "0.2", path = "../crates/temporal-compare" }
+midstreamer-scheduler = { version = "0.2", path = "../crates/nanosecond-scheduler" }
+midstreamer-attractor = { version = "0.2", path = "../crates/temporal-attractor-studio" }
+midstreamer-neural-solver = { version = "0.2", path = "../crates/temporal-neural-solver" }
+midstreamer-strange-loop = { version = "0.2", path = "../crates/strange-loop" }
 
 # AIMDS internal crates
-aimds-core = { version = "0.1.0", path = "crates/aimds-core" }
-aimds-detection = { version = "0.1.0", path = "crates/aimds-detection" }
-aimds-analysis = { version = "0.1.0", path = "crates/aimds-analysis" }
-aimds-response = { version = "0.1.0", path = "crates/aimds-response" }
+aimds-core = { version = "0.1.1", path = "crates/aimds-core" }
+aimds-detection = { version = "0.1.1", path = "crates/aimds-detection" }
+aimds-analysis = { version = "0.1.1", path = "crates/aimds-analysis" }
+aimds-response = { version = "0.1.1", path = "crates/aimds-response" }
 
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }
@@ -48,9 +55,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-appender = "0.2"
 
 # Metrics and monitoring
+# Note: `metrics` 0.24 introduced the `counter!(name).increment(n)`
+# chain syntax used in `aimds-response::mitigations`; the older
+# 0.21 macro signature is incompatible.
 prometheus = "0.13"
-metrics = "0.21"
-metrics-exporter-prometheus = "0.12"
+metrics = "0.24"
+metrics-exporter-prometheus = "0.16"
 
 # HTTP and networking
 hyper = { version = "1.0", features = ["full"] }
@@ -64,7 +74,9 @@ blake3 = "1.5"
 ring = "0.17"
 
 # Testing
-criterion = { version = "0.5", features = ["html_reports"] }
+# `async_tokio` is required by the aimds-response benches that drive
+# the async mitigator with `b.to_async(rt).iter(...)`.
+criterion = { version = "0.5", features = ["html_reports", "async_tokio"] }
 proptest = "1.4"
 quickcheck = "1.0"
 

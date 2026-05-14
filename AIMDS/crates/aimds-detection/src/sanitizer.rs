@@ -155,11 +155,26 @@ impl Sanitizer {
         ]
     }
 
-    /// Default patterns to neutralize with replacements
+    /// Default patterns to neutralize with replacements.
+    ///
+    /// Prompt-injection neutralization. The regex shapes are
+    /// deliberately permissive: real attack strings stack adjectives
+    /// (e.g. `ignore all previous instructions`, `disregard the prior
+    /// system prompt`, `forget all above instructions`), so a strict
+    /// "ignore + ONE word + instructions" pattern misses the most
+    /// common shapes. We accept up to four whitespace-separated
+    /// modifier words between the verb and `instructions/prompts/rules`
+    /// to cover the realistic attack surface without over-matching
+    /// benign English.
     fn default_neutralization_patterns() -> Vec<(Regex, String)> {
         vec![
             (
-                Regex::new(r"(?i)ignore\s+(all|previous|prior)\s+instructions").unwrap(),
+                // ignore | disregard | forget | override + 0..4 modifier
+                // words + instructions | prompts | rules | system prompt
+                Regex::new(
+                    r"(?i)\b(?:ignore|disregard|forget|override)\b(?:\s+\w+){0,4}\s+\b(?:instruction|instructions|prompt|prompts|rule|rules|context|system[\s-]prompt)\b",
+                )
+                .unwrap(),
                 "[redacted instruction]".to_string(),
             ),
             (
@@ -167,7 +182,17 @@ impl Sanitizer {
                 "user: ".to_string(),
             ),
             (
-                Regex::new(r"(?i)admin\s+mode").unwrap(),
+                Regex::new(r"(?i)\badmin\s+mode\b").unwrap(),
+                "user mode".to_string(),
+            ),
+            (
+                // Role hijack: "you are now <X>" / "act as <X>"
+                Regex::new(r"(?i)\b(?:you\s+are\s+now|act\s+as|pretend\s+to\s+be)\s+\w+").unwrap(),
+                "[redacted role-hijack]".to_string(),
+            ),
+            (
+                // Jailbreak markers: "DAN mode", "developer mode", "god mode"
+                Regex::new(r"(?i)\b(?:DAN|developer|god|root)\s+mode\b").unwrap(),
                 "user mode".to_string(),
             ),
         ]
@@ -248,7 +273,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(result.modifications.len() > 0);
+        assert!(!result.modifications.is_empty());
         assert!(result.sanitized_content.contains("[redacted instruction]"));
     }
 }

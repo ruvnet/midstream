@@ -1,10 +1,9 @@
 //! Integration tests for AIMDS response layer
 
 use aimds_response::{
-    ResponseSystem, MetaLearningEngine, AdaptiveMitigator, MitigationAction,
-    ThreatContext, FeedbackSignal, MitigationOutcome,
+    ResponseSystem, MetaLearningEngine, AdaptiveMitigator,
+    ThreatContext, FeedbackSignal,
 };
-use std::collections::HashMap;
 use std::time::Duration;
 
 mod common;
@@ -63,7 +62,9 @@ async fn test_strategy_optimization() {
     system.optimize(&feedback).await.unwrap();
 
     let metrics = system.metrics().await;
-    assert!(metrics.optimization_level >= 0);
+    // optimization_level is `usize`, so `>= 0` is a tautology;
+    // cap at the engine's documented ceiling (25) instead.
+    assert!(metrics.optimization_level <= 25);
 }
 
 #[tokio::test]
@@ -162,8 +163,9 @@ async fn test_meta_learning_convergence() {
 
     engine.optimize_strategy(&feedback);
 
-    // Should advance toward higher levels
-    assert!(engine.current_optimization_level() >= 0);
+    // current_optimization_level is `usize` so `>= 0` is a
+    // tautology; bound by the documented ceiling (25) instead.
+    assert!(engine.current_optimization_level() <= 25);
 }
 
 #[tokio::test]
@@ -201,7 +203,7 @@ async fn test_effectiveness_tracking() {
 async fn test_pattern_extraction() {
     let engine = MetaLearningEngine::new();
 
-    let incident = create_test_incident(1, 8, 0.9);
+    let _incident = create_test_incident(1, 8, 0.9);
 
     // This is tested internally, but we verify the engine handles it
     assert_eq!(engine.learned_patterns_count(), 0);
