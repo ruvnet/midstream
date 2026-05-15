@@ -119,7 +119,7 @@ midstreamer-neural-solver = { version = "0.2.1", path = "crates/temporal-neural-
 midstreamer-strange-loop = { version = "0.2.1", path = "crates/strange-loop" }
 
 # QUIC multi-stream support (local workspace crate)
-midstreamer-quic = { version = "0.2.1", path = "crates/quic-multistream" }
+midstreamer-quic = { version = "0.3.0", path = "crates/quic-multistream" }
 
 # Additional dependencies for advanced integrations
 nalgebra = "0.33" # For linear algebra in attractor analysis

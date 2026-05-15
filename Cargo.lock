@@ -1367,8 +1367,9 @@ dependencies = [
 
 [[package]]
 name = "midstreamer-quic"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
+ "async-trait",
  "criterion",
  "futures",
  "js-sys",
