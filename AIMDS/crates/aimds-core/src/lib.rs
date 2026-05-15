@@ -5,10 +5,12 @@
 
 pub mod config;
 pub mod error;
+pub mod gate;
 pub mod types;
 
 pub use config::AimdsConfig;
 pub use error::{AimdsError, Result};
+pub use gate::{SafetyGate, SafetyVerdict};
 pub use types::*;
 
 /// Version information
