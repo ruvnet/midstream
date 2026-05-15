@@ -21,6 +21,8 @@ uuid.workspace = true
 # Additional dependencies
 derive_more = "0.99"
 validator = { version = "0.18", features = ["derive"] }
+# `SafetyGate` composing trait (v0.2.0 — see gate.rs).
+async-trait = "0.1"
 
 [dev-dependencies]
 proptest.workspace = true

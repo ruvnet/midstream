@@ -1,6 +1,6 @@
 [package]
 name = "midstreamer-quic"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.81"
 description = "QUIC multi-stream support for native and WASM targets"
@@ -27,6 +27,10 @@ serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
 futures = "0.3"
 tracing = "0.1"
+# `QuicTransport` embedding trait (v0.3.0). Required on native targets;
+# WASM build doesn't expose the trait (WebTransport has different
+# stream semantics) so the dep is dead-code-eliminated there.
+async-trait = "0.1"
 
 # Native dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
