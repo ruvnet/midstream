@@ -1,14 +1,18 @@
 {
-  "name": "@midstream/wasm",
-  "version": "0.3.0",
+  "name": "midstreamer",
+  "version": "0.3.1",
   "description": "WebAssembly bindings for Midstream temporal comparison, scheduling, and meta-learning + real QUIC transport via agentic-flow",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "types/index.d.ts",
   "files": [
-    "dist",
-    "types",
-    "README.md"
+    "pkg",
+    "pkg-node",
+    "pkg-bundler",
+    "README.md",
+    "QUICK_START.md",
+    "PACKAGE_SUMMARY.md",
+    "quic.js"
   ],
   "scripts": {
     "build:wasm": "wasm-pack build --target web --out-dir pkg",
@@ -60,5 +64,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "exports": {
+    "./quic": "./quic.js",
+    "./package.json": "./package.json"
   }
 }
