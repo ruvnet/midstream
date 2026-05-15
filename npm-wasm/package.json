@@ -1,7 +1,7 @@
 {
   "name": "@midstream/wasm",
-  "version": "1.0.0",
-  "description": "WebAssembly bindings for Midstream temporal comparison, scheduling, and meta-learning",
+  "version": "0.3.0",
+  "description": "WebAssembly bindings for Midstream temporal comparison, scheduling, and meta-learning + real QUIC transport via agentic-flow",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "types/index.d.ts",
@@ -43,7 +43,8 @@
   "author": "Midstream Contributors",
   "license": "(MIT OR Apache-2.0)",
   "dependencies": {
-    "@peculiar/webcrypto": "^1.4.3"
+    "@peculiar/webcrypto": "^1.4.3",
+    "agentic-flow": "2.0.12-fix.8"
   },
   "devDependencies": {
     "wasm-pack": "^0.12.1",
