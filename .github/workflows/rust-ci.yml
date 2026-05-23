@@ -270,11 +270,17 @@ jobs:
         run: cargo install cargo-audit
 
       - name: Run security audit
-        # RUSTSEC-2024-0436 (paste unmaintained) is a transitive dep via
-        # nalgebra → simba → paste; no upstream fix exists without breaking
-        # changes. Also tracked in deny.toml. Suppress here so `--deny
-        # warnings` does not block on an advisory that cannot be resolved.
-        run: cargo audit --deny warnings --ignore RUSTSEC-2024-0436
+        # RUSTSEC-2024-0436 (paste unmaintained): transitive dep via
+        # nalgebra → simba → paste; no upstream fix without breaking changes.
+        # RUSTSEC-2026-0009 (time DoS): `time 0.3.47` uses Cargo edition2024
+        # which breaks the MSRV 1.81 toolchain; pinned to 0.3.36 in the lock
+        # file. The CVE is via rcgen → yasna → time (none of our public APIs
+        # accept untrusted ASN.1 structures from callers). Both are tracked in
+        # deny.toml and the PR audit trail.
+        run: >
+          cargo audit --deny warnings
+          --ignore RUSTSEC-2024-0436
+          --ignore RUSTSEC-2026-0009
 
   # Code coverage
   coverage:

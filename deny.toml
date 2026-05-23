@@ -56,6 +56,13 @@ ignore = [
     #   * paste 1.0.15  via nalgebra -> simba  — needs nalgebra audit
     # Expiries: 2026-08-13 (quarterly review).
     { id = "RUSTSEC-2024-0436", reason = "paste via nalgebra->simba; nalgebra audit" },
+    # RUSTSEC-2026-0009 (time DoS via stack exhaustion): `time >= 0.3.47`
+    # fixes this, but 0.3.47 uses Cargo edition2024 (manifests) which
+    # Cargo 1.81 cannot parse, breaking the MSRV check. The affected path
+    # is time via rcgen → yasna (X.509 ASN.1 parsing). Midstream does not
+    # expose ASN.1 parsing to untrusted callers. Expiry: 2026-11-23 (when
+    # the declared MSRV is bumped past 1.85 to allow edition2024 deps).
+    { id = "RUSTSEC-2026-0009", reason = "time 0.3.36 locked for MSRV 1.81; not user-facing attack surface" },
 ]
 
 # --------------------------------------------------------------------------
