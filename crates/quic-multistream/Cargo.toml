@@ -36,7 +36,7 @@ async-trait = "0.1"
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 quinn = "0.11"
 rustls-platform-verifier = "0.6"
-rcgen = "0.12"
+rcgen = "0.14"
 tokio = { version = "1.42", features = ["full"] }
 
 # WASM dependencies
