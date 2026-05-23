@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod unit {
     use crate::midstream::{
         AggregateFunction, HyprService, Intent, LLMClient, MetricRecord, Midstream,
         StreamProcessor, TimeWindow, ToolIntegration,
@@ -61,7 +61,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_time_aggregation() {
-        let mut mock_llm = MockLLMClient::new();
+        let mock_llm = MockLLMClient::new();
         let mut mock_hypr = MockHyprService::new();
 
         mock_hypr
@@ -106,7 +106,7 @@ mod tests {
     #[tokio::test]
     async fn test_empty_stream() {
         let mut mock_llm = MockLLMClient::new();
-        let mut mock_hypr = MockHyprService::new();
+        let mock_hypr = MockHyprService::new();
 
         mock_llm
             .expect_stream()
@@ -183,7 +183,7 @@ mod tests {
     #[tokio::test]
     async fn test_empty_message_handling() {
         let mut mock_llm = MockLLMClient::new();
-        let mut mock_hypr = MockHyprService::new();
+        let mock_hypr = MockHyprService::new();
 
         mock_llm
             .expect_stream()

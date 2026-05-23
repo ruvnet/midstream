@@ -12,10 +12,17 @@ categories = ["asynchronous", "concurrency"]
 [lints]
 workspace = true
 
+[features]
+# "native" enables tokio (mio/net), which is incompatible with wasm32.
+# The library core (structs, priority queue, crossbeam channels) is
+# fully usable on wasm32-unknown-unknown without this feature.
+default = ["native"]
+native = ["dep:tokio"]
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
-tokio = { version = "1.42.0", features = ["full"] }
+tokio = { version = "1.42.0", features = ["full"], optional = true }
 crossbeam = "0.8"
 parking_lot = "0.12"
 
