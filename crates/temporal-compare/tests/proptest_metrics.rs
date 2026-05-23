@@ -10,19 +10,19 @@
 //! Invariants asserted:
 //!
 //! * Edit-distance is a metric:
-//!     d(x, x) = 0
-//!     d(x, y) >= 0
-//!     d(x, y) = d(y, x)            (symmetry)
-//!     d(x, y) <= max(|x|, |y|)     (sup bound)
+//!   d(x, x) = 0
+//!   d(x, y) >= 0
+//!   d(x, y) = d(y, x)            (symmetry)
+//!   d(x, y) <= max(|x|, |y|)     (sup bound)
 //!
 //! * DTW:
-//!     d(x, x) = 0
-//!     d(x, y) >= 0
-//!     d(x, y) = d(y, x)
+//!   d(x, x) = 0
+//!   d(x, y) >= 0
+//!   d(x, y) = d(y, x)
 //!
 //! * LCS:
-//!     d(x, y) is finite (no NaN/Inf leak)
-//!     d(x, y) = d(y, x)
+//!   d(x, y) is finite (no NaN/Inf leak)
+//!   d(x, y) = d(y, x)
 //!
 //! `TemporalComparator<T>` requires `T: Clone + PartialEq + Debug +
 //! Serialize + Hash + Eq`, so the test uses `i32` (`f64` would fail

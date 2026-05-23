@@ -11,7 +11,7 @@
 use std::time::Duration;
 
 // Import from published crates
-use midstreamer_attractor::{AttractorAnalyzer, AttractorType, PhasePoint};
+use midstreamer_attractor::{AttractorAnalyzer, PhasePoint};
 use midstreamer_neural_solver::{
     TemporalFormula, TemporalNeuralSolver, TemporalState, VerificationStrictness,
 };
@@ -169,7 +169,7 @@ fn test_attractor_solver_integration() {
         let t = i as f64 * 0.1;
 
         // Create periodic trajectory
-        let point = PhasePoint::new(vec![t.sin(), t.cos()], i as u64 * 10);
+        let point = PhasePoint::new(vec![t.sin(), t.cos()], i * 10);
         analyzer.add_point(point).unwrap();
 
         // Record temporal state
@@ -276,10 +276,10 @@ fn test_full_system_strange_loop() {
     println!("\n=== Test 5: Full System Integration with Strange Loop ===");
 
     let mut strange_loop = StrangeLoop::new(StrangeLoopConfig {
-        max_levels: 5,
-        max_knowledge_per_level: 100,
-        enable_reflection: true,
-        learning_rate: 0.1,
+        max_meta_depth: 5,
+        enable_self_modification: true,
+        max_modifications_per_cycle: 100,
+        safety_check_enabled: true,
     });
 
     let scheduler: RealtimeScheduler<String> = RealtimeScheduler::default();
@@ -321,7 +321,7 @@ fn test_full_system_strange_loop() {
     // Verify workflow properties
     for i in 0..workflow_steps.len() {
         let mut state = TemporalState::new(i as u64, i as u64 * 100);
-        state.set_proposition("scheduled", i >= 0);
+        state.set_proposition("scheduled", true); // all steps are always scheduled (i >= 0 is always true for usize)
         state.set_proposition("executed", i >= 1);
         state.set_proposition("analyzed", i >= 2);
         state.set_proposition("verified", i >= 3);
@@ -547,7 +547,7 @@ fn test_pattern_detection_pipeline() {
     let detected = comparator.detect_pattern(&series, &pattern, 1.0);
     assert!(detected, "Pattern should be detected");
 
-    let no_match = comparator.detect_pattern(&series, &vec![10.0, 20.0, 30.0], 1.0);
+    let no_match = comparator.detect_pattern(&series, &[10.0, 20.0, 30.0], 1.0);
     assert!(!no_match, "Non-existent pattern should not be detected");
 
     println!("  ✓ Pattern detection pipeline verified");
@@ -596,7 +596,7 @@ fn test_state_management() {
     let mut strange_loop = StrangeLoop::default();
 
     strange_loop
-        .learn_at_level(MetaLevel::base(), &vec!["a".to_string()])
+        .learn_at_level(MetaLevel::base(), &["a".to_string()])
         .unwrap();
     let before = strange_loop.get_summary();
     assert!(before.total_knowledge > 0);

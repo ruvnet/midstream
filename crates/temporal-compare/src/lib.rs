@@ -172,6 +172,67 @@ impl SimilarityMatch {
     }
 }
 
+/// Compute the Dynamic Time Warping distance between two sequences.
+///
+/// Only requires `T: PartialEq`, so it can be called from both the
+/// `Hash + Eq` impl block and the weaker-bound extension impl.
+fn dtw_sequences<T: PartialEq>(
+    seq1: &Sequence<T>,
+    seq2: &Sequence<T>,
+) -> Result<ComparisonResult, TemporalError> {
+    let n = seq1.len();
+    let m = seq2.len();
+
+    if n == 0 || m == 0 {
+        return Ok(ComparisonResult {
+            distance: (n + m) as f64,
+            algorithm: ComparisonAlgorithm::DTW,
+            alignment: None,
+        });
+    }
+
+    // Initialize DTW matrix
+    let mut dtw = vec![vec![f64::INFINITY; m + 1]; n + 1];
+    dtw[0][0] = 0.0;
+
+    // Fill DTW matrix
+    for i in 1..=n {
+        for j in 1..=m {
+            let cost = if seq1.elements[i - 1].value == seq2.elements[j - 1].value {
+                0.0
+            } else {
+                1.0
+            };
+            dtw[i][j] = cost + dtw[i - 1][j - 1].min(dtw[i - 1][j]).min(dtw[i][j - 1]);
+        }
+    }
+
+    // Backtrack for alignment
+    let mut alignment = Vec::new();
+    let (mut i, mut j) = (n, m);
+
+    while i > 0 && j > 0 {
+        alignment.push((i - 1, j - 1));
+        let min_val = dtw[i - 1][j - 1].min(dtw[i - 1][j]).min(dtw[i][j - 1]);
+        if dtw[i - 1][j - 1] == min_val {
+            i -= 1;
+            j -= 1;
+        } else if dtw[i - 1][j] == min_val {
+            i -= 1;
+        } else {
+            j -= 1;
+        }
+    }
+
+    alignment.reverse();
+
+    Ok(ComparisonResult {
+        distance: dtw[n][m],
+        algorithm: ComparisonAlgorithm::DTW,
+        alignment: Some(alignment),
+    })
+}
+
 /// Temporal comparator with caching
 pub struct TemporalComparator<T> {
     cache: Arc<Mutex<LruCache<String, ComparisonResult>>>,
@@ -182,22 +243,31 @@ pub struct TemporalComparator<T> {
     max_sequence_length: usize,
 }
 
+/// Methods on `TemporalComparator<T>` that only require
+/// `Clone + PartialEq + fmt::Debug + Serialize` — no `Hash` or `Eq`.
+///
+/// This includes construction (`new`), cache management, and the
+/// `compare` dispatch function.  `detect_recurring_patterns` lives in
+/// a separate impl block (below) that adds `Hash + Eq` because it uses
+/// `HashMap<Vec<T>, _>` internally.
 impl<T> TemporalComparator<T>
 where
-    T: Clone + PartialEq + fmt::Debug + Serialize + Hash + Eq,
+    T: Clone + PartialEq + fmt::Debug + Serialize,
 {
-    /// Create a new temporal comparator
+    /// Create a new temporal comparator.
+    ///
+    /// `cache_size` is clamped to a minimum of 1 so that a caller passing 0
+    /// does not cause a panic inside `LruCache::new` (which requires a
+    /// `NonZeroUsize`). The effective minimum capacity is therefore 1 entry.
     pub fn new(cache_size: usize, max_sequence_length: usize) -> Self {
+        // SAFETY: max(cache_size, 1) is always ≥ 1, so NonZeroUsize::new never
+        // returns None here.
+        let capacity =
+            NonZeroUsize::new(cache_size.max(1)).expect("cache_size.max(1) is always at least 1");
         Self {
-            cache: Arc::new(Mutex::new(LruCache::new(
-                NonZeroUsize::new(cache_size).unwrap(),
-            ))),
-            pattern_cache: Arc::new(Mutex::new(LruCache::new(
-                NonZeroUsize::new(cache_size).unwrap(),
-            ))),
-            similarity_cache: Arc::new(Mutex::new(LruCache::new(
-                NonZeroUsize::new(cache_size).unwrap(),
-            ))),
+            cache: Arc::new(Mutex::new(LruCache::new(capacity))),
+            pattern_cache: Arc::new(Mutex::new(LruCache::new(capacity))),
+            similarity_cache: Arc::new(Mutex::new(LruCache::new(capacity))),
             cache_hits: Arc::new(DashMap::new()),
             cache_misses: Arc::new(DashMap::new()),
             max_sequence_length,
@@ -245,66 +315,14 @@ where
         Ok(result)
     }
 
-    /// Dynamic Time Warping implementation
+    /// Dynamic Time Warping implementation (delegates to the free function
+    /// `dtw_sequences` so it is also available in the weaker-bound impl block).
     fn dtw(
         &self,
         seq1: &Sequence<T>,
         seq2: &Sequence<T>,
     ) -> Result<ComparisonResult, TemporalError> {
-        let n = seq1.len();
-        let m = seq2.len();
-
-        if n == 0 || m == 0 {
-            return Ok(ComparisonResult {
-                distance: (n + m) as f64,
-                algorithm: ComparisonAlgorithm::DTW,
-                alignment: None,
-            });
-        }
-
-        // Initialize DTW matrix
-        let mut dtw = vec![vec![f64::INFINITY; m + 1]; n + 1];
-        dtw[0][0] = 0.0;
-
-        // Fill DTW matrix
-        for i in 1..=n {
-            for j in 1..=m {
-                let cost = if seq1.elements[i - 1].value == seq2.elements[j - 1].value {
-                    0.0
-                } else {
-                    1.0
-                };
-
-                dtw[i][j] = cost + dtw[i - 1][j - 1].min(dtw[i - 1][j]).min(dtw[i][j - 1]);
-            }
-        }
-
-        // Backtrack for alignment
-        let mut alignment = Vec::new();
-        let (mut i, mut j) = (n, m);
-
-        while i > 0 && j > 0 {
-            alignment.push((i - 1, j - 1));
-
-            let min_val = dtw[i - 1][j - 1].min(dtw[i - 1][j]).min(dtw[i][j - 1]);
-
-            if dtw[i - 1][j - 1] == min_val {
-                i -= 1;
-                j -= 1;
-            } else if dtw[i - 1][j] == min_val {
-                i -= 1;
-            } else {
-                j -= 1;
-            }
-        }
-
-        alignment.reverse();
-
-        Ok(ComparisonResult {
-            distance: dtw[n][m],
-            algorithm: ComparisonAlgorithm::DTW,
-            alignment: Some(alignment),
-        })
+        dtw_sequences(seq1, seq2)
     }
 
     /// Longest Common Subsequence implementation
@@ -439,10 +457,14 @@ where
         let hits: u64 = self.cache_hits.iter().map(|r| *r.value()).sum();
         let misses: u64 = self.cache_misses.iter().map(|r| *r.value()).sum();
 
-        let (size, capacity) = if let Ok(cache) = self.cache.lock() {
-            (cache.len(), cache.cap().get())
-        } else {
-            (0, 0)
+        // Report total occupied entries across all three caches.
+        // Capacity is the per-cache capacity (all three share the same size).
+        let (size, capacity) = {
+            let cmp_size = self.cache.lock().map(|c| c.len()).unwrap_or(0);
+            let pat_size = self.pattern_cache.lock().map(|c| c.len()).unwrap_or(0);
+            let sim_size = self.similarity_cache.lock().map(|c| c.len()).unwrap_or(0);
+            let cap = self.cache.lock().map(|c| c.cap().get()).unwrap_or(0);
+            (cmp_size + pat_size + sim_size, cap)
         };
 
         CacheStats {
@@ -540,7 +562,14 @@ where
 
         Ok(matches)
     }
+}
 
+/// Methods on `TemporalComparator<T>` that require `Hash + Eq` in addition to
+/// the base bounds, because they use `HashMap<Vec<T>, _>` internally.
+impl<T> TemporalComparator<T>
+where
+    T: Clone + PartialEq + fmt::Debug + Serialize + Hash + Eq,
+{
     /// Detect recurring patterns in a sequence
     pub fn detect_recurring_patterns(
         &self,
@@ -623,10 +652,147 @@ where
 
 impl<T> Default for TemporalComparator<T>
 where
-    T: Clone + PartialEq + fmt::Debug + Serialize + Hash + Eq,
+    T: Clone + PartialEq + fmt::Debug + Serialize,
 {
     fn default() -> Self {
         Self::new(1000, 10000)
+    }
+}
+
+/// Extension methods on `TemporalComparator<T>` that require only
+/// `Clone + PartialEq + fmt::Debug + Serialize` — not `Hash + Eq` — so they
+/// also work for types like `f64` that don't implement a hashable equality.
+impl<T> TemporalComparator<T>
+where
+    T: Clone + PartialEq + fmt::Debug + Serialize,
+{
+    /// Find positions in `haystack` where `needle` appears with a DTW
+    /// distance (normalised by needle length) at or below `threshold`.
+    ///
+    /// Returns a sorted `Vec<(start_index, distance)>` (best match first).
+    /// An empty `Vec` is returned when `needle` is empty or longer than
+    /// `haystack`.
+    pub fn find_similar(&self, haystack: &[T], needle: &[T], threshold: f64) -> Vec<(usize, f64)> {
+        if needle.is_empty() || haystack.len() < needle.len() {
+            return Vec::new();
+        }
+
+        let needle_len = needle.len();
+        let mut matches: Vec<(usize, f64)> = Vec::new();
+
+        for start_idx in 0..=(haystack.len() - needle_len) {
+            let window = &haystack[start_idx..start_idx + needle_len];
+
+            let mut seq1 = Sequence::new();
+            for (i, item) in window.iter().enumerate() {
+                seq1.push(item.clone(), i as u64);
+            }
+            let mut seq2 = Sequence::new();
+            for (i, item) in needle.iter().enumerate() {
+                seq2.push(item.clone(), i as u64);
+            }
+
+            if let Ok(result) = dtw_sequences(&seq1, &seq2) {
+                let normalised = result.distance / needle_len as f64;
+                // Use strict less-than so threshold acts as an exclusive upper bound.
+                // A normalised distance exactly equal to the threshold means every
+                // element mismatches (worst case) and is not considered a match.
+                if normalised < threshold {
+                    matches.push((start_idx, result.distance));
+                }
+            }
+        }
+
+        matches.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        matches
+    }
+
+    /// Return `true` when `needle` appears at least once in `series` with a
+    /// normalised DTW distance at or below `threshold`.
+    pub fn detect_pattern(&self, series: &[T], needle: &[T], threshold: f64) -> bool {
+        !self.find_similar(series, needle, threshold).is_empty()
+    }
+
+    /// Detect patterns that recur in `sequence` (pattern lengths in
+    /// `[min_length, max_length]`) using a DTW similarity threshold
+    /// `similarity_threshold` (normalised).  Two windows are considered the
+    /// same "fuzzy pattern" when their normalised DTW distance ≤ 1 -
+    /// `similarity_threshold`.
+    ///
+    /// Returns patterns ordered by frequency (most-frequent first).
+    pub fn detect_fuzzy_patterns(
+        &self,
+        sequence: &[T],
+        min_length: usize,
+        max_length: usize,
+        similarity_threshold: f64,
+    ) -> Result<Vec<Pattern<T>>, TemporalError> {
+        if min_length > max_length {
+            return Err(TemporalError::InvalidPatternLength(min_length, max_length));
+        }
+        if sequence.len() < min_length {
+            return Ok(Vec::new());
+        }
+
+        // Distance threshold: windows closer than this are "the same" pattern.
+        let dist_threshold = (1.0 - similarity_threshold).max(0.0);
+
+        let mut fuzzy_groups: Vec<(Vec<T>, Vec<usize>)> = Vec::new();
+
+        for pat_len in min_length..=max_length.min(sequence.len()) {
+            for start_idx in 0..=(sequence.len() - pat_len) {
+                let window: Vec<T> = sequence[start_idx..start_idx + pat_len].to_vec();
+
+                // Find an existing group whose representative is close enough.
+                let mut found_group = false;
+                for (rep, occurrences) in fuzzy_groups.iter_mut() {
+                    if rep.len() != pat_len {
+                        continue;
+                    }
+                    let mut s1 = Sequence::new();
+                    for (i, v) in rep.iter().enumerate() {
+                        s1.push(v.clone(), i as u64);
+                    }
+                    let mut s2 = Sequence::new();
+                    for (i, v) in window.iter().enumerate() {
+                        s2.push(v.clone(), i as u64);
+                    }
+                    if let Ok(r) = dtw_sequences(&s1, &s2) {
+                        let nd = r.distance / pat_len as f64;
+                        if nd <= dist_threshold {
+                            occurrences.push(start_idx);
+                            found_group = true;
+                            break;
+                        }
+                    }
+                }
+
+                if !found_group {
+                    fuzzy_groups.push((window, vec![start_idx]));
+                }
+            }
+        }
+
+        let mut patterns: Vec<Pattern<T>> = fuzzy_groups
+            .into_iter()
+            .filter(|(_, occ)| occ.len() >= 2)
+            .map(|(seq, occ)| {
+                let freq = occ.len() as f64;
+                let total = (sequence.len().saturating_sub(seq.len()) + 1).max(1) as f64;
+                let confidence = (freq / total).min(1.0);
+                Pattern::new(seq, occ, confidence)
+            })
+            .collect();
+
+        patterns.sort_by(|a, b| {
+            b.frequency().cmp(&a.frequency()).then_with(|| {
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+        });
+
+        Ok(patterns)
     }
 }
 

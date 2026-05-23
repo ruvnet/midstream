@@ -57,7 +57,7 @@ mem_forget = "deny"
 name = "midstream"
 version = "0.2.1"
 edition = "2021"
-rust-version = "1.81"
+rust-version = "1.88"
 description = "Real-time LLM streaming with inflight analysis"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ruvnet/midstream"
@@ -105,7 +105,7 @@ bytes = "1"
 # Lean Agentic dependencies
 thiserror = "2.0"
 dashmap = "6.1"
-lru = "0.12"
+lru = "0.16"
 
 # Phase 1: Temporal and Scheduling integrations (local workspace crates)
 midstreamer-temporal-compare = { version = "0.2.1", path = "crates/temporal-compare" }
@@ -122,7 +122,7 @@ midstreamer-strange-loop = { version = "0.2.1", path = "crates/strange-loop" }
 midstreamer-quic = { version = "0.3.0", path = "crates/quic-multistream" }
 
 # Additional dependencies for advanced integrations
-nalgebra = "0.33" # For linear algebra in attractor analysis
+nalgebra = "0.34" # For linear algebra in attractor analysis
 ndarray = "0.16" # For multi-dimensional arrays
 
 [dev-dependencies]
@@ -163,6 +163,21 @@ harness = false
 name = "openrouter"
 path = "examples/openrouter.rs"
 
+# quic_server requires quinn/rcgen/rustls/tracing-subscriber direct deps that
+# are not in the default feature set. Excluded from default builds.
+[[example]]
+name = "quic_server"
+path = "examples/quic_server.rs"
+required-features = ["quic-server-example"]
+
+# pattern_detection_demo uses TemporalComparator<f64> — tested via the
+# temporal_compare_api_test integration tests instead.
+[[example]]
+name = "pattern_detection_demo"
+path = "examples/pattern_detection_demo.rs"
+required-features = ["pattern-demo-example"]
+
 [[example]]
 name = "lean_agentic_streaming"
 path = "examples/lean_agentic_streaming.rs"
+required-features = ["lean-agentic"]

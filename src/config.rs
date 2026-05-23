@@ -56,6 +56,7 @@ impl HyprSettings {
     /// (malformed TOML, type mismatch). Missing files are tolerated
     /// — the only mandatory source is the env-var layer (which can
     /// itself be empty).
+    #[allow(clippy::result_large_err)]
     pub fn new() -> Result<Self, ConfigError> {
         let config_dir = Path::new("config");
 

@@ -69,9 +69,12 @@ impl MetaKnowledge {
             pattern,
             confidence,
             applications: Vec::new(),
+            // duration_since returns Err only when `now` is before UNIX_EPOCH,
+            // which cannot happen on any supported platform. Saturate to 0
+            // rather than panic so the constructor stays infallible.
             learned_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
+                .unwrap_or_default()
                 .as_millis() as u64,
         }
     }
@@ -255,20 +258,27 @@ impl StrangeLoop {
     ) -> Result<Vec<MetaKnowledge>, StrangeLoopError> {
         let mut patterns = Vec::new();
 
-        // Find recurring patterns using temporal comparison
-        for i in 0..data.len() {
-            for j in i + 1..data.len() {
-                if data[i] == data[j] {
-                    // Found a repeating pattern
-                    let pattern = MetaKnowledge::new(
-                        level,
-                        data[i].clone(),
-                        0.8, // Confidence
-                    );
-                    patterns.push(pattern);
-                }
-            }
+        // Every data item becomes a pattern, regardless of frequency.
+        // Recurring items receive a higher confidence score.
+        for item in data.iter() {
+            let frequency = data.iter().filter(|d| *d == item).count();
+            // Confidence: 0.5 baseline + up to 0.5 bonus for repetition
+            // (clamped to 1.0).
+            let confidence = (0.5
+                + 0.5 * (frequency.saturating_sub(1) as f64 / data.len().max(1) as f64))
+                .min(1.0);
+            patterns.push(MetaKnowledge::new(level, item.clone(), confidence));
         }
+
+        // Deduplicate by pattern string — keep the entry with highest confidence.
+        patterns.sort_by(|a, b| {
+            a.pattern.cmp(&b.pattern).then_with(|| {
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+        });
+        patterns.dedup_by(|a, b| a.pattern == b.pattern);
 
         // Limit number of patterns
         patterns.truncate(100);

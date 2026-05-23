@@ -1,4 +1,7 @@
 //! Comprehensive simulation tests for various real-world scenarios
+// These tests exercise the `lean-agentic` subsystem; they are compiled
+// and run only when that feature is enabled.
+#![cfg(feature = "lean-agentic")]
 
 use midstream::{
     AgentContext, Entity, EntityType, KnowledgeGraph, LeanAgenticConfig, LeanAgenticSystem,

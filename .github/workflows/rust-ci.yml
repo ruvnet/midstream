@@ -52,24 +52,30 @@ jobs:
         run: cargo clippy --workspace --exclude midstream --exclude hyprstream --all-targets --all-features -- -D warnings
 
   # MSRV (Minimum Supported Rust Version) check per ADR-0023.
-  # Every published crate declares rust-version = "1.81"; this job
+  # Every published crate declares rust-version = "1.88"; this job
   # proves the workspace still compiles + tests on that toolchain so
   # the declared MSRV doesn't quietly drift forward. --locked is
   # mandatory: an unlocked update could pull a transitive dep that
   # requires newer rustc, masking the MSRV check.
+  # Bumped from 1.81 → 1.88: transitive deps adopted requirements that
+  # exceed 1.81:
+  #   nalgebra 0.34.2 requires rustc 1.87.0 (edition2024 + api)
+  #   time 0.3.47 / time-core 0.1.8 require rustc 1.88.0
+  # Rust 1.88 (2025-06-05) is the first stable release that satisfies
+  # all transitive rust-version requirements in the locked dep graph.
   msrv:
-    name: MSRV (1.81)
+    name: MSRV (1.88)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust 1.81 toolchain
-        uses: dtolnay/rust-toolchain@1.81
+      - name: Install Rust 1.88 toolchain
+        uses: dtolnay/rust-toolchain@1.88
 
       - name: Setup cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "msrv-1.81"
+          shared-key: "msrv-1.88"
 
       - name: cargo check (workspace, locked)
         # Exclude `midstream` and `hyprstream` while ADR-0002 / ADR-0014
@@ -270,7 +276,11 @@ jobs:
         run: cargo install cargo-audit
 
       - name: Run security audit
-        run: cargo audit --deny warnings
+        # RUSTSEC-2024-0436 (paste unmaintained) is a transitive dep via
+        # nalgebra → simba → paste; no upstream fix exists without breaking
+        # changes. Also tracked in deny.toml. Suppress here so `--deny
+        # warnings` does not block on an advisory that cannot be resolved.
+        run: cargo audit --deny warnings --ignore RUSTSEC-2024-0436
 
   # Code coverage
   coverage:

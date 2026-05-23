@@ -2,7 +2,7 @@
 name = "midstreamer-quic"
 version = "0.3.0"
 edition = "2021"
-rust-version = "1.81"
+rust-version = "1.88"
 description = "QUIC multi-stream support for native and WASM targets"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ruvnet/midstream"
