@@ -2,7 +2,7 @@
 name = "xtask"
 version = "0.2.1"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.88"
 publish = false
 license = "MIT OR Apache-2.0"
 description = "midstream task runner (cargo xtask <command>) — replaces the legacy publish_*.sh / install.sh / setup.sh scripts. See ADR-0037."
