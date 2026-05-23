@@ -36,7 +36,7 @@ jobs:
     name: cargo audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       # `stable`, not MSRV. The audit action installs the latest
       # `cargo-audit` (currently 0.22, which requires rustc 1.85+).
       # MSRV gates compile, not tooling.
@@ -72,7 +72,7 @@ jobs:
           - licenses
           - sources
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
         with:
           # The Embark action expands to (per its action.yml + entrypoint.sh):
