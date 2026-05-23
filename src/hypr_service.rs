@@ -32,7 +32,7 @@ impl HyprServiceImpl {
 
         let filtered: Vec<_> = metrics
             .iter()
-            .filter(|m| now - m.timestamp <= window_secs)
+            .filter(|m| now.saturating_sub(m.timestamp) <= window_secs)
             .collect();
 
         match func {

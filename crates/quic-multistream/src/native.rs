@@ -50,8 +50,14 @@ impl QuicConnection {
                 .map_err(|e| QuicError::TlsError(format!("{:?}", e)))?,
         ));
 
-        // Create endpoint
-        let mut endpoint = Endpoint::client("0.0.0.0:0".parse().unwrap())
+        // Create endpoint bound to an ephemeral local port.
+        // The literal "0.0.0.0:0" is always a valid SocketAddr, so the parse
+        // is infallible; map_err covers the OS bind failure that Endpoint::client
+        // can still return.
+        let bind_addr: std::net::SocketAddr = "0.0.0.0:0"
+            .parse()
+            .map_err(|e: std::net::AddrParseError| QuicError::InvalidConfig(e.to_string()))?;
+        let mut endpoint = Endpoint::client(bind_addr)
             .map_err(|e| QuicError::ConnectionFailed(e.to_string()))?;
         endpoint.set_default_client_config(client_config);
 
@@ -128,10 +134,17 @@ impl QuicConnection {
         }
     }
 
-    /// Close the connection
+    /// Close the connection.
+    ///
+    /// `error_code` is clamped to [`VarInt::MAX`] (2^62 − 1) if it exceeds
+    /// the QUIC variable-length integer range, rather than panicking. Values
+    /// within range are forwarded unchanged.
     pub fn close(&self, error_code: u64, reason: &[u8]) {
-        self.connection
-            .close(VarInt::from_u64(error_code).unwrap(), reason);
+        // VarInt::from_u64 returns None for values > 2^62-1. Clamp rather
+        // than panic so callers passing a raw OS error code can't crash the
+        // process.
+        let code = VarInt::from_u64(error_code).unwrap_or(VarInt::MAX);
+        self.connection.close(code, reason);
     }
 
     /// Get the remote address

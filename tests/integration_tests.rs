@@ -276,10 +276,10 @@ fn test_full_system_strange_loop() {
     println!("\n=== Test 5: Full System Integration with Strange Loop ===");
 
     let mut strange_loop = StrangeLoop::new(StrangeLoopConfig {
-        max_levels: 5,
-        max_knowledge_per_level: 100,
-        enable_reflection: true,
-        learning_rate: 0.1,
+        max_meta_depth: 5,
+        enable_self_modification: true,
+        max_modifications_per_cycle: 100,
+        safety_check_enabled: true,
     });
 
     let scheduler: RealtimeScheduler<String> = RealtimeScheduler::default();

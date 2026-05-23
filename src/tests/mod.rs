@@ -20,9 +20,10 @@ mod tests {
 
     mock! {
         pub HyprService {}
+        #[async_trait::async_trait]
         impl HyprService for HyprService {
-            fn ingest_metric(&self, metric: MetricRecord) -> Result<(), BoxError>;
-            fn query_aggregate(&self, window: TimeWindow, func: AggregateFunction) -> Result<f64, BoxError>;
+            async fn ingest_metric(&self, metric: MetricRecord) -> Result<(), BoxError>;
+            async fn query_aggregate(&self, window: TimeWindow, func: AggregateFunction) -> Result<f64, BoxError>;
         }
     }
 

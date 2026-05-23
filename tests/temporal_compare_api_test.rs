@@ -12,22 +12,23 @@ fn test_find_similar_with_f64() {
     let series = vec![1.0, 2.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 6.0, 7.0];
     let pattern = vec![3.0, 4.0, 5.0];
 
-    // Find similar patterns with a reasonable threshold
-    let matches = comparator.find_similar(&series, &pattern, 1.0);
+    // Threshold of 0.1 admits only exact matches (normalised DTW = 0.0 for
+    // identical windows; the next-closest window [2,3,4] has DTW=2, norm=0.67).
+    let matches = comparator.find_similar(&series, &pattern, 0.1);
 
     // Verify we found the expected matches
     assert!(!matches.is_empty(), "Should find at least one match");
-    assert_eq!(matches.len(), 2, "Should find exactly 2 matches");
+    assert_eq!(matches.len(), 2, "Should find exactly 2 exact matches");
 
     // Verify the indices are correct
     assert_eq!(matches[0].0, 2, "First match should be at index 2");
     assert_eq!(matches[1].0, 5, "Second match should be at index 5");
 
-    // Verify distances are within threshold
+    // Verify distances are zero (exact matches)
     for (idx, distance) in &matches {
         assert!(
-            *distance <= 1.0,
-            "Distance {} at index {} exceeds threshold",
+            *distance < 0.1,
+            "Distance {} at index {} should be near-zero for exact match",
             distance,
             idx
         );
@@ -298,12 +299,8 @@ fn test_comprehensive_workflow() {
         .unwrap();
     assert_eq!(matches.len(), 3, "Should find 3 occurrences of pattern");
 
-    // Test 4: Simple detection
-    let found = comparator.detect_pattern(
-        &sequence.iter().map(|&x| x as f64).collect::<Vec<_>>(),
-        &needle.iter().map(|&x| x as f64).collect::<Vec<_>>(),
-        1.0,
-    );
+    // Test 4: Simple detection (same types as the comparator)
+    let found = comparator.detect_pattern(&sequence, &needle, 1.0);
     assert!(found, "Pattern should be detected");
 
     // Test 5: Verify caching is working
