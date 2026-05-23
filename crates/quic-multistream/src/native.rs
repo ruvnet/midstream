@@ -57,8 +57,8 @@ impl QuicConnection {
         let bind_addr: std::net::SocketAddr = "0.0.0.0:0"
             .parse()
             .map_err(|e: std::net::AddrParseError| QuicError::InvalidConfig(e.to_string()))?;
-        let mut endpoint = Endpoint::client(bind_addr)
-            .map_err(|e| QuicError::ConnectionFailed(e.to_string()))?;
+        let mut endpoint =
+            Endpoint::client(bind_addr).map_err(|e| QuicError::ConnectionFailed(e.to_string()))?;
         endpoint.set_default_client_config(client_config);
 
         // Connect to server

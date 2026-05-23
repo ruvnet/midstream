@@ -262,8 +262,8 @@ where
     pub fn new(cache_size: usize, max_sequence_length: usize) -> Self {
         // SAFETY: max(cache_size, 1) is always ≥ 1, so NonZeroUsize::new never
         // returns None here.
-        let capacity = NonZeroUsize::new(cache_size.max(1))
-            .expect("cache_size.max(1) is always at least 1");
+        let capacity =
+            NonZeroUsize::new(cache_size.max(1)).expect("cache_size.max(1) is always at least 1");
         Self {
             cache: Arc::new(Mutex::new(LruCache::new(capacity))),
             pattern_cache: Arc::new(Mutex::new(LruCache::new(capacity))),
@@ -785,9 +785,11 @@ where
             .collect();
 
         patterns.sort_by(|a, b| {
-            b.frequency()
-                .cmp(&a.frequency())
-                .then_with(|| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal))
+            b.frequency().cmp(&a.frequency()).then_with(|| {
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
         });
 
         Ok(patterns)

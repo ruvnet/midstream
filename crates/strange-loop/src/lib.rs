@@ -264,16 +264,19 @@ impl StrangeLoop {
             let frequency = data.iter().filter(|d| *d == item).count();
             // Confidence: 0.5 baseline + up to 0.5 bonus for repetition
             // (clamped to 1.0).
-            let confidence = (0.5 + 0.5 * (frequency.saturating_sub(1) as f64 / data.len().max(1) as f64))
+            let confidence = (0.5
+                + 0.5 * (frequency.saturating_sub(1) as f64 / data.len().max(1) as f64))
                 .min(1.0);
             patterns.push(MetaKnowledge::new(level, item.clone(), confidence));
         }
 
         // Deduplicate by pattern string — keep the entry with highest confidence.
         patterns.sort_by(|a, b| {
-            a.pattern
-                .cmp(&b.pattern)
-                .then_with(|| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal))
+            a.pattern.cmp(&b.pattern).then_with(|| {
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
         });
         patterns.dedup_by(|a, b| a.pattern == b.pattern);
 
