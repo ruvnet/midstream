@@ -2,7 +2,7 @@
 name = "xtask"
 version = "0.2.1"
 edition = "2021"
-rust-version = "1.81"
+rust-version = "1.85"
 publish = false
 license = "MIT OR Apache-2.0"
 description = "midstream task runner (cargo xtask <command>) — replaces the legacy publish_*.sh / install.sh / setup.sh scripts. See ADR-0037."
@@ -12,6 +12,6 @@ workspace = true
 
 [dependencies]
 anyhow = "1"
-clap = { version = "~4.5", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
 xshell = "0.2"
 cargo_metadata = "0.18"

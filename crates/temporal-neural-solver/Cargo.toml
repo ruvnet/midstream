@@ -2,7 +2,7 @@
 name = "midstreamer-neural-solver"
 version = "0.2.1"
 edition = "2021"
-rust-version = "1.81"
+rust-version = "1.85"
 description = "Temporal logic with neural reasoning"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ruvnet/midstream"
