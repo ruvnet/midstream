@@ -107,7 +107,7 @@ jobs:
           node-version: 20
 
       - name: Install Rust toolchain (wasm32 target)
-        uses: dtolnay/rust-toolchain@1.81
+        uses: dtolnay/rust-toolchain@488a732d2e77e2b89cfb873716d303a3aca6d88b
         with:
           targets: wasm32-unknown-unknown
 
