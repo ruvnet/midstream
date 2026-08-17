@@ -123,11 +123,63 @@ jobs:
       - name: Build @midstream/wasm
         working-directory: npm-wasm
         run: |
-          # Run only the `wasm-pack build` step — the `webpack`
-          # downstream step requires a chromium headless setup that's
-          # out of scope for the initial rollout.
+          # Build the three wasm-pack targets that ship in the npm
+          # tarball. The `webpack` demo-bundle step requires a chromium
+          # headless setup that's out of scope for the initial rollout
+          # (and its output is not published).
           npm ci --no-audit --prefer-offline
           npm run build:wasm
+          npm run build:bundler
+          npm run build:nodejs
+
+      # Packaging regression gate for issue #95: midstreamer@0.3.1
+      # published with `main`/`module` pointing at an unshipped
+      # `dist/` and no "." entry in `exports`, so `import
+      # 'midstreamer'` threw ERR_PACKAGE_PATH_NOT_EXPORTED. Pack the
+      # tarball, install it into a fresh project, and import it the
+      # way a consumer would.
+      - name: Pack + fresh-install import smoke test
+        working-directory: npm-wasm
+        run: |
+          npm pack
+          TARBALL="$PWD/$(ls midstreamer-*.tgz)"
+          SMOKE_DIR="$(mktemp -d)"
+          cd "$SMOKE_DIR"
+          npm init -y >/dev/null
+          npm install --no-audit "$TARBALL"
+
+          # ESM default entry: must resolve, init, and do real work.
+          node --input-type=module -e "
+            import assert from 'node:assert/strict';
+            const m = await import('midstreamer');
+            for (const key of ['init', 'TemporalCompare', 'NanoScheduler', 'StrangeLoop', 'version']) {
+              assert.equal(typeof m[key], 'function', key + ' export missing');
+            }
+            await m.init();
+            const tc = new m.TemporalCompare(16);
+            const d = tc.dtw([1, 2, 3, 4], [1, 2, 3, 4]);
+            assert.equal(d, 0, 'dtw of identical sequences should be 0');
+            console.log('ESM default entry OK — version', m.version());
+          "
+
+          # CJS default entry.
+          node -e "
+            const assert = require('node:assert/strict');
+            const m = require('midstreamer');
+            assert.equal(typeof m.init, 'function', 'require(midstreamer) broken');
+            console.log('CJS default entry OK');
+          "
+
+          # ./quic subpath: loads without agentic-flow installed and
+          # reports QUIC unavailable rather than crashing.
+          node --input-type=module -e "
+            import assert from 'node:assert/strict';
+            const quic = await import('midstreamer/quic');
+            assert.equal(typeof quic.loadQuicTransport, 'function');
+            assert.equal(await quic.isQuicAvailable(), false,
+              'isQuicAvailable should be false without the optional agentic-flow peer dep');
+            console.log('quic subpath OK');
+          "
 
   # npm audit reports any high-severity advisories on the JS side
   # to mirror cargo-audit's gate on the Rust side.
