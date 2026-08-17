@@ -1,9 +1,15 @@
 /**
- * @midstream/wasm - WebAssembly bindings for Midstream
+ * midstreamer - WebAssembly bindings for Midstream
  *
  * Browser and Node.js compatible wrapper for temporal comparison,
  * nanosecond scheduling, meta-learning, and QUIC multistream.
+ *
+ * This file is CommonJS (the package has no `"type": "module"`), so
+ * `require('midstreamer')` works directly and `import 'midstreamer'`
+ * gets named exports via Node's CJS named-export detection.
  */
+
+'use strict';
 
 let wasm;
 let initialized = false;
@@ -369,11 +375,20 @@ class QuicMultistream {
  * @returns {Promise<import('agentic-flow/transport/loader').AgentTransport>}
  */
 async function loadQuicTransport(config) {
-  // Dynamic import so the dep stays optional in browser bundles that
-  // don't use the QUIC entry point. `agentic-flow` is declared as a
-  // dependency of @midstream/wasm@0.3.0+ so this import succeeds in
-  // Node environments where federation peers run.
-  const mod = await import('agentic-flow/transport/loader');
+  // Dynamic import so the dep stays out of bundles that never touch
+  // QUIC. `agentic-flow` is an *optional peer dependency* as of
+  // midstreamer@0.3.2 — temporal-compare consumers don't pull its
+  // ~580-package tree. QUIC consumers install it explicitly.
+  let mod;
+  try {
+    mod = await import('agentic-flow/transport/loader');
+  } catch (error) {
+    throw new Error(
+      "midstreamer: QUIC transport requires the optional peer dependency 'agentic-flow'. " +
+      'Install it with `npm install agentic-flow` (or use isQuicAvailable() to probe first).',
+      { cause: error }
+    );
+  }
   return mod.loadQuicTransport(config);
 }
 
@@ -438,7 +453,7 @@ function benchmarkDtw(size = 100, iterations = 100) {
 // EXPORTS
 // ============================================================================
 
-export {
+module.exports = {
   init,
   TemporalCompare,
   NanoScheduler,
@@ -451,16 +466,5 @@ export {
   benchmarkDtw
 };
 
-// Default export for convenience
-export default {
-  init,
-  TemporalCompare,
-  NanoScheduler,
-  StrangeLoop,
-  QuicMultistream,
-  loadQuicTransport,
-  isQuicAvailable,
-  isNative,
-  version,
-  benchmarkDtw
-};
+// Default export for convenience (mirrors quic.js)
+module.exports.default = module.exports;

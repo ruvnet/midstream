@@ -1,6 +1,10 @@
 /**
- * TypeScript definitions for @midstream/wasm
+ * TypeScript definitions for midstreamer
  */
+
+import type { QuicTransportConfig, AgentTransport } from '../quic';
+
+export type { QuicTransportConfig, AgentTransport };
 
 /**
  * Initialize the WASM module
@@ -235,6 +239,24 @@ export class QuicMultistream {
 }
 
 /**
+ * Load a real QUIC transport via the optional peer dependency
+ * `agentic-flow`. Throws a descriptive error if it is not installed.
+ */
+export function loadQuicTransport(config?: QuicTransportConfig): Promise<AgentTransport>;
+
+/**
+ * Probe whether QUIC is available without instantiating a transport.
+ * Resolves false when `agentic-flow` is not installed.
+ */
+export function isQuicAvailable(): Promise<boolean>;
+
+/**
+ * Reports that `loadQuicTransport` is backed by the real agentic-flow
+ * QUIC stack rather than a stub.
+ */
+export function isNative(): boolean;
+
+/**
  * Get WASM module version
  * @returns Version string
  */
@@ -257,6 +279,9 @@ declare const _default: {
   NanoScheduler: typeof NanoScheduler;
   StrangeLoop: typeof StrangeLoop;
   QuicMultistream: typeof QuicMultistream;
+  loadQuicTransport: typeof loadQuicTransport;
+  isQuicAvailable: typeof isQuicAvailable;
+  isNative: typeof isNative;
   version: typeof version;
   benchmarkDtw: typeof benchmarkDtw;
 };
