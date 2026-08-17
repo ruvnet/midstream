@@ -1,4 +1,4 @@
-# @midstream/wasm Package Summary
+# midstreamer Package Summary
 
 ## 📦 Complete npm Package Structure
 
@@ -61,7 +61,7 @@ The package builds for multiple environments:
 1. **Web** (`pkg/`): Browser ES modules
 2. **Bundler** (`pkg-bundler/`): Webpack/Rollup compatible
 3. **Node.js** (`pkg-node/`): CommonJS for Node.js
-4. **Webpack** (`dist/`): Production bundles with demo
+4. **Webpack** (`dist/`): Production demo bundle (dev-only, not published)
 
 ## 📊 Key Features
 
@@ -116,7 +116,7 @@ npm run clean          # Remove build artifacts
 ### Browser (ES Modules)
 
 ```javascript
-import { init, TemporalCompare, NanoScheduler } from '@midstream/wasm';
+import { init, TemporalCompare, NanoScheduler } from 'midstreamer';
 
 // Initialize WASM
 await init();
@@ -135,7 +135,7 @@ scheduler.schedule(() => console.log('Hello!'), 1e9); // 1 second
 ### Node.js
 
 ```javascript
-const { init, StrangeLoop, QuicMultistream } = require('@midstream/wasm');
+const { init, StrangeLoop, QuicMultistream } = require('midstreamer');
 
 async function main() {
   await init();
@@ -160,7 +160,7 @@ import {
   TemporalCompare,
   TemporalMetrics,
   MetaPattern
-} from '@midstream/wasm';
+} from 'midstreamer';
 
 await init();
 
@@ -191,7 +191,7 @@ The package is configured for npm publishing:
 
 ```json
 {
-  "name": "@midstream/wasm",
+  "name": "midstreamer",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"

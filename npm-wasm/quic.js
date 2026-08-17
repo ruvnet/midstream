@@ -35,7 +35,19 @@
  * @returns {Promise<import('agentic-flow/transport/loader').AgentTransport>}
  */
 async function loadQuicTransport(config) {
-  const mod = await import('agentic-flow/transport/loader');
+  // `agentic-flow` is an optional peer dependency as of
+  // midstreamer@0.3.2 — QUIC consumers install it explicitly;
+  // temporal-compare consumers never pull its dependency tree.
+  let mod;
+  try {
+    mod = await import('agentic-flow/transport/loader');
+  } catch (error) {
+    throw new Error(
+      "midstreamer/quic: QUIC transport requires the optional peer dependency 'agentic-flow'. " +
+      'Install it with `npm install agentic-flow` (or use isQuicAvailable() to probe first).',
+      { cause: error }
+    );
+  }
   return mod.loadQuicTransport(config);
 }
 

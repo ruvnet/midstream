@@ -1,34 +1,49 @@
 {
   "name": "midstreamer",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "WebAssembly bindings for Midstream temporal comparison, scheduling, and meta-learning + real QUIC transport via agentic-flow",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "main": "index.js",
   "types": "types/index.d.ts",
   "files": [
+    "index.js",
+    "quic.js",
+    "quic.d.ts",
+    "types",
     "pkg",
     "pkg-node",
     "pkg-bundler",
     "README.md",
     "QUICK_START.md",
-    "PACKAGE_SUMMARY.md",
-    "quic.js"
+    "PACKAGE_SUMMARY.md"
   ],
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
+    },
+    "./quic": {
+      "types": "./quic.d.ts",
+      "default": "./quic.js"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
-    "build:wasm": "wasm-pack build --target web --out-dir pkg",
-    "build:bundler": "wasm-pack build --target bundler --out-dir pkg-bundler",
-    "build:nodejs": "wasm-pack build --target nodejs --out-dir pkg-node",
+    "build:wasm": "wasm-pack build --target web --out-dir pkg && rm -f pkg/.gitignore",
+    "build:bundler": "wasm-pack build --target bundler --out-dir pkg-bundler && rm -f pkg-bundler/.gitignore",
+    "build:nodejs": "wasm-pack build --target nodejs --out-dir pkg-node && rm -f pkg-node/.gitignore",
     "build:webpack": "webpack --mode production",
     "build:dev": "webpack --mode development",
     "build": "npm run build:wasm && npm run build:bundler && npm run build:nodejs && npm run build:webpack",
     "dev": "webpack serve --mode development --open",
     "test": "wasm-pack test --headless --chrome",
     "clean": "rm -rf pkg pkg-bundler pkg-node dist",
-    "prepublishOnly": "npm run clean && npm run build"
+    "verify:pack": "node scripts/verify-pack.mjs",
+    "prepack": "npm run verify:pack",
+    "prepublishOnly": "npm run clean && npm run build:wasm && npm run build:bundler && npm run build:nodejs"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/midstream/midstream.git",
+    "url": "https://github.com/ruvnet/midstream.git",
     "directory": "npm-wasm"
   },
   "keywords": [
@@ -46,9 +61,13 @@
   ],
   "author": "Midstream Contributors",
   "license": "(MIT OR Apache-2.0)",
-  "dependencies": {
-    "@peculiar/webcrypto": "^1.4.3",
-    "agentic-flow": "2.0.12-fix.8"
+  "peerDependencies": {
+    "agentic-flow": "^2.0.12-fix.8"
+  },
+  "peerDependenciesMeta": {
+    "agentic-flow": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "wasm-pack": "^0.12.1",
@@ -64,9 +83,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "exports": {
-    "./quic": "./quic.js",
-    "./package.json": "./package.json"
   }
 }
