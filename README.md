@@ -307,6 +307,10 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT
 | Security disclosures | [`SECURITY.md`](SECURITY.md) |
 | Author | [ruv.io](https://ruv.io) · [@ruvnet](https://github.com/ruvnet) |
 
+## Related
+
+[`ruvnet/LatentMesh`](https://github.com/ruvnet/LatentMesh) — a research prototype for causally-verified latent agent communication; ADR-004 names MidStream's chunk-level analysis pipeline as the streaming substrate for latent frames (design-stage, not yet wired to a live MidStream deployment).
+
 ## License
 
 Dual-licensed under **MIT OR Apache-2.0** — pick whichever is more convenient. The same dual licence applies to every workspace member, every WASM artifact, and every npm package. See [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE). ADR-0036 explains why.
