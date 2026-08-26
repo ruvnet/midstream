@@ -46,16 +46,58 @@ pub fn decode_frame(input: &[u8]) -> Result<Option<(LatentFrameView, usize)>, Br
     }
     let frame: LatentFrameView = serde_json::from_slice(&input[LENGTH_PREFIX_BYTES..total])
         .map_err(|e| BridgeError::Malformed(e.to_string()))?;
+    validate_payload_shape(&frame)?;
     Ok(Some((frame, total)))
 }
 
+/// Reject frames whose payload shape is internally inconsistent, mirroring
+/// the LatentMesh-side check: `bytes.len()` must equal `dim` times the
+/// encoding's bytes-per-element, `int8` must carry finite dequantization
+/// params, and non-int8 payloads must not carry them. Checked at the wire
+/// boundary so no consumer ever trusts a forged `dim`.
+pub fn validate_payload_shape(frame: &LatentFrameView) -> Result<(), BridgeError> {
+    let payload = &frame.payload;
+    let per_element = match payload.encoding {
+        crate::frame::EncodingView::F32 => 4usize,
+        crate::frame::EncodingView::F16 => 2,
+        crate::frame::EncodingView::Int8 => 1,
+    };
+    let expected = payload
+        .dim
+        .checked_mul(per_element)
+        .ok_or_else(|| BridgeError::Malformed("payload dim overflows".into()))?;
+    if payload.bytes.len() != expected {
+        return Err(BridgeError::Malformed(format!(
+            "payload declares dim {} ({expected} bytes) but carries {} bytes",
+            payload.dim,
+            payload.bytes.len()
+        )));
+    }
+    match (payload.encoding, payload.int8_params) {
+        (crate::frame::EncodingView::Int8, None) => Err(BridgeError::Malformed(
+            "int8 payload without dequantization params".into(),
+        )),
+        (crate::frame::EncodingView::Int8, Some((scale, _))) if !scale.is_finite() => {
+            Err(BridgeError::Malformed("int8 scale is not finite".into()))
+        }
+        (crate::frame::EncodingView::F32 | crate::frame::EncodingView::F16, Some(_)) => Err(
+            BridgeError::Malformed("non-int8 payload carries int8 params".into()),
+        ),
+        _ => Ok(()),
+    }
+}
+
 /// Incremental decoder for chunked byte streams (the QUIC receive path).
-/// Buffering is bounded: an oversized declared length is rejected before the
-/// body is buffered, so a peer cannot grow memory past the frame bound.
+/// Buffering is hard-bounded: `push` refuses growth past
+/// [`MAX_BUFFERED_BYTES`] even when the caller never drains.
 #[derive(Debug, Default)]
 pub struct FrameDecoder {
     buffer: Vec<u8>,
 }
+
+/// Hard cap on the decoder's internal buffer: one maximal frame in flight
+/// plus one maximal frame of read-ahead.
+pub const MAX_BUFFERED_BYTES: usize = 2 * (MAX_FRAME_BYTES + LENGTH_PREFIX_BYTES);
 
 impl FrameDecoder {
     pub fn new() -> Self {
@@ -67,8 +109,16 @@ impl FrameDecoder {
         self.buffer.len()
     }
 
-    /// Append received bytes, failing fast on an oversized declared length.
+    /// Append received bytes, failing fast on an oversized declared length
+    /// and refusing to grow past [`MAX_BUFFERED_BYTES`] regardless of
+    /// content — call [`FrameDecoder::next_frame`] to drain.
     pub fn push(&mut self, chunk: &[u8]) -> Result<(), BridgeError> {
+        if self.buffer.len().saturating_add(chunk.len()) > MAX_BUFFERED_BYTES {
+            self.buffer.clear();
+            return Err(BridgeError::Transport(
+                "decoder buffer bound exceeded (caller must drain frames)".into(),
+            ));
+        }
         self.buffer.extend_from_slice(chunk);
         if self.buffer.len() >= LENGTH_PREFIX_BYTES {
             let declared = u32::from_be_bytes([
@@ -168,6 +218,40 @@ mod tests {
             decode_frame(&bytes),
             Err(BridgeError::Malformed(_))
         ));
+    }
+
+    #[test]
+    fn shape_mismatched_payloads_are_rejected_at_the_wire() {
+        let mut f = frame(1);
+        f.payload.dim = 999;
+        let bytes = encode_frame(&f).expect("encodes");
+        assert!(matches!(
+            decode_frame(&bytes),
+            Err(BridgeError::Malformed(_))
+        ));
+
+        let mut f = frame(2);
+        f.payload.int8_params = Some((1.0, 0));
+        let bytes = encode_frame(&f).expect("encodes");
+        assert!(matches!(
+            decode_frame(&bytes),
+            Err(BridgeError::Malformed(_))
+        ));
+    }
+
+    #[test]
+    fn decoder_refuses_unbounded_buffering_when_never_drained() {
+        let mut decoder = FrameDecoder::new();
+        let frame_bytes = encode_frame(&frame(1)).expect("encodes");
+        let mut overflowed = false;
+        for _ in 0..(MAX_BUFFERED_BYTES / frame_bytes.len() + 2) {
+            if decoder.push(&frame_bytes).is_err() {
+                overflowed = true;
+                break;
+            }
+        }
+        assert!(overflowed);
+        assert_eq!(decoder.buffered(), 0);
     }
 
     #[test]

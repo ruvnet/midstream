@@ -25,7 +25,10 @@ pub mod emitter;
 pub mod frame;
 pub mod quic;
 
-pub use codec::{decode_frame, encode_frame, FrameDecoder, MAX_FRAME_BYTES};
+pub use codec::{
+    decode_frame, encode_frame, validate_payload_shape, FrameDecoder, MAX_BUFFERED_BYTES,
+    MAX_FRAME_BYTES,
+};
 pub use emitter::LatentEmitter;
 pub use frame::{
     AuthorityView, BridgeError, EncodingView, LatentFrameView, PayloadView, ProvenanceView,

@@ -19,6 +19,13 @@ pub struct LatentEmitter {
     transform_hash: String,
     dimensions: usize,
     next_sequence: u64,
+    /// Mixed into both the placeholder embedding and the context hash.
+    /// Empty = deterministic across streams, which makes hashes *linkable
+    /// and guess-confirmable*: an observer who can guess a chunk's content
+    /// can confirm the guess by hashing it. Supply a per-stream salt via
+    /// [`LatentEmitter::with_salt`] when frames may cross an untrusted
+    /// network and chunk contents are low-entropy.
+    salt: Vec<u8>,
 }
 
 impl LatentEmitter {
@@ -37,7 +44,17 @@ impl LatentEmitter {
             transform_hash: transform_hash.into(),
             dimensions: dimensions.max(1),
             next_sequence: 0,
+            salt: Vec::new(),
         }
+    }
+
+    /// Same emitter with a per-stream salt mixed into the embedding and the
+    /// context hash, making provenance hashes unlinkable across streams and
+    /// resistant to dictionary confirmation of low-entropy chunk contents.
+    /// The receiver treats `context_hash` as opaque, so salting is free.
+    pub fn with_salt(mut self, salt: impl Into<Vec<u8>>) -> Self {
+        self.salt = salt.into();
+        self
     }
 
     /// The sequence the next frame will carry.
@@ -54,6 +71,7 @@ impl LatentEmitter {
         'outer: loop {
             let mut hasher = Sha256::new();
             hasher.update(b"midstream-latent-placeholder-v1");
+            hasher.update(&self.salt);
             hasher.update(lane.to_be_bytes());
             hasher.update(content);
             for pair in hasher.finalize().chunks_exact(2) {
@@ -76,6 +94,7 @@ impl LatentEmitter {
         let bytes: Vec<u8> = values.iter().flat_map(|v| v.to_le_bytes()).collect();
         let context_hash = {
             let mut hasher = Sha256::new();
+            hasher.update(&self.salt);
             hasher.update(content);
             hasher
                 .finalize()
@@ -130,6 +149,16 @@ mod tests {
         assert_eq!(a.payload.bytes, a2.payload.bytes);
         // Sender defaults to the lowest authority rung.
         assert_eq!(a.authority, AuthorityView::ObserveOnly);
+    }
+
+    #[test]
+    fn salted_emitters_produce_unlinkable_hashes() {
+        let mut unsalted = LatentEmitter::new("m", "r", "t", 8);
+        let mut salted = LatentEmitter::new("m", "r", "t", 8).with_salt(*b"stream-nonce-01!");
+        let a = unsalted.emit(b"same content", 0.5, 0);
+        let b = salted.emit(b"same content", 0.5, 0);
+        assert_ne!(a.provenance.context_hash, b.provenance.context_hash);
+        assert_ne!(a.payload.bytes, b.payload.bytes);
     }
 
     #[test]

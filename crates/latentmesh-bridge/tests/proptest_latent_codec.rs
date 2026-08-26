@@ -35,7 +35,8 @@ prop_compose! {
         transform in "[a-f0-9]{1,32}",
         sequence in any::<u64>(),
         encoding in arb_encoding(),
-        bytes in proptest::collection::vec(any::<u8>(), 0..256),
+        dim in 0usize..64,
+        seed_byte in any::<u8>(),
         confidence in 0.0f32..=1.0,
         context in "[a-f0-9]{1,64}",
         authority in arb_authority(),
@@ -47,11 +48,18 @@ prop_compose! {
             receiver_space: receiver,
             transform_hash: transform,
             sequence,
-            payload: PayloadView {
-                encoding,
-                dim: bytes.len(),
-                bytes,
-                int8_params: if encoding == EncodingView::Int8 { Some((0.5, 12)) } else { None },
+            payload: {
+                let per_element = match encoding {
+                    EncodingView::F32 => 4,
+                    EncodingView::F16 => 2,
+                    EncodingView::Int8 => 1,
+                };
+                PayloadView {
+                    encoding,
+                    dim,
+                    bytes: vec![seed_byte; dim * per_element],
+                    int8_params: if encoding == EncodingView::Int8 { Some((0.5, 12)) } else { None },
+                }
             },
             confidence,
             provenance: ProvenanceView {
