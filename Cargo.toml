@@ -107,7 +107,7 @@ bytes = "1"
 # Lean Agentic dependencies
 thiserror = "2.0"
 dashmap = "6.1"
-lru = "0.16"
+lru = "0.18"
 
 # Phase 1: Temporal and Scheduling integrations (local workspace crates)
 midstreamer-temporal-compare = { version = "0.2.1", path = "crates/temporal-compare" }

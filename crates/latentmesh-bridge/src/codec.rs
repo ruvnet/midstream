@@ -12,8 +12,11 @@ pub const MAX_FRAME_BYTES: usize = 1024 * 1024;
 /// Bytes of the big-endian length prefix.
 pub const LENGTH_PREFIX_BYTES: usize = 4;
 
-/// Encode one frame as `[len: u32 BE][json bytes]`.
+/// Encode one frame as `[len: u32 BE][json bytes]`. Shape-validates first,
+/// so a locally-constructed inconsistent frame is caught at the sender
+/// instead of by the peer's decoder.
 pub fn encode_frame(frame: &LatentFrameView) -> Result<Vec<u8>, BridgeError> {
+    validate_payload_shape(frame)?;
     let body = serde_json::to_vec(frame).map_err(|e| BridgeError::Malformed(e.to_string()))?;
     if body.len() > MAX_FRAME_BYTES {
         return Err(BridgeError::FrameTooLarge {
@@ -220,21 +223,36 @@ mod tests {
         ));
     }
 
+    /// Craft wire bytes for a frame without going through `encode_frame`'s
+    /// own validation, to prove the decoder independently rejects them.
+    fn raw_wire(frame: &LatentFrameView) -> Vec<u8> {
+        let body = serde_json::to_vec(frame).expect("serializes");
+        let mut out = (body.len() as u32).to_be_bytes().to_vec();
+        out.extend_from_slice(&body);
+        out
+    }
+
     #[test]
-    fn shape_mismatched_payloads_are_rejected_at_the_wire() {
-        let mut f = frame(1);
-        f.payload.dim = 999;
-        let bytes = encode_frame(&f).expect("encodes");
+    fn shape_mismatched_payloads_are_rejected_by_encoder_and_decoder() {
+        let mut bad_dim = frame(1);
+        bad_dim.payload.dim = 999;
         assert!(matches!(
-            decode_frame(&bytes),
+            encode_frame(&bad_dim),
+            Err(BridgeError::Malformed(_))
+        ));
+        assert!(matches!(
+            decode_frame(&raw_wire(&bad_dim)),
             Err(BridgeError::Malformed(_))
         ));
 
-        let mut f = frame(2);
-        f.payload.int8_params = Some((1.0, 0));
-        let bytes = encode_frame(&f).expect("encodes");
+        let mut stray_params = frame(2);
+        stray_params.payload.int8_params = Some((1.0, 0));
         assert!(matches!(
-            decode_frame(&bytes),
+            encode_frame(&stray_params),
+            Err(BridgeError::Malformed(_))
+        ));
+        assert!(matches!(
+            decode_frame(&raw_wire(&stray_params)),
             Err(BridgeError::Malformed(_))
         ));
     }

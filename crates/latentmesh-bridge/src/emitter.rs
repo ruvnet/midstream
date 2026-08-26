@@ -2,7 +2,7 @@
 //! is a deterministic hash-based projection — a stand-in with the same shape
 //! as a real hidden-state slice, NOT a semantic embedding (the same honesty
 //! rule as ruvector's AgenticDB warning: similar text does not produce
-//! similar vectors here). Real deployments replace [`LatentEmitter::embed`]'s
+//! similar vectors here). Real deployments replace the private `embed` step's
 //! output with actual model states; everything else (sequencing, provenance
 //! hashing, authority defaults, wire encoding) is production-shaped.
 
@@ -74,8 +74,10 @@ impl LatentEmitter {
             hasher.update(&self.salt);
             hasher.update(lane.to_be_bytes());
             hasher.update(content);
-            for pair in hasher.finalize().chunks_exact(2) {
-                let raw = u16::from_be_bytes([pair[0], pair[1]]);
+            let digest = hasher.finalize();
+            let (pairs, _) = digest.as_chunks::<2>();
+            for pair in pairs {
+                let raw = u16::from_be_bytes(*pair);
                 values.push(f32::from(raw) / f32::from(u16::MAX) * 2.0 - 1.0);
                 if values.len() == self.dimensions {
                     break 'outer;
