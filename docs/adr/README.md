@@ -91,7 +91,13 @@ that *supersedes* the old one (the old file stays, with its Status updated).
 | 0039 | [Governance: CONTRIBUTING, CoC, SECURITY, CODEOWNERS](0039-governance.md) | Accepted (#12) |
 | 0040 | [Web dashboard: deferred behind a stable event stream](0040-web-dashboard-deferred.md) | Proposed (deferred) |
 
-ADRs 0041+ will be added as further iterations of `/loop deep review and
+### Cross-stack integrations
+
+| #    | Title                                                              | Status   |
+|------|--------------------------------------------------------------------|----------|
+| 0041 | [LatentMesh bridge: mirror the wire vocabulary, share a golden fixture](0041-latentmesh-bridge.md) | Accepted |
+
+ADRs 0042+ will be added as further iterations of `/loop deep review and
 optimization of midstream` surface additional concrete decisions
 (`cargo-flamegraph` profiling baseline, `tokio-console` policy, telemetry
 PII redaction, prompt-injection regression suite, Lean theorem-prover
