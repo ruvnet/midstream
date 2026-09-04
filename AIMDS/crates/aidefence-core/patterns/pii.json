@@ -1,0 +1,56 @@
+[
+  {
+    "id": "pii.email",
+    "kind": "email",
+    "regex": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b",
+    "flags": "",
+    "mask": "@email",
+    "description": "Email address (TS source had [A-Z|a-z]; the literal '|' was a bug and is fixed here)",
+    "examples": ["contact jane.doe@example.com for access"]
+  },
+  {
+    "id": "pii.ssn",
+    "kind": "ssn",
+    "regex": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+    "flags": "",
+    "mask": "***-**-****",
+    "description": "US Social Security Number",
+    "examples": ["my ssn is 123-45-6789"]
+  },
+  {
+    "id": "pii.credit_card",
+    "kind": "credit_card",
+    "regex": "\\b\\d{4}[-\\s]?\\d{4}[-\\s]?\\d{4}[-\\s]?\\d{4}\\b",
+    "flags": "",
+    "mask": "**** **** **** ****",
+    "description": "Credit card number",
+    "examples": ["card 4111 1111 1111 1111 exp 12/29"]
+  },
+  {
+    "id": "pii.api_key.openai_anthropic",
+    "kind": "api_key",
+    "regex": "\\b(sk-[a-zA-Z0-9]{20,}|sk-ant-[a-zA-Z0-9-]{20,})\\b",
+    "flags": "",
+    "mask": "[REDACTED_API_KEY]",
+    "description": "API key (OpenAI/Anthropic format)",
+    "examples": ["OPENAI_API_KEY=sk-abcdefghijklmnopqrstuvwxyz123456"]
+  },
+  {
+    "id": "pii.api_key.github",
+    "kind": "api_key",
+    "regex": "\\b(ghp_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{82})\\b",
+    "flags": "",
+    "mask": "[REDACTED_GITHUB_TOKEN]",
+    "description": "GitHub token",
+    "examples": ["token ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"]
+  },
+  {
+    "id": "pii.password",
+    "kind": "password",
+    "regex": "password\\s*[:=]\\s*[\"']?[^\"'\\s]{4,}[\"']?",
+    "flags": "i",
+    "mask": "password: ***",
+    "description": "Hardcoded password (mask is shorter than 4 chars so re-sanitizing is a no-op)",
+    "examples": ["password: hunter2secret"]
+  }
+]

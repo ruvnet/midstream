@@ -4,6 +4,7 @@ members = [
     "crates/aimds-detection",
     "crates/aimds-analysis",
     "crates/aimds-response",
+    "crates/aidefence-core",
 ]
 resolver = "2"
 
@@ -89,3 +90,17 @@ debug = true
 [profile.dev]
 opt-level = 0
 debug = true
+
+# The aidefence-core packs carry heavy regexes; an unoptimised regex engine makes the
+# crate's 100 KB latency gate ~30x slower in `cargo test`. Optimise only the regex
+# crates in dev builds (measured: 294 ms -> well under the 200 ms bound).
+[profile.dev.package.regex]
+opt-level = 3
+[profile.dev.package.regex-automata]
+opt-level = 3
+[profile.dev.package.regex-syntax]
+opt-level = 3
+[profile.dev.package.aho-corasick]
+opt-level = 3
+[profile.dev.package.memchr]
+opt-level = 3
