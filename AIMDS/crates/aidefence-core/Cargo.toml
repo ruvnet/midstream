@@ -1,0 +1,32 @@
+[package]
+name = "aidefence-core"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.81"
+authors = ["AIMDS Team"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ruvnet/midstream"
+description = "Rust core for AIDefence: regex-pack detection of prompt injection, tool-invocation directives, exfiltration URLs, encoded instructions, Slack markup forgery and PII, sharing pattern data with the aidefence npm package"
+keywords = ["security", "prompt-injection", "llm", "pii", "aidefence"]
+categories = ["text-processing"]
+readme = "README.md"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[features]
+default = []
+# Browser / Node bindings via wasm-bindgen. Build with:
+#   cargo build --release --target wasm32-unknown-unknown --features wasm
+wasm = ["dep:wasm-bindgen"]
+
+[dependencies]
+regex = "1.10"
+serde = { workspace = true }
+serde_json = { workspace = true }
+base64 = "0.22"
+unicode-normalization = "0.1"
+wasm-bindgen = { version = "0.2", optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
