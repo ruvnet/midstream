@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { AgentDBClient } from '../agentdb/client';
+import { InjectionDetector, InjectionThreat, createInjectionDetector } from '../detection';
 import { LeanAgenticVerifier } from '../lean-agentic/verifier';
 import { MetricsCollector } from '../monitoring/metrics';
 import { Logger } from '../utils/logger';
@@ -21,9 +22,17 @@ import {
   LeanAgenticConfig,
   SecurityPolicy,
   AIMDSRequestSchema,
-  ThreatIncident
+  ThreatIncident,
+  ThreatMatch
 } from '../types';
 import { createHash } from 'crypto';
+
+const INJECTION_SEVERITY_TO_LEVEL: Record<InjectionThreat['severity'], ThreatLevel> = {
+  low: ThreatLevel.LOW,
+  medium: ThreatLevel.MEDIUM,
+  high: ThreatLevel.HIGH,
+  critical: ThreatLevel.CRITICAL
+};
 
 export class AIMDSGateway {
   private app: express.Application;
@@ -33,6 +42,7 @@ export class AIMDSGateway {
   private logger: Logger;
   private config: GatewayConfig;
   private defaultPolicy: SecurityPolicy;
+  private injectionDetector: InjectionDetector | null;
   private server?: any;
 
   constructor(
@@ -47,6 +57,10 @@ export class AIMDSGateway {
     this.metrics = new MetricsCollector(this.logger);
     this.app = express();
     this.defaultPolicy = this.createDefaultPolicy();
+    const injection = gatewayConfig.injectionDetection;
+    this.injectionDetector = injection?.enabled === false
+      ? null
+      : createInjectionDetector({ packs: injection?.packs, maxInputChars: injection?.maxChars });
   }
 
   /**
@@ -121,6 +135,11 @@ export class AIMDSGateway {
         diversityFactor: 0.3
       });
       const vectorSearchTime = Date.now() - vectorSearchStart;
+
+      // Step 2b: Content scan of payload text with the pattern packs
+      for (const match of this.scanPayloadForInjection(req)) {
+        matches.push(match);
+      }
 
       // Calculate threat level from matches
       const threatLevel = this.calculateThreatLevel(matches);
@@ -429,6 +448,32 @@ export class AIMDSGateway {
     return embedding;
   }
 
+  /**
+   * Run the pattern-pack detector over every string found in the request
+   * payload and context (headers are not scanned). Returns one ThreatMatch
+   * per finding; empty when disabled or when there is no text.
+   */
+  private scanPayloadForInjection(req: AIMDSRequest): ThreatMatch[] {
+    if (!this.injectionDetector) return [];
+    const text = collectStrings({ payload: req.action.payload, context: req.context });
+    if (!text) return [];
+    const report = this.injectionDetector.detect(text);
+    const now = Date.now();
+    return report.threats.map((t) => ({
+      id: `injection:${t.id}`,
+      patternId: t.id,
+      similarity: t.confidence,
+      threatLevel: INJECTION_SEVERITY_TO_LEVEL[t.severity],
+      description: `${t.pack}/${t.type}: ${t.description}`,
+      metadata: {
+        firstSeen: now,
+        lastSeen: now,
+        occurrences: 1,
+        sources: [t.decodedFrom ? `decoded:${t.decodedFrom}` : `variant:${t.variant}`]
+      }
+    }));
+  }
+
   private calculateThreatLevel(matches: any[]): ThreatLevel {
     if (matches.length === 0) return ThreatLevel.NONE;
 
@@ -513,4 +558,26 @@ export class AIMDSGateway {
       ]
     };
   }
+}
+
+/**
+ * Concatenate every string leaf of a JSON-like value, depth- and size-bounded,
+ * so nested payloads (messages, tool results, fetched pages) are all scanned.
+ */
+function collectStrings(value: unknown, limit = 262144): string {
+  const parts: string[] = [];
+  let size = 0;
+  const walk = (v: unknown, depth: number): void => {
+    if (size >= limit || depth > 16 || v === null || v === undefined) return;
+    if (typeof v === 'string') {
+      parts.push(v);
+      size += v.length;
+    } else if (Array.isArray(v)) {
+      for (const item of v) walk(item, depth + 1);
+    } else if (typeof v === 'object') {
+      for (const item of Object.values(v as Record<string, unknown>)) walk(item, depth + 1);
+    }
+  };
+  walk(value, 0);
+  return parts.join('\n').slice(0, limit);
 }
