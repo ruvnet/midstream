@@ -222,6 +222,17 @@ export interface GatewayConfig {
     request: number;
     shutdown: number;
   };
+  /**
+   * Content-level prompt-injection scanning of string values in
+   * `action.payload` using the pattern packs in `AIMDS/patterns/*.json`.
+   * Enabled by default; every pack is on unless listed as `false`.
+   */
+  injectionDetection?: {
+    enabled?: boolean;
+    packs?: Partial<Record<string, boolean>>;
+    /** Maximum characters of payload text scanned per request (default 262144). */
+    maxChars?: number;
+  };
 }
 
 export interface AgentDBConfig {
