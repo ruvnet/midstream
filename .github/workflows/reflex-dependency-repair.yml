@@ -1,0 +1,74 @@
+name: Reflex dependency repair evidence
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/reflex-dependency-repair.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@39b0b3842c7e8bbf6904c0bfc3d9006fdd4dc4e0
+        with:
+          toolchain: 1.88.0
+          components: clippy
+      - name: Install pinned audit tool
+        run: cargo install cargo-audit --version 0.22.2 --locked
+      - name: Record original dependency evidence
+        run: |
+          mkdir -p /tmp/reflex-repair
+          git rev-parse HEAD > /tmp/reflex-repair/source-commit.txt
+          rustc --version --verbose > /tmp/reflex-repair/compiler.txt
+          set +e
+          cargo audit --json > /tmp/reflex-repair/audit-before.json
+          status=$?
+          set -e
+          echo "$status" > /tmp/reflex-repair/audit-before-exit.txt
+      - name: Prepare narrowly scoped dependency candidate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['Cargo.toml', 'crates/temporal-compare/Cargo.toml']:
+              path = Path(name)
+              text = path.read_text()
+              assert text.count('lru = "0.16"') == 1, name
+              path.write_text(text.replace('lru = "0.16"', 'lru = "0.18.2"'))
+          PY
+          cargo update -p lru --precise 0.18.2
+          cargo update -p crossbeam-epoch --precise 0.9.20
+          cargo update -p h2 --precise 0.4.16
+          cargo update -p quinn-proto --precise 0.11.15
+          cargo update -p anyhow --precise 1.0.104
+      - name: Audit actual candidate lockfile
+        run: cargo audit --json > /tmp/reflex-repair/audit-after.json
+      - name: Check locked workspace on minimum Rust
+        run: cargo check --workspace --locked
+      - name: Test locked workspace libraries and integrations
+        run: cargo test --workspace --lib --tests --locked
+      - name: Strict root library lint
+        run: cargo clippy -p midstream --no-default-features --lib --locked -- -D warnings
+      - name: Retain exact proposed files and patch
+        run: |
+          git diff --check
+          git diff -- Cargo.toml Cargo.lock crates/temporal-compare/Cargo.toml > /tmp/reflex-repair/dependency-repair.patch
+          cp Cargo.toml /tmp/reflex-repair/Cargo.toml
+          cp Cargo.lock /tmp/reflex-repair/Cargo.lock
+          cp crates/temporal-compare/Cargo.toml /tmp/reflex-repair/temporal-compare-Cargo.toml
+          sha256sum Cargo.toml Cargo.lock crates/temporal-compare/Cargo.toml > /tmp/reflex-repair/files.sha256
+      - name: Upload dependency evidence for review, never push it
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reflex-dependency-repair
+          path: /tmp/reflex-repair/
+          retention-days: 14
+          if-no-files-found: error
