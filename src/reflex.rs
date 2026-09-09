@@ -131,9 +131,8 @@ impl ReasonerHandoff {
             })
             .collect::<Vec<_>>()
             .join(",");
-        let latch = |value: Option<u64>| {
-            value.map_or_else(|| "null".to_string(), |v| format!("\"{v}\""))
-        };
+        let latch =
+            |value: Option<u64>| value.map_or_else(|| "null".to_string(), |v| format!("\"{v}\""));
         Ok(format!(
             "{{\"version\":1,\"authority\":\"none\",\"session_id\":\"{}\",\"latest_sequence\":\"{}\",\"queued_events\":[{}],\"interrupt_sequence\":{},\"cancel_sequence\":{},\"cancelled_work_units\":\"{}\",\"dropped_events\":\"{}\"}}",
             session_id, self.latest_sequence, events, latch(self.interrupt_sequence),
@@ -305,7 +304,8 @@ mod tests {
         let mut c = ReflexController::new(8);
         c.observe(event(1, ReflexEventKind::Interrupt), 0);
         assert_eq!(
-            c.observe(event(2, ReflexEventKind::Interrupt), 0).disposition,
+            c.observe(event(2, ReflexEventKind::Interrupt), 0)
+                .disposition,
             ReflexDisposition::Coalesced
         );
         let h = c.drain_for_reasoner();
@@ -350,7 +350,10 @@ mod tests {
         c.observe(event(2, ReflexEventKind::Cancel), 3);
         let h = c.drain_for_reasoner();
         assert_eq!(
-            h.queued_events.iter().map(|e| e.sequence).collect::<Vec<_>>(),
+            h.queued_events
+                .iter()
+                .map(|e| e.sequence)
+                .collect::<Vec<_>>(),
             vec![1, 2]
         );
         assert_eq!(h.authority, "none");
@@ -384,7 +387,8 @@ mod tests {
         c.observe(event(1, ReflexEventKind::Interrupt), 0);
         c.drain_for_reasoner();
         assert_eq!(
-            c.observe(event(2, ReflexEventKind::Interrupt), 0).disposition,
+            c.observe(event(2, ReflexEventKind::Interrupt), 0)
+                .disposition,
             ReflexDisposition::Accepted
         );
         assert_eq!(c.queued(), 1);
