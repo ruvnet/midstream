@@ -256,7 +256,7 @@ impl TemporalNeuralSolver {
 
         let satisfied = self.check_formula(formula, 0)?;
 
-        let formula_str = format!("{:?}", formula);
+        let formula_str = format!("{formula:?}");
 
         Ok(VerificationResult {
             satisfied,
@@ -317,8 +317,7 @@ impl TemporalNeuralSolver {
                         Ok(false)
                     }
                     _ => Err(TemporalError::ParseError(format!(
-                        "Invalid unary operator: {:?}",
-                        op
+                        "Invalid unary operator: {op:?}"
                     ))),
                 }
             }
@@ -347,8 +346,7 @@ impl TemporalNeuralSolver {
                         Ok(false)
                     }
                     _ => Err(TemporalError::ParseError(format!(
-                        "Invalid binary operator: {:?}",
-                        op
+                        "Invalid binary operator: {op:?}"
                     ))),
                 }
             }
