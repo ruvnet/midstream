@@ -32,6 +32,32 @@ pub enum ReflexAction {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ReflexActions {
+    pub first: ReflexAction,
+    pub second: Option<ReflexAction>,
+}
+
+impl ReflexActions {
+    const fn one(first: ReflexAction) -> Self {
+        Self {
+            first,
+            second: None,
+        }
+    }
+
+    const fn two(first: ReflexAction, second: ReflexAction) -> Self {
+        Self {
+            first,
+            second: Some(second),
+        }
+    }
+
+    pub fn contains(&self, action: ReflexAction) -> bool {
+        self.first == action || self.second == Some(action)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ReflexDisposition {
     Accepted,
     Stale,
@@ -43,7 +69,7 @@ pub enum ReflexDisposition {
 pub struct ReflexReceipt {
     pub sequence: u64,
     pub disposition: ReflexDisposition,
-    pub actions: Vec<ReflexAction>,
+    pub actions: ReflexActions,
     pub authority: &'static str,
     pub queued: usize,
     pub cancelled_work_units: u64,
@@ -79,7 +105,11 @@ impl ReflexController {
 
     pub fn observe(&mut self, event: ReflexEvent, in_flight_work_units: u64) -> ReflexReceipt {
         if event.sequence <= self.latest_sequence {
-            return self.receipt(event.sequence, ReflexDisposition::Stale, vec![ReflexAction::Noop]);
+            return self.receipt(
+                event.sequence,
+                ReflexDisposition::Stale,
+                ReflexActions::one(ReflexAction::Noop),
+            );
         }
 
         self.latest_sequence = event.sequence;
@@ -93,33 +123,38 @@ impl ReflexController {
             return self.receipt(
                 event.sequence,
                 ReflexDisposition::Coalesced,
-                vec![ReflexAction::Acknowledge, ReflexAction::PauseReasoning],
+                ReflexActions::two(ReflexAction::Acknowledge, ReflexAction::PauseReasoning),
             );
         }
 
         if self.queue.len() >= self.max_queue {
-            return self.receipt(event.sequence, ReflexDisposition::Overflow, vec![ReflexAction::Noop]);
+            return self.receipt(
+                event.sequence,
+                ReflexDisposition::Overflow,
+                ReflexActions::one(ReflexAction::Noop),
+            );
         }
 
         let actions = match event.kind {
             ReflexEventKind::Interrupt => {
                 self.last_interrupt_sequence = Some(event.sequence);
-                vec![ReflexAction::Acknowledge, ReflexAction::PauseReasoning]
+                ReflexActions::two(ReflexAction::Acknowledge, ReflexAction::PauseReasoning)
             }
-            ReflexEventKind::Backchannel => vec![ReflexAction::Acknowledge],
+            ReflexEventKind::Backchannel => ReflexActions::one(ReflexAction::Acknowledge),
             ReflexEventKind::Cancel => {
                 self.cancelled_work_units = self
                     .cancelled_work_units
                     .saturating_add(in_flight_work_units);
-                vec![ReflexAction::Acknowledge, ReflexAction::RequestCancel]
+                ReflexActions::two(ReflexAction::Acknowledge, ReflexAction::RequestCancel)
             }
             ReflexEventKind::Observation | ReflexEventKind::CommitBoundary => {
-                vec![ReflexAction::ForwardToReasoner]
+                ReflexActions::one(ReflexAction::ForwardToReasoner)
             }
         };
 
-        self.queue.push_back(event.clone());
-        self.receipt(event.sequence, ReflexDisposition::Accepted, actions)
+        let sequence = event.sequence;
+        self.queue.push_back(event);
+        self.receipt(sequence, ReflexDisposition::Accepted, actions)
     }
 
     pub fn drain_for_reasoner(&mut self) -> ReasonerHandoff {
@@ -140,7 +175,7 @@ impl ReflexController {
         &self,
         sequence: u64,
         disposition: ReflexDisposition,
-        actions: Vec<ReflexAction>,
+        actions: ReflexActions,
     ) -> ReflexReceipt {
         ReflexReceipt {
             sequence,
@@ -173,7 +208,7 @@ mod tests {
         assert_eq!(receipt.authority, "none");
         assert_eq!(
             receipt.actions,
-            vec![ReflexAction::Acknowledge, ReflexAction::PauseReasoning]
+            ReflexActions::two(ReflexAction::Acknowledge, ReflexAction::PauseReasoning)
         );
     }
 
@@ -200,7 +235,7 @@ mod tests {
         let mut controller = ReflexController::new(8);
         let receipt = controller.observe(event(1, ReflexEventKind::Cancel), 7);
         assert_eq!(receipt.cancelled_work_units, 7);
-        assert!(receipt.actions.contains(&ReflexAction::RequestCancel));
+        assert!(receipt.actions.contains(ReflexAction::RequestCancel));
     }
 
     #[test]
@@ -221,7 +256,11 @@ mod tests {
         assert_eq!(handoff.authority, "none");
         assert_eq!(handoff.cancelled_work_units, 3);
         assert_eq!(
-            handoff.queued_events.iter().map(|e| e.sequence).collect::<Vec<_>>(),
+            handoff
+                .queued_events
+                .iter()
+                .map(|event| event.sequence)
+                .collect::<Vec<_>>(),
             vec![1, 2]
         );
         assert_eq!(controller.queued(), 0);
