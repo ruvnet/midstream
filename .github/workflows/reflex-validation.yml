@@ -1,0 +1,41 @@
+name: Reflex validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/reflex.rs'
+      - 'src/lib.rs'
+      - 'benches/reflex_bench.rs'
+      - '.github/workflows/reflex-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reflex:
+    name: Reflex contract and root integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@39b0b3842c7e8bbf6904c0bfc3d9006fdd4dc4e0
+        with:
+          components: rustfmt, clippy
+      - name: Record compiler
+        run: rustc --version --verbose
+      - name: Format check
+        run: rustfmt --edition 2021 --check src/reflex.rs
+      - name: Compile standalone contract tests
+        run: rustc --edition 2021 --test src/reflex.rs -o /tmp/reflex-tests
+      - name: Run standalone contract tests
+        run: /tmp/reflex-tests
+      - name: Check actual root library without retired features
+        run: cargo check -p midstream --no-default-features --lib --locked
+      - name: Test actual root reflex module
+        run: cargo test -p midstream --no-default-features --lib reflex --locked
+      - name: Lint actual root library
+        run: cargo clippy -p midstream --no-default-features --lib --locked -- -D warnings
+      - name: Compile existing Criterion benchmark
+        run: cargo bench -p midstream --bench reflex_bench --no-run --locked
