@@ -47,7 +47,7 @@ impl QuicConnection {
 
         let client_config = ClientConfig::new(Arc::new(
             quinn::crypto::rustls::QuicClientConfig::try_from(crypto)
-                .map_err(|e| QuicError::TlsError(format!("{:?}", e)))?,
+                .map_err(|e| QuicError::TlsError(format!("{e:?}")))?,
         ));
 
         // Create endpoint bound to an ephemeral local port.
@@ -197,7 +197,7 @@ impl QuicStream {
     pub async fn finish(&mut self) -> Result<(), QuicError> {
         self.send
             .finish()
-            .map_err(|e| QuicError::StreamError(format!("Failed to finish stream: {:?}", e)))?;
+            .map_err(|e| QuicError::StreamError(format!("Failed to finish stream: {e:?}")))?;
         Ok(())
     }
 
@@ -237,7 +237,7 @@ impl QuicSendStream {
     pub async fn finish(&mut self) -> Result<(), QuicError> {
         self.send
             .finish()
-            .map_err(|e| QuicError::StreamError(format!("Failed to finish stream: {:?}", e)))?;
+            .map_err(|e| QuicError::StreamError(format!("Failed to finish stream: {e:?}")))?;
         Ok(())
     }
 }
