@@ -79,8 +79,8 @@ pub use midstream::{
     StreamProcessor, TimeWindow, ToolIntegration,
 };
 pub use reflex::{
-    ReasonerHandoff, ReflexAction, ReflexController, ReflexDisposition, ReflexEvent, ReflexEventKind,
-    ReflexReceipt,
+    ReasonerHandoff, ReflexAction, ReflexActions, ReflexController, ReflexDisposition, ReflexEvent,
+    ReflexEventKind, ReflexReceipt,
 };
 
 // Lean Agentic Learning System exports — gated behind the same feature.
