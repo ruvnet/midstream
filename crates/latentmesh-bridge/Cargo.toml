@@ -1,0 +1,31 @@
+# ADR-0041: the MidStream side of the LatentMesh live-streaming integration.
+# Mirrors LatentMesh's `LatentFrame` serde vocabulary and length-prefixed wire
+# framing without depending on the (unpublished) latentmesh crates — a shared
+# golden fixture, checked into both repositories, keeps the two codecs
+# byte-compatible. Transport rides midstreamer-quic's published surface.
+[package]
+name = "midstreamer-latentmesh"
+version = "0.2.1"
+edition = "2021"
+rust-version = "1.88"
+description = "LatentMesh bridge for MidStream: LatentFrame wire codec, stream emitter, and QUIC transport helpers"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ruvnet/midstream"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+thiserror = "2.0"
+midstreamer-quic = { version = "0.3.0", path = "../quic-multistream" }
+
+[dev-dependencies]
+proptest = "1"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "latentmesh_codec_bench"
+harness = false

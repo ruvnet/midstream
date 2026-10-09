@@ -6,6 +6,7 @@ members = [
     "crates/temporal-attractor-studio",
     "crates/temporal-neural-solver",
     "crates/strange-loop",
+    "crates/latentmesh-bridge",
     "xtask",
 ]
 # `xtask` is excluded from default-members so `cargo check / build`
@@ -19,6 +20,7 @@ default-members = [
     "crates/temporal-attractor-studio",
     "crates/temporal-neural-solver",
     "crates/strange-loop",
+    "crates/latentmesh-bridge",
 ]
 exclude = ["npm-wasm", "fuzz"]
 
@@ -105,7 +107,7 @@ bytes = "1"
 # Lean Agentic dependencies
 thiserror = "2.0"
 dashmap = "6.1"
-lru = "0.16"
+lru = "0.18"
 
 # Phase 1: Temporal and Scheduling integrations (local workspace crates)
 midstreamer-temporal-compare = { version = "0.2.1", path = "crates/temporal-compare" }
@@ -120,6 +122,10 @@ midstreamer-strange-loop = { version = "0.2.1", path = "crates/strange-loop" }
 
 # QUIC multi-stream support (local workspace crate)
 midstreamer-quic = { version = "0.3.0", path = "crates/quic-multistream" }
+
+# LatentMesh bridge (ADR-0041): LatentFrame wire codec + emitter + QUIC
+# helpers for streaming latent state to a LatentMesh receiver.
+midstreamer-latentmesh = { version = "0.2.1", path = "crates/latentmesh-bridge" }
 
 # Additional dependencies for advanced integrations
 nalgebra = "0.34" # For linear algebra in attractor analysis
@@ -158,6 +164,10 @@ harness = false
 [[bench]]
 name = "quic_bench"
 harness = false
+
+[[example]]
+name = "latentmesh_stream"
+path = "examples/latentmesh_stream.rs"
 
 [[example]]
 name = "openrouter"
