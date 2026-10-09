@@ -1,4 +1,4 @@
-# @midstream/wasm
+# midstreamer
 
 WebAssembly bindings for Midstream temporal comparison, nanosecond scheduling, meta-learning, and QUIC multistream functionality.
 
@@ -12,7 +12,7 @@ WebAssembly bindings for Midstream temporal comparison, nanosecond scheduling, m
 ## Installation
 
 ```bash
-npm install @midstream/wasm
+npm install midstreamer
 ```
 
 ## Quick Start
@@ -24,7 +24,7 @@ npm install @midstream/wasm
 <html>
 <head>
   <script type="module">
-    import { init, TemporalCompare, NanoScheduler, StrangeLoop } from '@midstream/wasm';
+    import { init, TemporalCompare, NanoScheduler, StrangeLoop } from 'midstreamer';
 
     async function main() {
       // Initialize WASM module
@@ -67,7 +67,7 @@ npm install @midstream/wasm
 ### Node.js
 
 ```javascript
-import { init, TemporalCompare, NanoScheduler, StrangeLoop, QuicMultistream } from '@midstream/wasm';
+import { init, TemporalCompare, NanoScheduler, StrangeLoop, QuicMultistream } from 'midstreamer';
 
 async function main() {
   // Initialize WASM module
