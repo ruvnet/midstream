@@ -123,7 +123,7 @@ midstreamer-quic = { version = "0.3.0", path = "crates/quic-multistream" }
 
 # Additional dependencies for advanced integrations
 nalgebra = "0.34" # For linear algebra in attractor analysis
-ndarray = "0.16" # For multi-dimensional arrays
+ndarray = "0.17" # For multi-dimensional arrays
 
 [dev-dependencies]
 mockall = "0.11"
