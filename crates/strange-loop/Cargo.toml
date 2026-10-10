@@ -22,7 +22,7 @@ thiserror = "2.0"
 dashmap = "6.1"
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 # Property-based test baseline per ADR-0038. See
 # `tests/proptest_strange_loop.rs`.
 proptest = "1"
