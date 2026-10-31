@@ -1,17 +1,30 @@
 //! Audit logging for mitigation actions
 
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use crate::{ThreatContext, MitigationOutcome, ResponseError};
 
-/// Audit logger for tracking all mitigation activities
+/// Audit logger for tracking all mitigation activities.
+///
+/// Hot-path counters (`total_mitigations`, `successful_mitigations`)
+/// are kept in `AtomicU64` so they can be read from sync contexts
+/// (e.g. `ResponseSystem::metrics()`) without acquiring the async
+/// RwLock that guards the full `AuditStatistics` record. The atomics
+/// and the lock are kept in sync — atomics are bumped *before* the
+/// lock-protected stats are mutated, so an observer never sees a
+/// counter that's smaller than the lock-protected version.
 pub struct AuditLogger {
     /// Audit log entries
     entries: Arc<RwLock<Vec<AuditEntry>>>,
 
-    /// Statistics
+    /// Statistics (full snapshot, async access)
     stats: Arc<RwLock<AuditStatistics>>,
+
+    /// Hot-path counters — readable from sync code
+    total_mitigations: Arc<AtomicU64>,
+    successful_mitigations: Arc<AtomicU64>,
 
     /// Maximum entries to retain
     max_entries: usize,
@@ -23,6 +36,8 @@ impl AuditLogger {
         Self {
             entries: Arc::new(RwLock::new(Vec::new())),
             stats: Arc::new(RwLock::new(AuditStatistics::default())),
+            total_mitigations: Arc::new(AtomicU64::new(0)),
+            successful_mitigations: Arc::new(AtomicU64::new(0)),
             max_entries: 10000,
         }
     }
@@ -32,6 +47,8 @@ impl AuditLogger {
         Self {
             entries: Arc::new(RwLock::new(Vec::new())),
             stats: Arc::new(RwLock::new(AuditStatistics::default())),
+            total_mitigations: Arc::new(AtomicU64::new(0)),
+            successful_mitigations: Arc::new(AtomicU64::new(0)),
             max_entries,
         }
     }
@@ -50,6 +67,10 @@ impl AuditLogger {
 
         self.add_entry(entry).await;
 
+        // Bump the sync-readable atomic first so a concurrent
+        // `total_mitigations()` reader never sees a lower value than
+        // the lock-protected stats.
+        self.total_mitigations.fetch_add(1, Ordering::Relaxed);
         let mut stats = self.stats.write().await;
         stats.total_mitigations += 1;
     }
@@ -68,6 +89,7 @@ impl AuditLogger {
 
         self.add_entry(entry).await;
 
+        self.successful_mitigations.fetch_add(1, Ordering::Relaxed);
         let mut stats = self.stats.write().await;
         stats.successful_mitigations += 1;
         stats.total_actions_applied += outcome.actions_applied.len() as u64;
@@ -141,16 +163,14 @@ impl AuditLogger {
         stats.strategy_updates += 1;
     }
 
-    /// Get total mitigations count
+    /// Get total mitigations count (sync, lock-free).
     pub fn total_mitigations(&self) -> u64 {
-        // This is safe to return 0 for new instances
-        // In production, we'd use an atomic or proper async read
-        0
+        self.total_mitigations.load(Ordering::Relaxed)
     }
 
-    /// Get successful mitigations count
+    /// Get successful mitigations count (sync, lock-free).
     pub fn successful_mitigations(&self) -> u64 {
-        0
+        self.successful_mitigations.load(Ordering::Relaxed)
     }
 
     /// Get audit entries

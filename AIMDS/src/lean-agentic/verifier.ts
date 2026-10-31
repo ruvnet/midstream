@@ -1,9 +1,15 @@
 /**
  * lean-agentic Verifier Implementation
- * Formal verification with hash-consing, dependent types, and theorem proving
+ *
+ * Originally wrapped `lean-agentic`'s `createDemo()` engine. The
+ * published 0.3.2 tarball is missing its WASM artifact
+ * (`wasm/leanr_wasm.js`), which crashes the import. We now delegate
+ * to a local in-process stub (`StubLeanEngine`) that satisfies the
+ * same call shape and logs a warning. See ./stub-engine.ts for
+ * trade-offs and the upgrade path.
  */
 
-import leanAgentic from 'lean-agentic';
+import { createDemo, StubLeanEngine } from './stub-engine';
 import {
   SecurityPolicy,
   Action,
@@ -15,7 +21,7 @@ import { Logger } from '../utils/logger';
 import { createHash } from 'crypto';
 
 export class LeanAgenticVerifier {
-  private engine: any; // LeanDemo instance
+  private engine: StubLeanEngine;
   private logger: Logger;
   private config: LeanAgenticConfig;
   private proofCache: Map<string, ProofCertificate>;
@@ -26,9 +32,8 @@ export class LeanAgenticVerifier {
     this.logger = logger;
     this.proofCache = new Map();
     this.hashConsCache = new Map();
-
-    // Use lean-agentic's createDemo function
-    this.engine = leanAgentic.createDemo();
+    this.engine = createDemo();
+    this.engine.setLogger(logger);
   }
 
   /**

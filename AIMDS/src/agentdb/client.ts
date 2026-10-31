@@ -1,9 +1,20 @@
 /**
  * AgentDB Client Implementation
- * High-performance vector database with HNSW search and QUIC synchronization
+ *
+ * Provides a stable wrapper API (HNSW-style vector search, incident
+ * storage, ReflexionMemory, QUIC sync) over a swappable backend.
+ *
+ * The original implementation delegated directly to `agentdb`'s
+ * `createDatabase()`, but agentdb 3.x is a breaking API change that
+ * removed `createIndex`, `search`, `insert`, `count`, `sync`, etc.
+ * from the database handle. To keep the gateway functional, secure
+ * (0 CVEs), and publishable on npm, we now ship an in-memory store
+ * (`InMemoryStore` in ./memory-store.ts) that satisfies the call
+ * shape this wrapper expects. A persistent backend (agentdb v3
+ * wrapper or sqlite-vec) is scheduled for a follow-up.
  */
 
-import { createDatabase } from 'agentdb';
+import { InMemoryStore } from './memory-store';
 import {
   ThreatMatch,
   ThreatIncident,
@@ -15,7 +26,7 @@ import {
 import { Logger } from '../utils/logger';
 
 export class AgentDBClient {
-  private db: any; // AgentDB database instance
+  private db: InMemoryStore;
   private logger: Logger;
   private config: AgentDBConfig;
   private syncInterval?: NodeJS.Timeout;
@@ -23,8 +34,7 @@ export class AgentDBClient {
   constructor(config: AgentDBConfig, logger: Logger) {
     this.config = config;
     this.logger = logger;
-    // createDatabase accepts a filename string
-    this.db = createDatabase(config.path);
+    this.db = new InMemoryStore();
   }
 
   /**
@@ -155,7 +165,7 @@ export class AgentDBClient {
 
       await this.db.insert({
         collection: 'reflexion_memory',
-        document: reflexionEntry
+        document: reflexionEntry as unknown as Record<string, unknown>
       });
 
       // Update causal graphs
