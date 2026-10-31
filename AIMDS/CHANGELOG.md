@@ -7,6 +7,18 @@ The four crates (`aimds-core`, `aimds-detection`, `aimds-analysis`,
 `aimds-response`) are released in lockstep at the same workspace
 version — see `Cargo.toml`'s `[workspace.package]`.
 
+## npm `aidefence` [3.0.0] - 2026-10-31
+
+### Breaking
+- Importing the package no longer starts a server. `main` (`dist/index.js`) is a side-effect-free library entry. The gateway runs via the `aidefence` bin or `npm start` (`dist/server.js`).
+- The gateway binds `127.0.0.1` by default; set `HOST=0.0.0.0` to listen on all interfaces.
+
+### Added
+- Exports the pack-driven detector: `createInjectionDetector`, `InjectionDetector`, `loadPacks`, `normalizeText`, decoders. Ships the 6 pattern packs (53 patterns) in `patterns/`.
+
+### Fixed
+- npm now matches main: merged `ops/aimds-deep-review`, which carried 2.3.0's RUSTSEC-2024-0421 and npm advisory fixes but had never reached main. See docs/adr/0042.
+
 ## [0.1.1] - 2026-05-14
 
 First post-launch correctness pass. No public-API breaking changes;
