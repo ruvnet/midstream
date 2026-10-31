@@ -120,9 +120,14 @@ export function extractDecodedCandidates(text: string, opts: DecoderOptions = {}
   const scan = (re: RegExp, encoding: Encoding, decode: (blob: string) => string | null) => {
     re.lastIndex = 0;
     let m: RegExpExecArray | null;
+    // Cap each blob before decoding so a single 200 KB base64 run is not
+    // decoded in full only to be trimmed to maxBytes afterwards. The cap is a
+    // multiple of 12 so base64 quads, hex pairs and %XX triplets stay whole.
+    const maxBlob = Math.max(12, Math.floor((o.maxBytes * 3) / 12) * 12);
     while ((m = re.exec(text)) !== null && out.length < o.maxCandidates) {
       if (m[0].length < o.minBlob) continue;
-      consider(encoding, decode(m[0]), m.index, m[0].length);
+      const blob = m[0].length > maxBlob ? m[0].slice(0, maxBlob) : m[0];
+      consider(encoding, decode(blob), m.index, m[0].length);
     }
   };
 

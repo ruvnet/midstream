@@ -170,3 +170,21 @@ describe('normalisation and decoding primitives', () => {
     expect(extractDecodedCandidates('3f786850e387550fdab836ed7e6dc881de23001b').filter((c) => c.encoding === 'hex')).toHaveLength(0);
   });
 });
+
+describe('normaliser stays linear (aidefence 3.0.1)', () => {
+  // undoLeet's old /[cls]*[A-Za-z][cls]*/g rescanned a letter-free run from
+  // every start position: 100 KB of hex digits took ~2 s.
+  it.each([
+    ['hex', '41'.repeat(50_000)],
+    ['digits', '7'.repeat(100_000)],
+  ])('textVariants on 100 KB of %s', (_name, input) => {
+    const t = performance.now();
+    textVariants(input);
+    expect(performance.now() - t).toBeLessThan(200);
+  });
+
+  it('still undoes leet inside words', () => {
+    const leet = textVariants('1gn0r3 4ll pr3v10us').find((v) => v.name === 'leet');
+    expect(leet?.text).toBe('ignore all previous');
+  });
+});

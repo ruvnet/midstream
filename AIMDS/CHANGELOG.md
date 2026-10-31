@@ -7,6 +7,12 @@ The four crates (`aimds-core`, `aimds-detection`, `aimds-analysis`,
 `aimds-response`) are released in lockstep at the same workspace
 version — see `Cargo.toml`'s `[workspace.package]`.
 
+## npm `aidefence` [3.0.1] - 2026-10-31
+
+### Security
+- The leet-speak normaliser (`undoLeet`) was quadratic on letter-free runs: 100 KB of hex or digits took about 2 s per `detect()`, on input an attacker controls. It now matches maximal runs and checks for a letter in the callback, which produces the same output in linear time (0.3 ms). Found while vendoring the packs into ruflo's @claude-flow/aidefence 3.1.0.
+- Each encoded blob is capped before decoding (about 12 KB), so one huge base64 run is no longer decoded in full only to be trimmed.
+
 ## npm `aidefence` [3.0.0] - 2026-10-31
 
 ### Breaking

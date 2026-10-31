@@ -1,6 +1,6 @@
 {
   "name": "aidefence",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "AI manipulation defence: pack-driven prompt-injection detection (shared with the Rust aidefence-core) and the AIMDS gateway",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

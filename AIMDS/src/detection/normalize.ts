@@ -92,7 +92,11 @@ function undoSeparators(text: string): string {
  * letter (so numbers, hashes, and IDs are left alone).
  */
 function undoLeet(text: string): string {
-  return text.replace(/[A-Za-z0-9@$!|]*[A-Za-z][A-Za-z0-9@$!|]*/g, (token) => {
+  // Match maximal runs and check for a letter in the callback. The previous
+  // `[cls]*[A-Za-z][cls]*` rescanned a letter-free run (e.g. 100 KB of hex
+  // digits) from every start position: quadratic. Same tokens, linear time.
+  return text.replace(/[A-Za-z0-9@$!|]+/g, (token) => {
+    if (!/[A-Za-z]/.test(token)) return token;
     if (!/[0-9@$!|]/.test(token)) return token;
     return token.replace(/[0-9@$!|]/g, (ch) => LEET[ch] ?? ch);
   });
