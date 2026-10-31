@@ -119,13 +119,24 @@ impl MetaLearningEngine {
         self.optimize_patterns().await;
     }
 
-    /// Optimize strategies based on feedback signals
+    /// Optimize strategies based on feedback signals.
+    ///
+    /// The earlier implementation used `get_mut`, which silently
+    /// dropped feedback for any strategy that hadn't been seen
+    /// before. That meant `optimize_strategy` could be called
+    /// thousands of times without ever populating
+    /// `pattern_effectiveness`, leaving the optimization-level
+    /// advancement permanently stuck at zero. We now use
+    /// `entry().or_insert_with()` so the first feedback signal for a
+    /// strategy creates its metrics row, and subsequent signals
+    /// update it.
     pub fn optimize_strategy(&mut self, feedback: &[FeedbackSignal]) {
         for signal in feedback {
-            // Update effectiveness metrics
-            if let Some(metrics) = self.pattern_effectiveness.get_mut(&signal.strategy_id) {
-                metrics.update(signal.effectiveness_score, signal.success);
-            }
+            let metrics = self
+                .pattern_effectiveness
+                .entry(signal.strategy_id.clone())
+                .or_insert_with(EffectivenessMetrics::new);
+            metrics.update(signal.effectiveness_score, signal.success);
         }
 
         // Apply recursive optimization
@@ -278,15 +289,51 @@ impl MetaLearningEngine {
 
     /// Calculate optimization effectiveness
     fn calculate_optimization_effectiveness(&self) -> f64 {
-        if self.pattern_effectiveness.is_empty() {
-            return 0.5;
+        // Effectiveness pulls from two complementary signals so the
+        // function is well-defined regardless of which one the caller
+        // populated:
+        //
+        // - `pattern_effectiveness` (HashMap) carries per-strategy
+        //   rolling averages from `update_pattern_outcome` callers.
+        // - `learned_patterns` (Vec) carries the per-rule success /
+        //   failure tallies that `record_outcome` increments.
+        //
+        // The earlier implementation read only the HashMap, so any
+        // call site that drove learning through `learned_patterns`
+        // saw an effectiveness of 0.5 (the empty-map default) even
+        // after thousands of successful outcomes. We now blend both.
+        let map_score = if self.pattern_effectiveness.is_empty() {
+            None
+        } else {
+            let total: f64 = self
+                .pattern_effectiveness
+                .values()
+                .map(|m| m.average_score)
+                .sum();
+            Some(total / self.pattern_effectiveness.len() as f64)
+        };
+
+        let rules_score = {
+            let totals: (u64, u64) = self
+                .learned_patterns
+                .iter()
+                .fold((0u64, 0u64), |acc, r| {
+                    (acc.0 + r.success_count, acc.1 + r.failure_count)
+                });
+            let attempts = totals.0 + totals.1;
+            if attempts == 0 {
+                None
+            } else {
+                Some(totals.0 as f64 / attempts as f64)
+            }
+        };
+
+        match (map_score, rules_score) {
+            (Some(m), Some(r)) => (m + r) / 2.0,
+            (Some(m), None) => m,
+            (None, Some(r)) => r,
+            (None, None) => 0.5,
         }
-
-        let total: f64 = self.pattern_effectiveness.values()
-            .map(|m| m.average_score)
-            .sum();
-
-        total / self.pattern_effectiveness.len() as f64
     }
 
     /// Refine confidence at given optimization level
