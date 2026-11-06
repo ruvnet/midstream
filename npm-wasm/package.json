@@ -47,7 +47,7 @@
   "author": "Midstream Contributors",
   "license": "(MIT OR Apache-2.0)",
   "dependencies": {
-    "@peculiar/webcrypto": "^1.4.3",
+    "@peculiar/webcrypto": "^1.7.1",
     "agentic-flow": "2.0.12-fix.8"
   },
   "devDependencies": {
