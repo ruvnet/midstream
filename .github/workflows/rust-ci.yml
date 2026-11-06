@@ -219,9 +219,17 @@ jobs:
           shared-key: "bench"
 
       - name: Run benchmarks
-        run: cargo bench --workspace --all-features -- --output-format bencher | tee benchmark-results.txt
+        # Exclude the root `midstream` crate (does not build; every other job
+        # excludes it) and bench only the criterion targets: the libtest
+        # harness of lib targets rejects `--output-format bencher`.
+        run: |
+          set -o pipefail
+          cargo bench --workspace --exclude midstream --all-features --bench '*' -- --output-format bencher | tee benchmark-results.txt
 
       - name: Store benchmark results
+        # auto-push needs a gh-pages branch and a writable token; neither exists
+        # (repo default token is read-only). Record results without failing.
+        continue-on-error: true
         uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba
         if: github.event_name == 'push'
         with:
