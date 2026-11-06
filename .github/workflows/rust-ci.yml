@@ -256,6 +256,11 @@ jobs:
 
       - name: Deploy documentation
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # GitHub Pages is not enabled and the workflow token is read-only by repo
+        # policy, so this push has always been refused (403). Enabling it needs
+        # Pages turned on plus `permissions: contents: write`; until then it must
+        # not turn the whole run red.
+        continue-on-error: true
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
