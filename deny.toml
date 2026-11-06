@@ -26,19 +26,6 @@ yanked = "deny"
 # passed its expiry without a renewed justification.
 ignore = [
     # ------------------------------------------------------------------
-    # In-flight: rustls-webpki CRL / name-constraint CVEs.
-    # All four come from `rustls-webpki 0.102.8`, which is dragged in by
-    # the orphan `rustls = "0.22"` dep in `crates/quic-multistream/Cargo.toml`.
-    # PR #8 (feat/quic-tls-verification-adr0011) removes that line and
-    # the lockfile then unifies on rustls 0.23 + rustls-webpki 0.103.13.
-    # Verified via `cargo tree -i rustls-webpki:0.102.8` on this branch:
-    # the ONLY path is via the soon-to-be-removed rustls 0.22 dep.
-    # Expiry: 2026-06-13 (clear once PR #8 merges).
-    { id = "RUSTSEC-2026-0049", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
-    { id = "RUSTSEC-2026-0098", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
-    { id = "RUSTSEC-2026-0099", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
-    { id = "RUSTSEC-2026-0104", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
-    # ------------------------------------------------------------------
     # In-flight: unmaintained transitives.
     #
     # Retired (verified via `cargo tree -i <crate>` returning no path):
@@ -46,6 +33,7 @@ ignore = [
     #   * RUSTSEC-2021-0141 dotenv         — cleared by ADR-0019 dotenvy migration
     #   * RUSTSEC-2025-0141 bincode        — cleared by ADR-0002 hyprstream un-vendor
     #   * RUSTSEC-2025-0134 rustls-pemfile — cleared by reqwest 0.11 -> 0.12 bump
+    #   * RUSTSEC-2026-0049/0098/0099/0104 rustls-webpki — lockfile on 0.103.16 (rustls 0.22 dep gone)
     #
     # Still in tree (follow-up ADRs):
     #   * paste 1.0.15  via nalgebra -> simba  — needs nalgebra audit

@@ -272,7 +272,7 @@ export const AIMDSRequestSchema = z.object({
   source: z.object({
     ip: z.string(),
     userAgent: z.string().optional(),
-    headers: z.record(z.string())
+    headers: z.record(z.string(), z.string())
   }),
   action: z.object({
     type: z.string(),
@@ -280,7 +280,7 @@ export const AIMDSRequestSchema = z.object({
     method: z.string(),
     payload: z.unknown().optional()
   }),
-  context: z.record(z.unknown()).optional()
+  context: z.record(z.string(), z.unknown()).optional()
 });
 
 export const SecurityPolicySchema = z.object({
@@ -291,7 +291,7 @@ export const SecurityPolicySchema = z.object({
     condition: z.string(),
     action: z.enum(['allow', 'deny', 'verify']),
     priority: z.number(),
-    metadata: z.record(z.unknown()).optional()
+    metadata: z.record(z.string(), z.unknown()).optional()
   })),
   constraints: z.array(z.object({
     type: z.enum(['temporal', 'behavioral', 'resource', 'dependency']),

@@ -7,6 +7,15 @@ The four crates (`aimds-core`, `aimds-detection`, `aimds-analysis`,
 `aimds-response`) are released in lockstep at the same workspace
 version — see `Cargo.toml`'s `[workspace.package]`.
 
+## npm `aidefence` [3.0.2] - 2026-11-06
+
+### Security
+- `zod` moves from `^3.22.4` to `^4.6.7`. Zod below 4.6.6 can exhaust memory while validating oversized constrained collections (high). There is no 3.x fix. The request schemas now pass an explicit key type to `z.record`, which zod 4 requires.
+- The lockfile is refreshed to fixed versions of `proxy-addr` (critical), `body-parser`, `compression`, `form-data`, `nanoid`, `postcss`, `vite` and `brace-expansion` (high). `npm audit` reports no critical or high findings.
+
+### Fixed
+- `package.json` now has a `repository` field.
+
 ## npm `aidefence` [3.0.1] - 2026-10-31
 
 ### Security
