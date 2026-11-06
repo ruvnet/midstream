@@ -16,9 +16,10 @@
 //! - Concurrent streams: 100+ simultaneous
 //! - Priority handling: <1ms overhead
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_quic::{QuicConnection, StreamPriority};
 use quinn::{Endpoint, ServerConfig};
+use std::hint::black_box;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::runtime::Runtime;

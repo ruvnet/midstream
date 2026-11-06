@@ -14,10 +14,11 @@
 //! - Iteration speed: >1000 iterations/second
 //! - Safety overhead: <5% performance impact
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_strange_loop::{
     MetaKnowledge, MetaLevel, ModificationRule, SafetyConstraint, StrangeLoop, StrangeLoopConfig,
 };
+use std::hint::black_box;
 
 // ============================================================================
 // Test Data Generators

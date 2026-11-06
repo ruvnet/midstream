@@ -13,11 +13,12 @@
 //! - Verification: <100ms
 //! - Parsing: <5ms
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_neural_solver::{
     encoder::encode_formula, neural::NeuralVerifier, parser::parse_ltl, verifier::verify_trace,
     Formula, LTLFormula, State, TemporalSolver, Trace,
 };
+use std::hint::black_box;
 
 // ============================================================================
 // LTL Formula Generators

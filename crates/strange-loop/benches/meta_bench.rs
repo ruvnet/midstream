@@ -1,5 +1,6 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use midstreamer_strange_loop::*;
+use std::hint::black_box;
 
 /// Benchmark pattern extraction performance with varying data sizes
 fn pattern_extraction_benchmark(c: &mut Criterion) {
