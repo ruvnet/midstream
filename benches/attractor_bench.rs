@@ -13,12 +13,13 @@
 //! - Lyapunov: <500ms
 //! - Detection: <100ms
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_attractor::{
     detection::detect_attractor_type, dimension::estimate_correlation_dimension,
     embedding::reconstruct_phase_space, lyapunov::calculate_lyapunov_exponent, AttractorStudio,
     AttractorType, PhaseSpace, Trajectory,
 };
+use std::hint::black_box;
 
 // ============================================================================
 // Test Signal Generators

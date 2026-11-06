@@ -13,10 +13,11 @@
 //! - Task execution: <1μs
 //! - Stats calculation: <10μs
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_scheduler::{
     stats::SchedulerStats, NanoScheduler, ScheduleResult, Task, TaskPriority,
 };
+use std::hint::black_box;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};

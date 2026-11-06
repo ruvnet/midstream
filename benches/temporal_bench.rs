@@ -12,11 +12,12 @@
 //! - LCS n=100: <5ms
 //! - Edit distance n=100: <3ms
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use midstreamer_temporal_compare::{
     dtw::dtw_distance, edit::edit_distance, lcs::longest_common_subsequence, CachedCompare,
     TemporalCompare, TemporalData, TemporalPattern,
 };
+use std::hint::black_box;
 
 // ============================================================================
 // Test Data Generation
