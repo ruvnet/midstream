@@ -39,11 +39,6 @@ ignore = [
     { id = "RUSTSEC-2026-0099", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
     { id = "RUSTSEC-2026-0104", reason = "rustls-webpki<0.103.13; cleared by PR #8 / ADR-0011" },
     # ------------------------------------------------------------------
-    # In-flight: lru 0.12.5 IterMut unsoundness (RUSTSEC-2026-0002).
-    # Bumped to 0.18 by the follow-up dep-sweep PR per ADR-0014 impl
-    # notes. Expiry: 2026-07-13.
-    { id = "RUSTSEC-2026-0002", reason = "lru<0.18; pending workspace bump per ADR-0014" },
-    # ------------------------------------------------------------------
     # In-flight: unmaintained transitives.
     #
     # Retired (verified via `cargo tree -i <crate>` returning no path):
