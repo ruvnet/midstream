@@ -196,7 +196,7 @@ impl Midstream {
 
         // Attempt to ingest metric and handle errors
         if let Err(e) = self.hypr_service.ingest_metric(metric.clone()).await {
-            return Err(format!("Failed to ingest metric: {}", e).into());
+            return Err(format!("Failed to ingest metric: {e}").into());
         }
 
         // Update internal metrics

@@ -61,6 +61,7 @@
 pub mod config;
 pub mod hypr_service;
 pub mod midstream;
+pub mod reflex;
 pub mod tests;
 
 // `lean_agentic` is the legacy in-tree subsystem that ADR-0005 retires.
@@ -76,6 +77,10 @@ pub use hypr_service::HyprServiceImpl;
 pub use midstream::{
     AggregateFunction, HyprService, Intent, LLMClient, LLMMessage, MetricRecord, Midstream,
     StreamProcessor, TimeWindow, ToolIntegration,
+};
+pub use reflex::{
+    ReasonerHandoff, ReflexAction, ReflexActions, ReflexController, ReflexDisposition, ReflexEvent,
+    ReflexEventKind, ReflexReceipt,
 };
 
 // Lean Agentic Learning System exports — gated behind the same feature.
