@@ -3,13 +3,13 @@
 ## Installation
 
 ```bash
-npm install @midstream/wasm
+npm install midstreamer
 ```
 
 Or use from CDN:
 ```html
 <script type="module">
-  import init, { TemporalCompare } from 'https://unpkg.com/@midstream/wasm';
+  import { init, TemporalCompare } from 'https://unpkg.com/midstreamer';
   await init();
   // Use the module
 </script>
@@ -20,7 +20,7 @@ Or use from CDN:
 ### 1. Temporal Comparison (DTW, LCS, Edit Distance)
 
 ```javascript
-import init, { TemporalCompare } from '@midstream/wasm';
+import { init, TemporalCompare } from 'midstreamer';
 
 await init();
 
@@ -55,7 +55,7 @@ console.log('Metrics:', {
 ### 2. Nanosecond Scheduler (Browser Only)
 
 ```javascript
-import init, { NanoScheduler } from '@midstream/wasm';
+import { init, NanoScheduler } from 'midstreamer';
 
 await init();
 
@@ -83,7 +83,7 @@ console.log('Pending tasks:', scheduler.pending_count);
 ### 3. Meta-Learning (Strange Loop)
 
 ```javascript
-import init, { StrangeLoop } from '@midstream/wasm';
+import { init, StrangeLoop } from 'midstreamer';
 
 await init();
 
@@ -110,7 +110,7 @@ console.log('All patterns:', reflection);
 ### 4. QUIC Multistream
 
 ```javascript
-import init, { QuicMultistream } from '@midstream/wasm';
+import { init, QuicMultistream } from 'midstreamer';
 
 await init();
 
@@ -145,12 +145,12 @@ quic.close_stream(streamId);
 ## Performance Benchmarking
 
 ```javascript
-import init, { benchmark_dtw } from '@midstream/wasm';
+import { init, benchmarkDtw } from 'midstreamer';
 
 await init();
 
 // Benchmark DTW algorithm
-const avgTime = benchmark_dtw(100, 100);
+const avgTime = benchmarkDtw(100, 100);
 console.log(`Average time: ${avgTime.toFixed(3)}ms`);
 console.log(`Throughput: ${(1000 / avgTime).toFixed(0)} ops/sec`);
 ```
@@ -158,7 +158,7 @@ console.log(`Throughput: ${(1000 / avgTime).toFixed(0)} ops/sec`);
 ## Module Information
 
 ```javascript
-import init, { version } from '@midstream/wasm';
+import { init, version } from 'midstreamer';
 
 await init();
 
@@ -237,14 +237,14 @@ However, JavaScript's garbage collector will automatically clean up when objects
 Full TypeScript definitions are included:
 
 ```typescript
-import init, {
+import { init,
   TemporalCompare,
   NanoScheduler,
   StrangeLoop,
   QuicMultistream,
   TemporalMetrics,
   MetaPattern
-} from '@midstream/wasm';
+} from 'midstreamer';
 
 await init();
 
@@ -274,9 +274,9 @@ Most features work in Node.js 18+, except:
 ```javascript
 // Node.js example
 import { readFile } from 'fs/promises';
-import { TemporalCompare } from '@midstream/wasm';
+import { TemporalCompare } from 'midstreamer';
 
-const wasmBuffer = await readFile('./node_modules/@midstream/wasm/midstream_wasm_bg.wasm');
+const wasmBuffer = await readFile('./node_modules/midstreamer/pkg/midstream_wasm_bg.wasm');
 const wasmModule = await WebAssembly.compile(wasmBuffer);
 await init(wasmModule);
 
