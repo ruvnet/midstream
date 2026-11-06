@@ -23,6 +23,9 @@ permissions:
   pull-requests: write
   # Required for the SARIF upload step.
   security-events: write
+  # rustsec/audit-check creates a check run on push events; without this it
+  # fails with "Resource not accessible by integration" even on a clean audit.
+  checks: write
 
 env:
   CARGO_TERM_COLOR: always
