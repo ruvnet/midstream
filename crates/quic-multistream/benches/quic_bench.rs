@@ -32,15 +32,16 @@ use tokio::time::Duration;
 /// Create a real QUIC server using quinn
 async fn create_test_server() -> Result<(Endpoint, SocketAddr), Box<dyn std::error::Error>> {
     // Generate self-signed certificate for testing
-    let cert = rcgen::generate_simple_self_signed(vec!["localhost".to_string()])?;
-    let cert_der = cert.serialize_der()?;
-    let priv_key = cert.serialize_private_key_der();
+    let rcgen::CertifiedKey { cert, signing_key } =
+        rcgen::generate_simple_self_signed(vec!["localhost".to_string()])?;
+    let cert_der = cert.der().clone();
+    let priv_key = signing_key.serialize_der();
 
     // Create server TLS config
     let mut server_crypto = quinn::rustls::ServerConfig::builder()
         .with_no_client_auth()
         .with_single_cert(
-            vec![cert_der.into()],
+            vec![cert_der],
             quinn::rustls::pki_types::PrivatePkcs8KeyDer::from(priv_key).into(),
         )?;
 
