@@ -4,7 +4,6 @@
 
 import {
   Action,
-  Observation,
   Plan,
   Goal,
   Context,
@@ -49,7 +48,7 @@ export class AgenticLoop {
    */
   private async generateActionCandidates(
     input: string,
-    context: Context
+    _context: Context
   ): Promise<Action[]> {
     const candidates: Action[] = [];
     const inputLower = input.toLowerCase();
@@ -92,7 +91,7 @@ export class AgenticLoop {
   /**
    * Rank actions by expected reward
    */
-  private rankActions(actions: Action[], context: Context): Action[] {
+  private rankActions(actions: Action[], _context: Context): Action[] {
     return actions.sort((a, b) => b.expectedReward - a.expectedReward);
   }
 
