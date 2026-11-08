@@ -124,3 +124,10 @@ updates:
     labels: [dependencies, ci]
     commit-message:
       prefix: "chore(actions-deps)"
+    ignore:
+      # dtolnay/rust-toolchain's ref picks the Rust toolchain, not an
+      # action release. The MSRV job pins the 1.88 branch on purpose
+      # (rust-version = "1.88"), so a "bump" to 1.100 (see #43) would
+      # silently turn off the MSRV check. Toolchain changes are made by
+      # hand alongside rust-version.
+      - dependency-name: "dtolnay/rust-toolchain"
