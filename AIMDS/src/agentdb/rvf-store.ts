@@ -162,6 +162,7 @@ export class RvfStore implements StoreBackend {
 
   /** Queue several documents at once; they share one commit. */
   async insertMany(inputs: InsertInput[]): Promise<void> {
+    if (this.queue.closed) throw new Error('aidefence: store is closed');
     const queued: [string, Pending][] = [];
     for (const input of inputs) {
       const p = this.prepare(input);

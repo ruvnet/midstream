@@ -40,9 +40,7 @@ function installExitHook(): void {
   // beforeExit fires when the loop empties on a normal exit, and async work
   // is allowed in it. It does not fire on process.exit() or a fatal signal.
   process.on('beforeExit', () => {
-    for (const q of live) {
-      if (q.size > 0) q.flush().catch(() => undefined);
-    }
+    for (const q of live) q.flushOnExit();
   });
 }
 
@@ -54,7 +52,7 @@ export class WriteBehind<K, V> {
   private inflight = new Map<K, V>();
   private tail: Promise<void> = Promise.resolve();
   private timer?: NodeJS.Timeout;
-  private closed = false;
+  private isClosed = false;
   /** First failure of a commit nobody was awaiting; thrown by the next flush(). */
   private backgroundError?: Error;
 
@@ -74,6 +72,11 @@ export class WriteBehind<K, V> {
     return this.pending.size;
   }
 
+  /** True once `close()` has been called; writes are refused. */
+  get closed(): boolean {
+    return this.isClosed;
+  }
+
   /** The newest uncommitted entry for `key`, queued or in flight. */
   get(key: K): V | undefined {
     return this.pending.get(key) ?? this.inflight.get(key);
@@ -91,7 +94,7 @@ export class WriteBehind<K, V> {
   }
 
   async put(entries: Iterable<[K, V]>): Promise<void> {
-    if (this.closed) throw new Error('aidefence: store is closed');
+    if (this.isClosed) throw new Error('aidefence: store is closed');
     for (const [k, v] of entries) {
       this.pending.delete(k);
       this.pending.set(k, v);
@@ -142,15 +145,20 @@ export class WriteBehind<K, V> {
 
   /** Flush, then refuse further writes. */
   async close(): Promise<void> {
-    if (this.closed) return;
+    if (this.isClosed) return;
     try {
       await this.flush();
     } finally {
-      this.closed = true;
+      this.isClosed = true;
       if (this.timer) clearTimeout(this.timer);
       this.timer = undefined;
       live.delete(this as WriteBehind<unknown, unknown>);
     }
+  }
+
+  /** Called from the process's beforeExit event. */
+  flushOnExit(): void {
+    if (this.pending.size > 0) this.startFlush().catch(e => this.recordBackground(e));
   }
 
   private startFlush(): Promise<void> {
