@@ -1,98 +1,43 @@
 /**
- * In-memory storage backend for AgentDBClient.
+ * In-memory storage backend for AgentDBClient (the default).
  *
- * The AIMDS gateway was originally written against agentdb 1.x,
- * which exposed `createIndex`, `search`, `insert`, `count`, `sync`,
- * etc. directly on the database handle returned by
- * `createDatabase()`. agentdb 3.x is a breaking API change — those
- * methods are gone, replaced by a higher-level `AgentDB` class.
- *
- * Rather than chase the v3 alpha surface (which is still moving)
- * across an alpha-tagged dependency, this module provides a small,
- * dependency-free in-memory store that satisfies the call shape the
- * wrapper expects. It is correct, fast (HNSW-style cosine search
- * over an in-memory matrix), and ships zero CVEs.
- *
- * Trade-offs vs. a real persistent backend:
- * - No persistence across process restarts (TTL cleanup still works
- *   in-memory).
- * - No QUIC peer sync (the sync method is a no-op).
- * - Linear scan instead of HNSW for k-NN (still O(N·D) — fine up to
- *   ~100k vectors, which covers single-node deployments).
- *
- * A proper persistent backend (agentdb v3 wrapper or sqlite-vec) is
- * scheduled for a follow-up. Until then this module keeps the
- * gateway functional and the npm package publishable.
+ * Documents live in a Map per collection and k-NN search is an exact
+ * linear cosine scan, O(N·D) per query. Nothing is persisted: a restart
+ * loses every threat pattern, incident and reflexion entry, and `sync`
+ * is a no-op. Set `AgentDBConfig.path` to use the durable RvfStore
+ * (./rvf-store.ts) instead.
  */
 
-interface Doc {
-  [key: string]: unknown;
-}
+import {
+  Doc,
+  SearchInput,
+  InsertInput,
+  UpsertInput,
+  DeleteInput,
+  CountInput,
+  CollectionInput,
+  IndexInput,
+  SyncInput,
+  SearchResult,
+  StoreBackend,
+  docKey,
+} from './store-types';
 
 interface Collection {
   docs: Map<string, Doc>;
   vectors: Map<string, number[]>;
 }
 
-interface SearchInput {
-  collection: string;
-  vector: number[];
-  k: number;
-  ef?: number;
-}
-
-interface InsertInput {
-  collection: string;
-  document: Doc | Record<string, unknown>;
-}
-
-interface UpsertInput {
-  collection: string;
-  document: Doc | Record<string, unknown>;
-}
-
-interface DeleteInput {
-  collection: string;
-  filter: Record<string, { $lt?: number }>;
-}
-
-interface CountInput {
-  collection: string;
-}
-
-interface CollectionInput {
-  name: string;
-  schema?: unknown;
-}
-
-interface IndexInput {
-  type: string;
-  params: unknown;
-}
-
-interface SyncInput {
-  peer: string;
-  protocol: string;
-  port: number;
-  collections: string[];
-}
-
-interface SearchResult {
-  id: string;
-  similarity: number;
-  metadata: Record<string, unknown>;
-  embedding: number[];
-}
-
 let docCounter = 0;
 
-export class InMemoryStore {
+export class InMemoryStore implements StoreBackend {
+  readonly kind = 'memory' as const;
   private collections = new Map<string, Collection>();
   // tracked so `getMemoryUsage()` returns a meaningful figure
   private bytesEstimate = 0;
 
   async createIndex(_: IndexInput): Promise<void> {
-    // Linear search is built-in; no separate index object to maintain.
+    // No index: search is an exact linear scan.
   }
 
   async createCollection(input: CollectionInput): Promise<void> {
@@ -106,8 +51,8 @@ export class InMemoryStore {
 
   async insert(input: InsertInput): Promise<void> {
     const col = this.ensure(input.collection);
-    const docAny = input.document as { id?: string; embedding?: number[] };
-    const id = docAny.id ?? `auto-${++docCounter}`;
+    const docAny = input.document as { embedding?: number[] };
+    const id = docKey(input.document) ?? `auto-${++docCounter}`;
     const docToStore: Doc = { ...input.document, id };
     col.docs.set(id, docToStore);
     if (Array.isArray(docAny.embedding)) {
@@ -118,8 +63,7 @@ export class InMemoryStore {
   }
 
   async upsert(input: UpsertInput): Promise<void> {
-    const docAny = input.document as { patternId?: string; id?: string };
-    const key = docAny.patternId ?? docAny.id;
+    const key = docKey(input.document);
     if (key) {
       const col = this.ensure(input.collection);
       col.docs.delete(key);

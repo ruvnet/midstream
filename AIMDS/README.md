@@ -17,7 +17,7 @@ Part of the [Midstream Platform](https://github.com/agenticsorg/midstream) by [r
 - **🔒 Formal Verification** (<500ms): LTL policy checking, dependent type verification, theorem proving
 - **🛡️ Adaptive Response** (<50ms): Meta-learning mitigation, strategy optimization, rollback management
 - **📊 Production Ready**: Comprehensive logging, Prometheus metrics, audit trails, 98.3% test coverage
-- **🔗 Integrated Stack**: AgentDB vector search (150x faster), lean-agentic formal verification
+- **🔗 Integrated Stack**: threat-pattern store (in memory by default, durable via the optional [@ruvector/rvf](https://www.npmjs.com/package/@ruvector/rvf)), lean-agentic formal verification
 
 ## 📊 Performance Benchmarks
 
@@ -154,6 +154,57 @@ curl -X POST http://localhost:3000/api/v1/defend \
   }'
 ```
 
+### Persistence (rvf)
+
+By default the gateway keeps threat patterns, incidents and reflexion
+entries in memory: nothing is written to disk, and a restart loses them.
+To keep them, install the optional [`@ruvector/rvf`](https://www.npmjs.com/package/@ruvector/rvf)
+package and give the store a file path:
+
+```bash
+npm install aidefence @ruvector/rvf
+AGENTDB_PATH=/var/lib/aidefence/threats.rvf npx aidefence
+```
+
+From code, set `path` in the `AgentDBConfig` you pass to `AIMDSGateway` or
+`AgentDBClient`:
+
+```ts
+import { AgentDBClient, Logger } from 'aidefence';
+
+const db = new AgentDBClient({
+  path: '/var/lib/aidefence/threats.rvf',   // '' or ':memory:' = in memory
+  embeddingDim: 384,
+  hnswConfig: { m: 16, efConstruction: 200, efSearch: 100 },
+  quicSync: { enabled: false, peers: [], port: 4433 },
+  memory: { maxEntries: 100000, ttl: 86400000 },
+}, new Logger('aidefence'));
+await db.initialize();   // db.storageKind === 'rvf'
+```
+
+- All collections share the one `.rvf` file, plus a `<file>.idmap.json`
+  sidecar. Parent directories are created. Nothing is written to the
+  working directory.
+- Search uses rvf's HNSW index, scoped to one collection by a metadata
+  filter. The in-memory store is an exact linear scan.
+- An existing file must match `embeddingDim`, or `initialize()` throws.
+  rvf holds a writer lock, so use one process per file.
+- If `path` is set but `@ruvector/rvf` is not installed, the client logs a
+  warning and falls back to memory (`storageKind === 'memory'`).
+- Peer sync (`quicSync`) is not implemented by either backend.
+
+Measured with `node scripts/bench-store.mjs` (384-dim, k=10, 200 queries,
+efSearch 100, one Linux workstation):
+
+| Patterns | In-memory p50 / p95 | rvf p50 / p95 | rvf recall@10 |
+|---|---|---|---|
+| 1,000 | 0.31 / 0.56 ms | 0.33 / 0.41 ms | 1.000 |
+| 10,000 | 6.69 / 7.83 ms | 1.98 / 2.49 ms | 0.979 |
+
+Writes cost more, because each document is its own durable commit: about
+1.3 ms per document at 1,000 patterns and 11.8 ms at 10,000, against
+0.04 ms in memory. Reopening a 10,000-pattern file takes about 150 ms.
+
 ## 🎯 Use Cases
 
 ### AI Security
@@ -180,7 +231,7 @@ curl -X POST http://localhost:3000/api/v1/defend \
 - **Latency**: <10ms p99
 - **Throughput**: >10,000 requests/second
 - **Use Case**: Real-time detection, pattern matching
-- **Technology**: HNSW indexing via AgentDB (150x faster)
+- **Technology**: exact cosine scan in memory; HNSW via @ruvector/rvf when persistence is enabled (see [Persistence (rvf)](#persistence-rvf))
 
 ### Deep Path (Formal Verification)
 - **Latency**: <520ms combined (behavioral + verification)
@@ -304,10 +355,14 @@ AIMDS leverages production-validated Midstream crates:
 
 All integrations use 100% real APIs (no mocks) with validated performance.
 
+## 🔌 Works with
+
+- **[@ruvector/rvf](https://www.npmjs.com/package/@ruvector/rvf)** - optional durable store for threat patterns, incidents and reflexion memory ([how-to](#persistence-rvf), [source](https://github.com/ruvnet/RuVector))
+
 ## 🌟 Related Projects
 
 - **[Midstream Platform](https://github.com/agenticsorg/midstream)** - Core temporal analysis infrastructure
-- **[AgentDB](https://ruv.io/agentdb)** - 150x faster vector database with QUIC sync
+- **[AgentDB](https://ruv.io/agentdb)** - Vector memory for agents
 - **[lean-agentic](https://ruv.io/lean-agentic)** - Formal verification with dependent types
 - **[Claude Flow](https://ruv.io/claude-flow)** - Multi-agent orchestration framework
 - **[Flow Nexus](https://ruv.io/flow-nexus)** - Cloud-based AI swarm platform

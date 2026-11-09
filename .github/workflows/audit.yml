@@ -96,9 +96,37 @@ jobs:
           # log-level: surface warnings but only fail on errors.
           log-level: warn
 
+  # AIMDS/ is a separate, library-only Cargo workspace. Library lockfiles
+  # are not committed (AIMDS/.gitignore lists Cargo.lock), so CI resolves
+  # a fresh one and checks it against the same deny.toml. A fresh lock is
+  # what a downstream `cargo add aimds-*` resolves to, which is the tree
+  # users actually get.
+  cargo-deny-aimds:
+    name: cargo deny AIMDS (${{ matrix.check }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - advisories
+          - bans
+          - licenses
+          - sources
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Generate AIMDS/Cargo.lock
+        run: cargo generate-lockfile --manifest-path AIMDS/Cargo.toml
+      - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
+        with:
+          manifest-path: AIMDS/Cargo.toml
+          arguments: --workspace
+          command: check
+          command-arguments: --config deny.toml --hide-inclusion-graph ${{ matrix.check }}
+          log-level: warn
+
   audit-success:
     name: Audit gates passed
-    needs: [cargo-audit, cargo-deny]
+    needs: [cargo-audit, cargo-deny, cargo-deny-aimds]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -113,6 +141,10 @@ jobs:
           fi
           if [[ "${{ needs.cargo-deny.result }}" == "failure" ]]; then
             echo "::error::cargo deny failed. See the cargo deny matrix jobs."
+            exit 1
+          fi
+          if [[ "${{ needs.cargo-deny-aimds.result }}" == "failure" ]]; then
+            echo "::error::cargo deny failed for the AIMDS workspace. See the cargo deny AIMDS jobs."
             exit 1
           fi
           echo "Supply-chain audit complete (both gates green)."

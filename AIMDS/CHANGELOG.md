@@ -7,6 +7,25 @@ The four crates (`aimds-core`, `aimds-detection`, `aimds-analysis`,
 `aimds-response`) are released in lockstep at the same workspace
 version — see `Cargo.toml`'s `[workspace.package]`.
 
+## npm `aidefence` [3.1.0] - 2026-11-08
+
+### Added
+- Optional durable storage on [`@ruvector/rvf`](https://www.npmjs.com/package/@ruvector/rvf) (an `optionalDependency`, loaded lazily). Set `AgentDBConfig.path` (or `AGENTDB_PATH` for the gateway) to a file, and threat patterns, incidents and reflexion entries survive a restart. Search then runs on rvf's HNSW index, scoped to a collection by a metadata filter. See "Persistence (rvf)" in the README.
+- If `path` is set but `@ruvector/rvf` is not installed, the client logs a warning and keeps the in-memory store.
+- `AgentDBClient`, `InMemoryStore`, `RvfStore`, `createStore` and `Logger` are exported from the library entry. `AgentDBClient.storageKind` reports `'memory'` or `'rvf'`.
+- `scripts/bench-store.mjs` measures lookup latency for both backends.
+
+### Changed
+- The default is now in memory with nothing written to disk. `AGENTDB_PATH` used to default to `./data/agentdb`, a path that was never written to. It now defaults to empty.
+
+### Fixed
+- Comments and the README no longer claim "HNSW … 150x faster" for the in-memory store, which is a linear scan.
+- `InMemoryStore.upsert` keyed by `patternId` but inserted under an auto id, so upserted threat patterns accumulated duplicates. Both now use the same key.
+
+### Rust workspace
+- `aimds-detection` drops its unused `lru 0.12` dependency (RUSTSEC-2026-0002, RUSTSEC-2026-0253).
+- CI runs `cargo deny` on the AIMDS workspace against a freshly resolved lockfile.
+
 ## npm `aidefence` [3.0.2] - 2026-11-06
 
 ### Security

@@ -236,6 +236,10 @@ export interface GatewayConfig {
 }
 
 export interface AgentDBConfig {
+  /**
+   * Storage file for the durable /rvf backend. Empty or
+   * ':memory:' keeps everything in memory and writes nothing.
+   */
   path: string;
   embeddingDim: number;
   hnswConfig: {

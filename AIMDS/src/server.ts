@@ -30,7 +30,9 @@ const gatewayConfig: GatewayConfig = {
 };
 
 const agentdbConfig: AgentDBConfig = {
-  path: process.env.AGENTDB_PATH || './data/agentdb',
+  // Unset = in-memory store; nothing is written. A file path enables the
+  // durable /rvf store (optional dependency).
+  path: process.env.AGENTDB_PATH || '',
   embeddingDim: 384,
   hnswConfig: {
     m: 16,

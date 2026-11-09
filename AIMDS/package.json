@@ -1,6 +1,6 @@
 {
   "name": "aidefence",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "description": "AI manipulation defence: pack-driven prompt-injection detection (shared with the Rust aidefence-core) and the AIMDS gateway",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -76,5 +76,8 @@
     "type": "git",
     "url": "git+https://github.com/ruvnet/midstream.git",
     "directory": "AIMDS"
+  },
+  "optionalDependencies": {
+    "@ruvector/rvf": "^0.4.7"
   }
 }

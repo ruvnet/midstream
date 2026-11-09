@@ -127,7 +127,7 @@ export class AIMDSGateway {
       const embedding = await this.generateEmbedding(req);
       const embedTime = Date.now();
 
-      // Step 2: Fast path - Vector search with HNSW (<2ms target)
+      // Step 2: Fast path - k-NN over stored threat patterns
       const vectorSearchStart = Date.now();
       const matches = await this.agentdb.vectorSearch(embedding, {
         k: 10,
