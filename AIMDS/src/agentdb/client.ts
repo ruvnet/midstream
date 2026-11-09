@@ -1,20 +1,22 @@
 /**
  * AgentDB Client Implementation
  *
- * Provides a stable wrapper API (HNSW-style vector search, incident
- * storage, ReflexionMemory, QUIC sync) over a swappable backend.
+ * Wraps threat-pattern vector search, incident storage and
+ * ReflexionMemory over a swappable backend (./store-factory.ts):
  *
- * The original implementation delegated directly to `agentdb`'s
- * `createDatabase()`, but agentdb 3.x is a breaking API change that
- * removed `createIndex`, `search`, `insert`, `count`, `sync`, etc.
- * from the database handle. To keep the gateway functional, secure
- * (0 CVEs), and publishable on npm, we now ship an in-memory store
- * (`InMemoryStore` in ./memory-store.ts) that satisfies the call
- * shape this wrapper expects. A persistent backend (agentdb v3
- * wrapper or sqlite-vec) is scheduled for a follow-up.
+ * - default: InMemoryStore, an exact linear cosine scan; nothing persists.
+ * - `path` set: RvfStore, a durable @ruvector/rvf file searched through
+ *   rvf's HNSW index. @ruvector/rvf is an optional dependency; without it
+ *   the client falls back to the in-memory store.
+ *
+ * The name is historical: this package does not depend on `agentdb`.
+ * Peer sync (`quicSync`) is not implemented by either backend.
  */
 
 import { InMemoryStore } from './memory-store';
+import { StoreBackend } from './store-types';
+import { createStore, RvfLoader } from './store-factory';
+
 import {
   ThreatMatch,
   ThreatIncident,
@@ -26,25 +28,35 @@ import {
 import { Logger } from '../utils/logger';
 
 export class AgentDBClient {
-  private db: InMemoryStore;
+  private db: StoreBackend;
+  private loadRvf?: RvfLoader;
   private logger: Logger;
   private config: AgentDBConfig;
   private syncInterval?: NodeJS.Timeout;
 
-  constructor(config: AgentDBConfig, logger: Logger) {
+  constructor(config: AgentDBConfig, logger: Logger, options: { loadRvf?: RvfLoader } = {}) {
     this.config = config;
     this.logger = logger;
+    this.loadRvf = options.loadRvf;
     this.db = new InMemoryStore();
   }
 
+  /** Which backend is live: 'memory' or 'rvf'. */
+  get storageKind(): StoreBackend['kind'] {
+    return this.db.kind;
+  }
+
   /**
-   * Initialize AgentDB with HNSW index and QUIC sync
+   * Open the storage backend and create the collections.
    */
   async initialize(): Promise<void> {
     try {
       this.logger.info('Initializing AgentDB client...');
 
-      // Create HNSW index for fast vector search (150x faster than brute force)
+      this.db = await createStore(this.config, this.logger, this.loadRvf);
+
+      // m and efConstruction reach rvf through createStore; this call is a
+      // no-op on both backends and kept for the store contract.
       await this.db.createIndex({
         type: 'hnsw',
         params: {
@@ -71,8 +83,8 @@ export class AgentDBClient {
   }
 
   /**
-   * Fast vector search with HNSW and MMR diversity
-   * Target: <2ms for k=10
+   * k-NN search over threat patterns, with optional MMR diversity.
+   * HNSW on the rvf backend, an exact linear scan in memory.
    */
   async vectorSearch(
     embedding: number[],
@@ -81,7 +93,7 @@ export class AgentDBClient {
     const startTime = Date.now();
 
     try {
-      // HNSW search with specified parameters
+      // ef is the HNSW beam width on rvf; unused by the linear scan
       const results = await this.db.search({
         collection: 'threat_patterns',
         vector: embedding,

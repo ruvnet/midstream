@@ -23,7 +23,9 @@ const ConfigSchema = z.object({
   SHUTDOWN_TIMEOUT: z.string().default('10000'),
 
   // AgentDB config
-  AGENTDB_PATH: z.string().default('./data/agentdb'),
+  // Empty = in-memory store. Set to a file path (e.g. /var/lib/aidefence/threats.rvf)
+  // for the durable /rvf store.
+  AGENTDB_PATH: z.string().default(''),
   AGENTDB_EMBEDDING_DIM: z.string().default('384'),
   AGENTDB_HNSW_M: z.string().default('16'),
   AGENTDB_HNSW_EF_CONSTRUCTION: z.string().default('200'),
