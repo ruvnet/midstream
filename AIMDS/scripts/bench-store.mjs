@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-// Threat-pattern lookup latency: InMemoryStore (linear scan) vs RvfStore (rvf HNSW).
-// Usage: npm run build && node scripts/bench-store.mjs [sizes=1000,10000] [queries=200]
+// Threat-pattern write cost and lookup latency: InMemoryStore (linear scan)
+// vs RvfStore (rvf HNSW, batched writes).
+// Usage: npm run build && node scripts/bench-store.mjs [sizes=1000,10000] [queries=200] [flushIntervalMs]
+// Writes are timed until `await store.flush()` returns, so the figure is
+// the durable cost per document, not the cost of queueing it.
 // Prints one JSON line per (backend, size). Writes only to a fresh OS temp dir.
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,6 +18,7 @@ const DIM = 384;
 const K = 10;
 const sizes = (process.argv[2] ?? '1000,10000').split(',').map(Number);
 const nQueries = Number(process.argv[3] ?? 200);
+const flushIntervalMs = process.argv[4] === undefined ? undefined : Number(process.argv[4]);
 
 function rng(seed) {
   let s = seed >>> 0;
@@ -39,6 +43,7 @@ async function run(kind, store, n) {
       document: { patternId: `p${i}`, embedding: v, metadata: { threatLevel: 2 } },
     });
   }
+  await store.flush();
   const insertMs = performance.now() - t0;
 
   // Queries are stored patterns plus noise, so each has a true nearest neighbour.
@@ -60,6 +65,7 @@ async function run(kind, store, n) {
     p50_ms: +pct(lat, 50).toFixed(4),
     p95_ms: +pct(lat, 95).toFixed(4),
     insert_ms_per_doc: +(insertMs / n).toFixed(4),
+    insert_us_per_doc: +((insertMs * 1000) / n).toFixed(1),
     results,
   };
 }
@@ -70,7 +76,7 @@ for (const n of sizes) {
   const dir = mkdtempSync(join(tmpdir(), 'aidefence-bench-'));
   try {
     const path = join(dir, 'bench.rvf');
-    const store = await RvfStore.open(rvf, { path, dimension: DIM, m: 16, efConstruction: 200 });
+    const store = await RvfStore.open(rvf, { path, dimension: DIM, m: 16, efConstruction: 200, flushIntervalMs });
     const disk = await run('rvf', store, n);
     await store.close();
     const o = performance.now();
@@ -87,7 +93,7 @@ for (const n of sizes) {
     delete mem.results;
     delete disk.results;
     console.log(JSON.stringify(mem));
-    console.log(JSON.stringify({ ...disk, recall_at_k: recall, reopen_ms: +reopenMs.toFixed(1) }));
+    console.log(JSON.stringify({ ...disk, ...store.writeBehind, recall_at_k: recall, reopen_ms: +reopenMs.toFixed(1) }));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

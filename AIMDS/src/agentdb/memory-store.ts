@@ -62,6 +62,14 @@ export class InMemoryStore implements StoreBackend {
     this.bytesEstimate += JSON.stringify(docToStore).length;
   }
 
+  async insertMany(inputs: InsertInput[]): Promise<void> {
+    for (const input of inputs) await this.insert(input);
+  }
+
+  async flush(): Promise<void> {
+    // Nothing to persist.
+  }
+
   async upsert(input: UpsertInput): Promise<void> {
     const key = docKey(input.document);
     if (key) {

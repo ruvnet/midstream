@@ -256,6 +256,18 @@ export interface AgentDBConfig {
     maxEntries: number;
     ttl: number;
   };
+  /**
+   * Write batching for the rvf backend. Writes are queued and committed
+   * together once `maxBatch` (default 256) are queued, `flushIntervalMs`
+   * (default 50) after the first queued write, on `flush()` and on
+   * `shutdown()`. A crash without a flush loses at most the last
+   * `flushIntervalMs` of writes. `flushIntervalMs: 0` commits every write
+   * before it resolves.
+   */
+  writeBehind?: {
+    maxBatch?: number;
+    flushIntervalMs?: number;
+  };
 }
 
 export interface LeanAgenticConfig {

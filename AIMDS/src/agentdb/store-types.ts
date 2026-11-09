@@ -60,13 +60,22 @@ export interface StoreBackend {
   readonly kind: 'memory' | 'rvf';
   createIndex(input: IndexInput): Promise<void>;
   createCollection(input: CollectionInput): Promise<void>;
+  /** Store one document; a second write to the same key replaces the first. */
   insert(input: InsertInput): Promise<void>;
+  /** Store several documents; on rvf they share one commit. */
+  insertMany(inputs: InsertInput[]): Promise<void>;
   upsert(input: UpsertInput): Promise<void>;
+  /**
+   * Resolves once every write made before the call is durable. A no-op in
+   * memory; on rvf it commits the write-behind queue.
+   */
+  flush(): Promise<void>;
   search(input: SearchInput): Promise<SearchResult[]>;
   count(input: CountInput): Promise<number>;
   getMemoryUsage(): number;
   delete(input: DeleteInput): Promise<void>;
   sync(input: SyncInput): Promise<void>;
+  /** Flushes, then releases the backend. */
   close(): Promise<void>;
 }
 

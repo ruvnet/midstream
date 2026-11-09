@@ -50,7 +50,11 @@ export async function createStore(
     dimension: config.embeddingDim,
     m: config.hnswConfig?.m,
     efConstruction: config.hnswConfig?.efConstruction,
+    maxBatch: config.writeBehind?.maxBatch,
+    flushIntervalMs: config.writeBehind?.flushIntervalMs,
+    onWriteError: error =>
+      logger.warn('aidefence: a background rvf commit failed', { error: error.message }),
   });
-  logger.info('AgentDB using durable rvf store', { path: config.path });
+  logger.info('AgentDB using durable rvf store', { path: config.path, ...store.writeBehind });
   return store;
 }

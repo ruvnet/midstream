@@ -193,17 +193,63 @@ await db.initialize();   // db.storageKind === 'rvf'
   warning and falls back to memory (`storageKind === 'memory'`).
 - Peer sync (`quicSync`) is not implemented by either backend.
 
+#### Write batching and durability
+
+Writes to the rvf store are batched. `insert`, `storeIncident` and the
+other write calls return once the documents are queued, and the queue is
+committed to the file as one rvf ingest (plus one delete for documents
+being replaced) when any of these happens:
+
+- 256 documents are queued (`writeBehind.maxBatch`);
+- 50 ms have passed since the first queued write (`writeBehind.flushIntervalMs`);
+- you call `await db.flush()`;
+- you call `await db.shutdown()` (the gateway's `shutdown()` does);
+- the process exits normally (Node's `beforeExit` event).
+
+`storeIncident` queues the incident, its threat pattern and its reflexion
+entry together, so they always land in the same commit.
+
+What is guaranteed:
+
+- When `await db.flush()` resolves, every write made before the call is
+  on disk and survives a crash. If a commit failed, `flush()` rejects.
+- Queued documents are already visible to `vectorSearch` and `getStats`.
+- Without a flush, a crash (SIGKILL, power loss, `process.exit()`, a signal
+  with no handler that calls `shutdown()`) loses at most the writes of the
+  last `flushIntervalMs`, plus the commit that was running. The file
+  itself is not damaged and reopens.
+- Replacing a stored document is a delete followed by an ingest, as two
+  commits. A crash between them loses that document's old version too.
+- After a crash, rvf keeps the dead writer's `<file>.lock` for 30 s, and
+  opening the file before then fails with `LockHeld`.
+
+`writeBehind: { flushIntervalMs: 0 }` turns batching off: every write is
+committed before it returns, which costs one rvf commit per write.
+
+```ts
+const db = new AgentDBClient({ /* ... */ writeBehind: { maxBatch: 256, flushIntervalMs: 50 } }, logger);
+await db.initialize();
+await db.storeIncident(incident);   // queued
+await db.flush();                   // durable
+```
+
 Measured with `node scripts/bench-store.mjs` (384-dim, k=10, 200 queries,
-efSearch 100, one Linux workstation):
+efSearch 100, one Linux workstation). Write cost is timed until
+`flush()` returns, so it is the durable cost per document.
 
-| Patterns | In-memory p50 / p95 | rvf p50 / p95 | rvf recall@10 |
+| Patterns | In-memory write | rvf write, 3.1.0 (one commit per doc) | rvf write, 3.2.0 (batched) |
 |---|---|---|---|
-| 1,000 | 0.31 / 0.56 ms | 0.33 / 0.41 ms | 1.000 |
-| 10,000 | 6.69 / 7.83 ms | 1.98 / 2.49 ms | 0.979 |
+| 1,000 | 41 µs/doc | 4,308 µs/doc | 76 µs/doc |
+| 10,000 | 37 µs/doc | 15,297 µs/doc | 94 µs/doc |
 
-Writes cost more, because each document is its own durable commit: about
-1.3 ms per document at 1,000 patterns and 11.8 ms at 10,000, against
-0.04 ms in memory. Reopening a 10,000-pattern file takes about 150 ms.
+| Patterns | In-memory lookup p50 / p95 | rvf lookup p50 / p95 | rvf recall@10 |
+|---|---|---|---|
+| 1,000 | 0.32 / 0.54 ms | 0.34 / 0.42 ms | 1.000 |
+| 10,000 | 5.87 / 7.49 ms | 2.09 / 2.61 ms | 0.979 |
+
+Lookups are unchanged by batching, within run-to-run noise (rvf p50 at
+10,000 patterns ranged 1.28 to 2.14 ms over three runs). Reopening a
+10,000-pattern file takes about 180 ms.
 
 ## 🎯 Use Cases
 
