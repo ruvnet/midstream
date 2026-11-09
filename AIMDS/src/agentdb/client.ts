@@ -14,7 +14,7 @@
  */
 
 import { InMemoryStore } from './memory-store';
-import { StoreBackend } from './store-types';
+import { InsertInput, StoreBackend } from './store-types';
 import { createStore, RvfLoader } from './store-factory';
 
 import {
@@ -138,25 +138,33 @@ export class AgentDBClient {
   }
 
   /**
-   * Store security incident in ReflexionMemory for learning
+   * Store a security incident: the incident, the threat pattern it implies
+   * (threat level MEDIUM or above, with an embedding), a ReflexionMemory
+   * entry and its causal links. All of them go to the store in one call,
+   * so the rvf backend commits them together.
+   *
+   * On rvf this resolves once the documents are queued; call `flush()` to
+   * wait until they are durable.
    */
   async storeIncident(incident: ThreatIncident): Promise<void> {
     try {
-      // Store in main incidents collection
-      await this.db.insert({
-        collection: 'incidents',
-        document: {
-          id: incident.id,
-          timestamp: incident.timestamp,
-          request: incident.request,
-          result: incident.result,
-          embedding: incident.embedding
+      const docs: InsertInput[] = [
+        {
+          collection: 'incidents',
+          document: {
+            id: incident.id,
+            timestamp: incident.timestamp,
+            request: incident.request,
+            result: incident.result,
+            embedding: incident.embedding
+          }
         }
-      });
+      ];
 
       // Update threat patterns if this is a new pattern
       if (incident.result.threatLevel >= ThreatLevel.MEDIUM) {
-        await this.updateThreatPattern(incident);
+        const pattern = this.threatPatternDoc(incident);
+        if (pattern) docs.push(pattern);
       }
 
       // Store in ReflexionMemory for learning
@@ -174,22 +182,40 @@ export class AgentDBClient {
           latency: incident.result.latencyMs
         }
       };
-
-      await this.db.insert({
+      docs.push({
         collection: 'reflexion_memory',
         document: reflexionEntry as unknown as Record<string, unknown>
       });
 
       // Update causal graphs
-      if (incident.causalLinks && incident.causalLinks.length > 0) {
-        await this.updateCausalGraph(incident);
+      for (const link of incident.causalLinks || []) {
+        docs.push({
+          collection: 'causal_graph',
+          document: {
+            from: incident.id,
+            to: link,
+            timestamp: incident.timestamp,
+            weight: 1.0
+          }
+        });
       }
 
+      await this.db.insertMany(docs);
       this.logger.debug('Incident stored successfully', { id: incident.id });
     } catch (error) {
       this.logger.error('Failed to store incident', { error, incidentId: incident.id });
       throw error;
     }
+  }
+
+  /**
+   * Resolves once every write made before the call is durable. In memory
+   * this is a no-op. On rvf, writes are batched (see
+   * `AgentDBConfig.writeBehind`); without a flush, a crash loses at most
+   * the last `flushIntervalMs` of writes. `shutdown()` flushes too.
+   */
+  async flush(): Promise<void> {
+    await this.db.flush();
   }
 
   /**
@@ -373,11 +399,10 @@ export class AgentDBClient {
     return ThreatLevel.LOW;
   }
 
-  private async updateThreatPattern(incident: ThreatIncident): Promise<void> {
+  private threatPatternDoc(incident: ThreatIncident): InsertInput | undefined {
     // Update or create threat pattern based on incident
-    if (!incident.embedding) return;
-
-    await this.db.upsert({
+    if (!incident.embedding) return undefined;
+    return {
       collection: 'threat_patterns',
       document: {
         patternId: incident.id,
@@ -389,7 +414,7 @@ export class AgentDBClient {
           occurrences: 1
         }
       }
-    });
+    };
   }
 
   private generateFeedback(incident: ThreatIncident): string {
@@ -398,20 +423,5 @@ export class AgentDBClient {
            `Confidence: ${(result.confidence * 100).toFixed(1)}%, ` +
            `Path: ${result.metadata.pathTaken}, ` +
            `Latency: ${result.latencyMs.toFixed(2)}ms`;
-  }
-
-  private async updateCausalGraph(incident: ThreatIncident): Promise<void> {
-    // Update causal relationship graph
-    for (const link of incident.causalLinks || []) {
-      await this.db.insert({
-        collection: 'causal_graph',
-        document: {
-          from: incident.id,
-          to: link,
-          timestamp: incident.timestamp,
-          weight: 1.0
-        }
-      });
-    }
   }
 }

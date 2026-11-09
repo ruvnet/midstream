@@ -7,6 +7,23 @@ The four crates (`aimds-core`, `aimds-detection`, `aimds-analysis`,
 `aimds-response`) are released in lockstep at the same workspace
 version — see `Cargo.toml`'s `[workspace.package]`.
 
+## npm `aidefence` [3.2.0] - 2026-11-09
+
+### Added
+- `AgentDBClient.flush()` and `StoreBackend.flush()`: resolves once every write made before the call is durable.
+- `StoreBackend.insertMany()`: several documents in one call, and in one commit on rvf.
+- `AgentDBConfig.writeBehind` (`maxBatch`, default 256; `flushIntervalMs`, default 50; 0 disables batching).
+
+### Changed
+- rvf writes are batched through a bounded write-behind queue instead of one durable commit per document. Measured with `scripts/bench-store.mjs`, timed to `flush()`: 4,308 → 76 µs per document at 1,000 patterns, 15,297 → 94 µs at 10,000. Lookups are unchanged. See "Write batching and durability" in the README for the loss window when you don't flush.
+- `storeIncident` writes the incident, threat pattern, reflexion entry and causal links with one `insertMany` call, so they are committed together (one rvf ingest instead of three or more).
+- Queued documents are visible to search and count before they are committed.
+- `scripts/bench-store.mjs` times writes until `flush()` returns and reports `insert_us_per_doc`.
+
+### Fixed
+- An upsert committed together with other writes deletes the replaced id before the ingest, so rvf never re-ingests a live id (which drops its whole HNSW index and rebuilds it on the next query).
+- Embeddings with non-finite values are stored without a vector, instead of being rejected by rvf.
+
 ## npm `aidefence` [3.1.0] - 2026-11-08
 
 ### Added
