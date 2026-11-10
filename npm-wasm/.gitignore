@@ -4,7 +4,6 @@ pkg-bundler/
 pkg-node/
 dist/
 target/
-Cargo.lock
 *.wasm
 *.log
 .DS_Store

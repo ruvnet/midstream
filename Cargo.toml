@@ -55,12 +55,27 @@ mem_forget = "deny"
 
 [package]
 name = "midstream"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 rust-version = "1.88"
-description = "Real-time LLM streaming with inflight analysis"
+description = "Real-time LLM streaming with inflight analysis: intent detection, sentiment, metrics and temporal pattern analysis over token streams"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ruvnet/midstream"
+homepage = "https://ruv.io"
+documentation = "https://docs.rs/midstream"
+readme = "README.md"
+keywords = ["llm", "streaming", "inflight", "realtime", "sentiment"]
+categories = ["asynchronous", "text-processing", "command-line-utilities"]
+# Anchored allowlist: ship the crate, not the whole monorepo (0.2.0 also
+# packed npm/, plans/, publish scripts and security-report.json).
+include = [
+    "/src/**/*.rs",
+    "/benches/*.rs",
+    "/examples/*.rs",
+    "/README.md",
+    "/LICENSE-MIT",
+    "/LICENSE-APACHE",
+]
 
 # Per ADR-0005, the in-tree `src/lean_agentic/` subsystem duplicates
 # (and silently diverges from) the published `midstreamer-*` workspace
@@ -93,7 +108,9 @@ tracing = "0.1"
 # throughout and is on the cargo-deny `licenses` allowlist.
 figment = { version = "0.10", features = ["toml", "env"] }
 chrono = "0.4"
-reqwest = { version = "0.12", features = ["json", "stream"] }
+# rustls with the OS trust store instead of native-tls/openssl (RUSTSEC-2026-0477);
+# the remaining features are reqwest's defaults minus `default-tls`.
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls-native-roots", "http2", "charset", "macos-system-configuration"] }
 eventsource-stream = "0.2"
 tokio-stream = "0.1"
 # dotenv 0.15 is unmaintained (RUSTSEC-2021-0141). dotenvy is the
@@ -130,6 +147,12 @@ mockall = "0.11"
 tokio = "1.42.0"
 tokio-test = "0.4"
 criterion = { version = "0.8", features = ["async_tokio", "html_reports"] }
+
+# Installs as `midstream` (README: `cargo run --bin midstream`); without this
+# stanza `cargo install midstream` produced a binary called `main`.
+[[bin]]
+name = "midstream"
+path = "src/bin/main.rs"
 
 [[bench]]
 name = "lean_agentic_bench"

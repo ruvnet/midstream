@@ -90,6 +90,17 @@ cargo bench --workspace
 
 See [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) for the full zero-to-working-build walkthrough.
 
+### Install the demo binary
+
+The `midstream` crate ships a small demo binary that streams three canned messages through intent detection, metrics and sentiment. It reads `config/default.toml` from the current directory:
+
+```bash
+cargo install midstream --locked
+mkdir -p config
+curl -fsSL -o config/default.toml https://raw.githubusercontent.com/ruvnet/midstream/main/config/default.toml
+midstream   # prints the processed messages, metrics and average sentiment
+```
+
 ### Path C — WASM / browser
 
 ```bash
