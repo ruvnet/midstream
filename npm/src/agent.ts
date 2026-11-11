@@ -37,9 +37,11 @@ export class MidStreamAgent {
 
     // Load WASM module
     try {
+      // Optional WASM build output; may be absent, so it is loaded lazily.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const wasm = require('../wasm/midstream_wasm');
       this.wasmAgent = new wasm.MidStreamAgent(this.config);
-    } catch (error) {
+    } catch {
       console.warn('WASM module not available, using fallback implementation');
       this.wasmAgent = null;
     }
@@ -95,6 +97,17 @@ export class MidStreamAgent {
       return comparator?.compare(seq1, seq2, algorithm) || 0;
     }
 
+    // Two empty sequences are identical; avoid 0/0 below.
+    if (seq1.length === 0 && seq2.length === 0) {
+      return 1;
+    }
+
+    // Order-aware fallback for 'lcs': longest common subsequence length
+    // normalised by the longer sequence.
+    if (algorithm === 'lcs') {
+      return MidStreamAgent.lcsLength(seq1, seq2) / Math.max(seq1.length, seq2.length);
+    }
+
     // Simple fallback: Jaccard similarity
     const set1 = new Set(seq1);
     const set2 = new Set(seq2);
@@ -102,6 +115,20 @@ export class MidStreamAgent {
     const union = new Set([...set1, ...set2]);
 
     return intersection.size / union.size;
+  }
+
+  private static lcsLength(a: string[], b: string[]): number {
+    let prev = new Array<number>(b.length + 1).fill(0);
+    for (let i = 1; i <= a.length; i++) {
+      const curr = new Array<number>(b.length + 1).fill(0);
+      for (let j = 1; j <= b.length; j++) {
+        curr[j] = a[i - 1] === b[j - 1]
+          ? prev[j - 1] + 1
+          : Math.max(prev[j], curr[j - 1]);
+      }
+      prev = curr;
+    }
+    return prev[b.length];
   }
 
   /**
@@ -140,15 +167,22 @@ export class MidStreamAgent {
       this.rewardHistory = this.rewardHistory.slice(-this.config.maxHistory!);
     }
 
-    // Simple stability check (fallback)
+    if (rewards.length === 0) {
+      return { isStable: false, isChaotic: false, lyapunovExponent: 0 };
+    }
+
+    // Simple stability check (fallback). Rewards are normalised to [0, 1],
+    // so the standard deviation is at most 0.5 and uniform noise sits near
+    // 0.29; a threshold of 0.5 could never be crossed. Above 0.12 the series
+    // is treated as chaotic, below 0.1 as stable, and in between as neither.
     const mean = rewards.reduce((a, b) => a + b, 0) / rewards.length;
     const variance = rewards.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / rewards.length;
     const stdDev = Math.sqrt(variance);
 
     return {
       isStable: stdDev < 0.1,
-      isChaotic: stdDev > 0.5,
-      lyapunovExponent: stdDev > 0.5 ? 0.5 : -0.5,
+      isChaotic: stdDev > 0.12,
+      lyapunovExponent: stdDev > 0.12 ? 0.5 : -0.5,
     };
   }
 

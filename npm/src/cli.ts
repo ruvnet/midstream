@@ -11,7 +11,6 @@ import { MidStreamAgent } from './agent.js';
 import { WebSocketStreamServer, SSEStreamServer } from './streaming.js';
 import { MidStreamMCPServer } from './mcp-server.js';
 import * as fs from 'fs';
-import * as path from 'path';
 
 const program = new Command();
 
@@ -226,7 +225,7 @@ program
       ]);
 
       switch (action) {
-        case 'Process message':
+        case 'Process message': {
           const { message } = await inquirer.prompt([
             {
               type: 'input',
@@ -239,8 +238,9 @@ program
           console.log(JSON.stringify(result, null, 2));
           console.log();
           break;
+        }
 
-        case 'Analyze conversation':
+        case 'Analyze conversation': {
           const { file } = await inquirer.prompt([
             {
               type: 'input',
@@ -259,8 +259,9 @@ program
             console.error(chalk.red('Error:', error));
           }
           break;
+        }
 
-        case 'Compare sequences':
+        case 'Compare sequences': {
           const { file1, file2, algorithm } = await inquirer.prompt([
             {
               type: 'input',
@@ -288,13 +289,15 @@ program
             console.error(chalk.red('Error:', error));
           }
           break;
+        }
 
-        case 'Check status':
+        case 'Check status': {
           const status = agent.getStatus();
           console.log(chalk.bold('\nAgent Status:'));
           console.log(JSON.stringify(status, null, 2));
           console.log();
           break;
+        }
 
         case 'Exit':
           running = false;
@@ -320,6 +323,8 @@ program
     console.log(chalk.bold('Running benchmarks...\n'));
 
     try {
+      // Optional WASM build output; may be absent, so it is loaded lazily.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const wasm = require('../wasm/midstream_wasm');
 
       const dtwTime = wasm.benchmark_dtw(size, iterations);

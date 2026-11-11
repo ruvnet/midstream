@@ -244,7 +244,7 @@ export class RestreamClient extends EventEmitter {
   /**
    * Transcribe audio chunk
    */
-  private async transcribeAudio(audio: AudioChunk): Promise<void> {
+  private async transcribeAudio(_audio: AudioChunk): Promise<void> {
     // In a real implementation, this would use OpenAI Whisper or similar
     // to transcribe the audio
 
