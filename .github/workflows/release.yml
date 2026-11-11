@@ -71,7 +71,7 @@ jobs:
       # (also archived) is no longer needed.
       - name: Create GitHub release
         id: create_release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
@@ -151,7 +151,7 @@ jobs:
       # glob to the release identified by `tag_name`. No `upload_url`
       # plumbing needed.
       - name: Upload release asset
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           tag_name: v${{ needs.create-release.outputs.version }}
           files: ./${{ matrix.artifact_name }}.${{ matrix.os == 'windows-latest' && 'zip' || 'tar.gz' }}
