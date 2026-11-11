@@ -8,7 +8,6 @@
  */
 
 import { MidStreamAgent, AnalysisResult } from './agent.js';
-import { OpenAIRealtimeClient } from './openai-realtime.js';
 import chalk from 'chalk';
 import * as readline from 'readline';
 

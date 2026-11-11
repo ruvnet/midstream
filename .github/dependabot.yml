@@ -80,6 +80,12 @@ updates:
     labels: [dependencies, javascript]
     commit-message:
       prefix: "chore(npm-cli-deps)"
+    ignore:
+      # typescript-eslint (used by `npm run lint` here) does not support
+      # TypeScript 7 yet, so a TS 7 bump breaks lint. Lift this once
+      # typescript-eslint declares TS 7 support.
+      - dependency-name: "typescript"
+        versions: [">=7"]
     groups:
       patch-updates:
         applies-to: version-updates
@@ -111,6 +117,12 @@ updates:
     labels: [dependencies, javascript]
     commit-message:
       prefix: "chore(lean-js-deps)"
+    ignore:
+      # typescript-eslint (used by `npm run lint` here) does not support
+      # TypeScript 7 yet, so a TS 7 bump breaks lint. Lift this once
+      # typescript-eslint declares TS 7 support.
+      - dependency-name: "typescript"
+        versions: [">=7"]
 
   # ----- GitHub Actions used in CI -----
   - package-ecosystem: github-actions
