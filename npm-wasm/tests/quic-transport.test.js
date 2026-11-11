@@ -1,10 +1,11 @@
 /**
- * Tests for the real QUIC transport entry point in @midstream/wasm.
- * Asserts the loader returns a real `AgentTransport` (backed by
- * agentic-flow's validated stack — no stub) and reports `isNative`
- * truthfully.
+ * Tests for the transport entry point in midstreamer.
+ * The loader delegates to agentic-flow's transport loader, which has no
+ * native QUIC binding and returns a WebSocket fallback. These tests
+ * assert that midstreamer reports that truthfully.
  *
  * Run with: node tests/quic-transport.test.js
+ * (agentic-flow must be installed for the loadQuicTransport cases.)
  */
 
 import assert from 'node:assert/strict';
@@ -27,13 +28,12 @@ async function test(name, fn) {
   }
 }
 
-await test('isNative() returns true (the WASM-stub QUIC is no longer the network path)', () => {
-  assert.equal(isNative(), true);
+await test('isNative() returns false (no native QUIC binding is published)', () => {
+  assert.equal(isNative(), false);
 });
 
-await test('isQuicAvailable() resolves to a boolean', async () => {
-  const v = await isQuicAvailable();
-  assert.equal(typeof v, 'boolean');
+await test('isQuicAvailable() resolves to false (agentic-flow reports no QUIC)', async () => {
+  assert.equal(await isQuicAvailable(), false);
 });
 
 await test('loadQuicTransport returns an AgentTransport with the documented surface', async () => {

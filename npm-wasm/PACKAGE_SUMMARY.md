@@ -48,7 +48,7 @@ Meta-learning and self-improvement:
 - Best pattern selection
 
 ### 4. QuicMultistream
-WebTransport-compatible streaming:
+Simulated stream accounting (no network I/O):
 - Priority-based stream management
 - Multiplexed data transmission simulation
 - Stream statistics and monitoring
@@ -213,7 +213,7 @@ The WASM bindings are **standalone** and don't require the full Midstream worksp
 - **Temporal algorithms**: Reimplemented for WASM (no dependencies)
 - **Scheduler**: Uses browser Performance API
 - **Meta-learning**: Pure Rust implementation
-- **QUIC**: Simulated API (real WebTransport can be added)
+- **QuicMultistream**: simulated counters only; it opens no sockets and does not speak QUIC
 
 **Future Integration:**
 Could link to actual `temporal-compare`, `nanosecond-scheduler`, and `strange-loop` crates when compiling with `wasm32-unknown-unknown` target.

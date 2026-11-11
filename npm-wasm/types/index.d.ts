@@ -187,7 +187,8 @@ export interface StreamStats {
 }
 
 /**
- * QUIC multistream (WebTransport compatible)
+ * Simulated multistream accounting: per-stream priority and byte counters
+ * kept in memory. Does not open sockets or speak QUIC.
  */
 export class QuicMultistream {
   /**
@@ -239,20 +240,20 @@ export class QuicMultistream {
 }
 
 /**
- * Load a real QUIC transport via the optional peer dependency
- * `agentic-flow`. Throws a descriptive error if it is not installed.
+ * Load a transport via the optional peer dependency `agentic-flow`
+ * (currently its WebSocket fallback: no native QUIC binding is published).
+ * Throws a descriptive error if agentic-flow is not installed.
  */
 export function loadQuicTransport(config?: QuicTransportConfig): Promise<AgentTransport>;
 
 /**
- * Probe whether QUIC is available without instantiating a transport.
- * Resolves false when `agentic-flow` is not installed.
+ * Whether real QUIC is available, as reported by agentic-flow. False when
+ * `agentic-flow` is not installed, and false in every published release.
  */
 export function isQuicAvailable(): Promise<boolean>;
 
 /**
- * Reports that `loadQuicTransport` is backed by the real agentic-flow
- * QUIC stack rather than a stub.
+ * Whether a native QUIC binding backs `loadQuicTransport`. Always false.
  */
 export function isNative(): boolean;
 

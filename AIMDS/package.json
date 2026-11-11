@@ -58,7 +58,8 @@
   },
   "overrides": {
     "protobufjs": ">=7.5.6",
-    "@opentelemetry/sdk-node": ">=0.218.0"
+    "@opentelemetry/sdk-node": ">=0.218.0",
+    "minimatch": "^11.0.1"
   },
   "bin": {
     "aidefence": "dist/server.js"

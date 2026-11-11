@@ -1,14 +1,13 @@
 /**
  * TypeScript definitions for `midstreamer/quic`.
  *
- * The QUIC transport delegates to `agentic-flow/transport/loader`,
- * which is an optional peer dependency — install `agentic-flow` to
- * actually load a transport; `isQuicAvailable()` probes without it.
+ * The transport delegates to `agentic-flow/transport/loader`, an
+ * optional peer dependency. No native QUIC binding is published, so
+ * the loader returns agentic-flow's WebSocket fallback transport.
  */
 
 /**
- * Configuration accepted by the underlying
- * `agentic-flow/transport/loader` QUIC stack.
+ * Configuration accepted by `agentic-flow/transport/loader`.
  */
 export interface QuicTransportConfig {
   serverName?: string;
@@ -32,22 +31,21 @@ export interface AgentTransport {
 }
 
 /**
- * Load a real QUIC transport (UDP sockets, TLS, full handshake).
- * Throws with a descriptive error if the optional peer dependency
- * `agentic-flow` is not installed.
+ * Load a transport through agentic-flow's loader (currently its
+ * WebSocket fallback). Throws a descriptive error if the optional peer
+ * dependency `agentic-flow` is not installed.
  */
 export function loadQuicTransport(config?: QuicTransportConfig): Promise<AgentTransport>;
 
 /**
- * Probe whether QUIC is available without instantiating a transport.
- * Resolves false when `agentic-flow` is not installed or its loader
- * reports the stack is not ready.
+ * Whether real QUIC is available, as reported by agentic-flow. False
+ * when `agentic-flow` is not installed, and false in every published
+ * agentic-flow release to date.
  */
 export function isQuicAvailable(): Promise<boolean>;
 
 /**
- * Reports that this loader is backed by the real agentic-flow QUIC
- * stack rather than a stub.
+ * Whether a native QUIC binding backs the loader. Always false.
  */
 export function isNative(): boolean;
 

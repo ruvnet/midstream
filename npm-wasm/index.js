@@ -2,7 +2,8 @@
  * midstreamer - WebAssembly bindings for Midstream
  *
  * Browser and Node.js compatible wrapper for temporal comparison,
- * nanosecond scheduling, meta-learning, and QUIC multistream.
+ * nanosecond scheduling, meta-learning, and a simulated stream-accounting
+ * helper (QuicMultistream: counts bytes per stream, no network I/O).
  *
  * This file is CommonJS (the package has no `"type": "module"`), so
  * `require('midstreamer')` works directly and `import 'midstreamer'`
@@ -285,7 +286,8 @@ class StrangeLoop {
 // ============================================================================
 
 /**
- * QUIC multistream (WebTransport compatible)
+ * Simulated multistream accounting: tracks per-stream priority and byte
+ * counters in memory. It does not open sockets or speak QUIC.
  */
 class QuicMultistream {
   constructor() {
@@ -350,80 +352,14 @@ class QuicMultistream {
 }
 
 // ============================================================================
-// QUIC TRANSPORT (real UDP/TLS via agentic-flow's validated stack)
+// FEDERATION TRANSPORT (delegates to agentic-flow's transport loader)
 // ============================================================================
 
-/**
- * Load a real QUIC transport. This is the production network entry
- * point — UDP sockets, TLS, full handshake state machine, 0-RTT
- * reconnection, validated end-to-end (53.7% lower latency vs HTTP/2,
- * 91.2% reconnection improvement per `agentic-flow/docs/features/quic/
- * QUIC-STATUS.md`).
- *
- * The underlying stack is `agentic-flow/transport/loader`. midstream
- * delegates so the two packages share one validated QUIC implementation
- * — no parallel stub, no duplicate maintenance surface.
- *
- * Returns an `AgentTransport` directly (`send` / `receive` / `request`
- * / `sendBatch` / `getStats` / `close`), matching the
- * `agentic-flow/transport/loader` contract exactly so downstream
- * consumers (e.g. ruvnet/ruflo's federation transport loader) can
- * treat the two interchangeably.
- *
- * @param {Object} [config] - QuicTransportConfig
- *   ({serverName, maxIdleTimeoutMs, maxConcurrentStreams, enable0Rtt, tls})
- * @returns {Promise<import('agentic-flow/transport/loader').AgentTransport>}
- */
-async function loadQuicTransport(config) {
-  // Dynamic import so the dep stays out of bundles that never touch
-  // QUIC. `agentic-flow` is an *optional peer dependency* as of
-  // midstreamer@0.3.2 — temporal-compare consumers don't pull its
-  // ~580-package tree. QUIC consumers install it explicitly.
-  let mod;
-  try {
-    mod = await import('agentic-flow/transport/loader');
-  } catch (error) {
-    throw new Error(
-      "midstreamer: QUIC transport requires the optional peer dependency 'agentic-flow'. " +
-      'Install it with `npm install agentic-flow` (or use isQuicAvailable() to probe first).',
-      { cause: error }
-    );
-  }
-  return mod.loadQuicTransport(config);
-}
-
-/**
- * Probe whether QUIC is available without instantiating a transport.
- * Returns true when `agentic-flow/transport/loader` exposes a working
- * `isQuicAvailable()` AND the underlying stack reports ready, false
- * otherwise (e.g. browser bundle where the loader isn't resolvable).
- * @returns {Promise<boolean>}
- */
-async function isQuicAvailable() {
-  try {
-    const mod = await import('agentic-flow/transport/loader');
-    return typeof mod.isQuicAvailable === 'function'
-      ? await mod.isQuicAvailable()
-      : true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Reports that this `loadQuicTransport` is backed by the real
- * agentic-flow QUIC stack (UDP sockets, TLS, full handshake) rather
- * than a counter-tracking stub. Consumers (e.g. ruvnet/ruflo's
- * federation transport loader) use this to confirm they're not
- * binding a stubbed network path.
- *
- * The synchronous flavor; for the equivalent async probe that also
- * checks the backend is loadable, see `isQuicAvailable()`.
- * @returns {boolean}
- */
-function isNative() {
-  return true;
-}
+// Implemented once in ./quic.js (also exported as `midstreamer/quic`).
+// agentic-flow publishes no native QUIC binding, so loadQuicTransport()
+// returns its WebSocket fallback; isQuicAvailable() and isNative() report
+// false. See quic.js for details.
+const { loadQuicTransport, isQuicAvailable, isNative } = require('./quic.js');
 
 // ============================================================================
 // UTILITY FUNCTIONS
