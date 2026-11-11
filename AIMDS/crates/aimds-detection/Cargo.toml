@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage = "https://ruv.io"
+readme = "README.md"
+keywords = ["security", "prompt-injection", "llm", "pii", "ai-safety"]
 description = "Fast-path detection layer for AIMDS with pattern matching and anomaly detection"
 
 [dependencies]
