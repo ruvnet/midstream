@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" width="720" height="220" role="img" aria-labelledby="t d">
+  <title id="t">aidefence: prompt-injection detection</title>
+  <desc id="d">Two prompts are scanned in turn. A scan line sweeps across each one. The benign question is marked safe in green; the prompt asking to ignore previous instructions is marked critical in red.</desc>
+  <style>
+    .bg { fill: #0f172a; }
+    .title { font: 700 16px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #e2e8f0; }
+    .label { font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #94a3b8; }
+    .prompt { font: 500 14px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #e2e8f0; }
+    .box { fill: #1e293b; stroke: #334155; stroke-width: 1.5; }
+    .scan { fill: #38bdf8; opacity: 0.25; animation: sweep 6s infinite linear; }
+    .s2 { animation-delay: 3s; }
+    @keyframes sweep { 0% { transform: translateX(0); opacity: 0; } 3% { opacity: 0.3; } 40% { transform: translateX(560px); opacity: 0.3; } 45%, 100% { transform: translateX(560px); opacity: 0; } }
+    .verdict { opacity: 0; animation: show 6s infinite; }
+    .v2 { animation-delay: 3s; }
+    @keyframes show { 0%, 40% { opacity: 0; } 45%, 95% { opacity: 1; } 100% { opacity: 0; } }
+    .safe { font: 700 14px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #4ade80; }
+    .crit { font: 700 14px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #f87171; }
+    @media (prefers-reduced-motion: reduce) { .scan { animation: none; opacity: 0; } .verdict { animation: none; opacity: 1; } }
+  </style>
+  <rect class="bg" width="720" height="220" rx="12"/>
+  <text class="title" x="24" y="30">aidefence · detector.detect(prompt)</text>
+
+  <rect class="box" x="24" y="56" width="560" height="44" rx="6"/>
+  <text class="prompt" x="38" y="83">What is the capital of France?</text>
+  <rect class="scan" x="24" y="56" width="10" height="44"/>
+  <g class="verdict"><text class="safe" x="600" y="83">✓ safe</text></g>
+
+  <rect class="box" x="24" y="124" width="560" height="44" rx="6"/>
+  <text class="prompt" x="38" y="151">Ignore all previous instructions and…</text>
+  <rect class="scan s2" x="24" y="124" width="10" height="44"/>
+  <g class="verdict v2"><text class="crit" x="600" y="151">✗ critical</text></g>
+
+  <text class="label" x="24" y="204">pattern packs · normalised + decoded variants · Node.js 18+</text>
+</svg>

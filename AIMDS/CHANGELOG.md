@@ -7,6 +7,13 @@ The four crates (`aimds-core`, `aimds-detection`, `aimds-analysis`,
 `aimds-response`) are released in lockstep at the same workspace
 version — see `Cargo.toml`'s `[workspace.package]`.
 
+## npm `aidefence` [3.2.1] - 2026-11-11
+
+### Changed
+- The optional `@ruvector/rvf` dependency is pinned to exactly `0.4.12` (was `^0.4.7`, an open 0.x range). The full test suite, including the real-import rvf persistence and write-batching tests, passes on 0.4.12 (153 passed, 1 skipped). The benchmark tables in the README were measured on 0.4.7.
+- Package metadata: `homepage`, `bugs`, keywords.
+- README: an npm quickstart and an animated diagram.
+
 ## npm `aidefence` [3.2.0] - 2026-11-09
 
 ### Added
