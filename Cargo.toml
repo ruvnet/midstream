@@ -182,6 +182,10 @@ harness = false
 name = "quic_bench"
 harness = false
 
+[[bench]]
+name = "reflex_bench"
+harness = false
+
 [[example]]
 name = "openrouter"
 path = "examples/openrouter.rs"
