@@ -74,8 +74,12 @@ jobs:
         working-directory: ${{ matrix.package }}
         # `if` on the script existence — `lean-agentic-js` has the
         # script, `npm-wasm` is excluded from this matrix entry.
+        # eslint 10 requires Node >= 20 (`util.styleText`), so lint
+        # lean-agentic-js on 20/22 only; typecheck + tests still run on 18.
         run: |
-          if npm run | grep -qE '^  lint'; then
+          if [ "${{ matrix.package }}" = lean-agentic-js ] && [ "${{ matrix.node }}" -lt 20 ]; then
+            echo "::notice::eslint 10 needs Node >= 20; lint for lean-agentic-js runs on the Node 20/22 legs"
+          elif npm run | grep -qE '^  lint'; then
             npm run lint
           else
             echo "::notice::no lint script defined for ${{ matrix.package }}"

@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "pretest": "tsc",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "prepare": "npm run build"
