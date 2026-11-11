@@ -14,4 +14,4 @@ workspace = true
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 xshell = "0.2"
-cargo_metadata = "0.18"
+cargo_metadata = "0.23"
