@@ -1,7 +1,7 @@
 {
   "name": "midstreamer",
-  "version": "0.3.3",
-  "description": "WebAssembly bindings for Midstream temporal comparison, scheduling, and meta-learning + real QUIC transport via agentic-flow",
+  "version": "0.3.4",
+  "description": "WebAssembly time-series toolkit: DTW, LCS and edit distance, a nanosecond scheduler, and StrangeLoop meta-learning for Node.js and browsers.",
   "main": "index.js",
   "types": "types/index.d.ts",
   "files": [
@@ -41,23 +41,30 @@
     "prepack": "npm run verify:pack",
     "prepublishOnly": "npm run clean && npm run build:wasm && npm run build:bundler && npm run build:nodejs"
   },
+  "homepage": "https://ruv.io",
   "repository": {
     "type": "git",
     "url": "https://github.com/ruvnet/midstream.git",
     "directory": "npm-wasm"
   },
+  "bugs": {
+    "url": "https://github.com/ruvnet/midstream/issues"
+  },
   "keywords": [
     "wasm",
     "webassembly",
-    "temporal",
+    "time-series",
     "dtw",
+    "dynamic-time-warping",
     "lcs",
+    "edit-distance",
+    "sequence-alignment",
+    "temporal",
     "scheduler",
     "meta-learning",
-    "quic",
-    "webtransport",
+    "pattern-recognition",
     "browser",
-    "performance"
+    "nodejs"
   ],
   "author": "Midstream Contributors",
   "license": "(MIT OR Apache-2.0)",

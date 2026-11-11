@@ -269,7 +269,7 @@ Most features work in Node.js 18+, except:
 - ❌ NanoScheduler (requires browser `window` object)
 - ✅ TemporalCompare (full support)
 - ✅ StrangeLoop (full support)
-- ✅ QuicMultistream (full support)
+- ✅ QuicMultistream (simulated byte counters; no network I/O)
 
 ```javascript
 // Node.js example

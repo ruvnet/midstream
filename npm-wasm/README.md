@@ -1,13 +1,18 @@
 # midstreamer
 
-WebAssembly bindings for Midstream temporal comparison, nanosecond scheduling, meta-learning, and QUIC multistream functionality.
+[![npm](https://img.shields.io/npm/v/midstreamer.svg)](https://www.npmjs.com/package/midstreamer)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/ruvnet/midstream)
+
+![midstreamer aligning two time series with dynamic time warping](https://raw.githubusercontent.com/ruvnet/midstream/main/npm-wasm/assets/midstreamer-dtw.svg)
+
+WebAssembly time-series toolkit for Node.js and browsers: dynamic time warping, longest common subsequence and edit distance, a nanosecond scheduler, and StrangeLoop meta-learning.
 
 ## Features
 
 - **Temporal Comparison**: Dynamic Time Warping (DTW), Longest Common Subsequence (LCS), and Edit Distance algorithms
 - **Nanosecond Scheduler**: High-precision task scheduling with browser-based timing
 - **Strange Loop**: Meta-learning and pattern recognition with self-improving algorithms
-- **QUIC Multistream**: WebTransport-compatible multiplexed streaming (simulated)
+- **QuicMultistream**: simulated stream accounting (per-stream priority and byte counters in memory). It opens no sockets and does not speak QUIC.
 
 ## Installation
 
@@ -16,6 +21,56 @@ npm install midstreamer
 ```
 
 ## Quick Start
+
+Save as `quickstart.mjs` and run `node quickstart.mjs` (Node.js 18+):
+
+```javascript
+import { init, TemporalCompare, StrangeLoop } from 'midstreamer';
+
+await init();
+
+const tc = new TemporalCompare(16);
+const a = [1, 2, 3, 4, 5];
+const b = [1, 2, 4, 5];
+console.log('dtw:', tc.dtw(a, b));
+console.log('lcs:', tc.lcs(a, b));
+console.log('edit distance:', tc.editDistance('kitten', 'sitting'));
+
+const loop = new StrangeLoop(0.1);
+loop.observe('fast-path', 0.9);
+loop.observe('slow-path', 0.4);
+console.log('best pattern:', loop.bestPattern().patternId);
+```
+
+Output:
+
+```text
+[Midstream WASM] Initialized successfully
+dtw: 1
+lcs: 4
+edit distance: 3
+best pattern: fast-path
+```
+
+## Transport status (`midstreamer/quic`)
+
+`midstreamer/quic` delegates to the transport loader of the optional peer
+dependency [`agentic-flow`](https://www.npmjs.com/package/agentic-flow). No
+published agentic-flow release (checked through 3.5.4) includes a native QUIC
+binding, so `loadQuicTransport()` returns agentic-flow's **WebSocket fallback**
+transport, not QUIC. Both probes report this:
+
+```javascript
+import { isQuicAvailable, isNative } from 'midstreamer/quic';
+
+console.log('QUIC available:', await isQuicAvailable()); // false
+console.log('native binding:', isNative());              // false
+```
+
+midstreamer releases up to 0.3.3 described this as "real QUIC transport" and
+returned `true` from `isNative()`. Both were wrong and are corrected in 0.3.4.
+
+## Usage
 
 ### Browser
 
@@ -62,73 +117,6 @@ npm install midstreamer
   <h1>Midstream WASM Demo</h1>
 </body>
 </html>
-```
-
-### Node.js
-
-```javascript
-import { init, TemporalCompare, NanoScheduler, StrangeLoop, QuicMultistream } from 'midstreamer';
-
-async function main() {
-  // Initialize WASM module
-  await init();
-
-  // Temporal comparison example
-  const temporal = new TemporalCompare(100);
-
-  const timeSeries1 = Array.from({ length: 100 }, (_, i) => Math.sin(i / 10));
-  const timeSeries2 = Array.from({ length: 100 }, (_, i) => Math.cos(i / 10));
-
-  const dtwDistance = temporal.dtw(timeSeries1, timeSeries2);
-  console.log('DTW Distance:', dtwDistance);
-
-  const metrics = temporal.analyze(timeSeries1, timeSeries2);
-  console.log('Comprehensive Analysis:', metrics);
-
-  // Nanosecond scheduler example
-  const scheduler = new NanoScheduler();
-  scheduler.start();
-
-  let counter = 0;
-  const taskId = scheduler.scheduleRepeating(() => {
-    counter++;
-    console.log('Tick:', counter);
-
-    if (counter >= 10) {
-      scheduler.cancel(taskId);
-      scheduler.stop();
-    }
-  }, 100000000); // 100ms in nanoseconds
-
-  // Meta-learning example
-  const loop = new StrangeLoop(0.15);
-
-  // Simulate learning from observations
-  for (let i = 0; i < 100; i++) {
-    const performance = Math.random();
-    loop.observe(`pattern-${i % 5}`, performance);
-  }
-
-  console.log('Iteration count:', loop.iterationCount);
-  console.log('Pattern count:', loop.patternCount);
-  console.log('Best pattern:', loop.bestPattern());
-
-  // QUIC multistream example
-  const quic = new QuicMultistream();
-
-  const streamId = quic.openStream(255); // High priority
-  const data = new Uint8Array([1, 2, 3, 4, 5]);
-
-  const bytesSent = quic.send(streamId, data);
-  console.log('Bytes sent:', bytesSent);
-
-  const stats = quic.getStats(streamId);
-  console.log('Stream stats:', stats);
-
-  quic.closeStream(streamId);
-}
-
-main();
 ```
 
 ## API Reference
@@ -207,7 +195,7 @@ const loop = new StrangeLoop(learningRate?: number);
 
 ### QuicMultistream
 
-WebTransport-compatible multiplexed streaming.
+Simulated stream accounting: keeps per-stream priority and byte counters in memory. `send` counts bytes and `receive` returns zero-filled buffers; nothing goes over a network.
 
 #### Constructor
 
@@ -280,7 +268,7 @@ npm run clean
 
 ## License
 
-MIT
+MIT OR Apache-2.0
 
 ## Contributing
 
@@ -288,6 +276,6 @@ Contributions welcome! Please see the main Midstream repository for guidelines.
 
 ## Links
 
-- [GitHub Repository](https://github.com/midstream/midstream)
-- [Documentation](https://midstream.dev/docs)
-- [Examples](https://midstream.dev/examples)
+- [GitHub repository](https://github.com/ruvnet/midstream)
+- [Issues](https://github.com/ruvnet/midstream/issues)
+- [ruv.io](https://ruv.io)
