@@ -38,7 +38,7 @@
     "@typescript-eslint/parser": "^8.59.3",
     "eslint": "^10.3.0",
     "jest": "^30.4.2",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "repository": {
     "type": "git",
