@@ -76,7 +76,7 @@ jobs:
           - sources
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:
           # The Embark action expands to (per its action.yml + entrypoint.sh):
           #   cargo-deny [hardcoded log/manifest] ${arguments} ${command} ${command-arguments}
@@ -116,12 +116,14 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Generate AIMDS/Cargo.lock
         run: cargo generate-lockfile --manifest-path AIMDS/Cargo.toml
-      - uses: EmbarkStudios/cargo-deny-action@6c8f9facfa5047ec02d8485b6bf52b587b7777d1 # v2.0.18
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:
           manifest-path: AIMDS/Cargo.toml
-          arguments: --workspace
+          # `--config` is a top-level option in cargo-deny >= 0.20 (the v2.1.x
+          # action); it is rejected after `check`.
+          arguments: --workspace --config deny.toml
           command: check
-          command-arguments: --config deny.toml --hide-inclusion-graph ${{ matrix.check }}
+          command-arguments: --hide-inclusion-graph ${{ matrix.check }}
           log-level: warn
 
   audit-success:
