@@ -86,7 +86,7 @@ include = [
 # binary + library compile against the published API contract.
 [features]
 default = []
-lean-agentic = []
+lean-agentic = ["dep:mattbusel-mem-graph"]
 
 [dependencies]
 # `hyprstream`, `arrow`, and `arrow-flight` were declared here but never
@@ -123,6 +123,9 @@ bytes = "1"
 thiserror = "2.0"
 dashmap = "6.1"
 lru = "0.19"
+# Adjacency index behind `KnowledgeGraph::find_related`. Only pulled in
+# by the `lean-agentic` feature, so default builds are unchanged.
+mattbusel-mem-graph = { version = "0.2", optional = true }
 
 # Phase 1: Temporal and Scheduling integrations (local workspace crates)
 midstreamer-temporal-compare = { version = "0.2.1", path = "crates/temporal-compare" }
