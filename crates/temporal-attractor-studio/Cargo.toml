@@ -16,7 +16,7 @@ workspace = true
 midstreamer-temporal-compare = { version = "0.2.1", path = "../temporal-compare" }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
-nalgebra = "0.34"
+nalgebra = "0.35"
 ndarray = "0.17"
 
 [dev-dependencies]
